@@ -1,0 +1,17 @@
+services:
+  frontend:
+    build:
+      context: ./frontend-svelte
+      dockerfile: ../Dockerfile.frontend
+    ports: 
+      - "3000:5173"
+    volumes:
+      - ./frontend-svelte:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
