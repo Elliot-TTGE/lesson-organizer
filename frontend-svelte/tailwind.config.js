@@ -9,7 +9,16 @@ export default {
   ],
 
   daisyui: {
-    themes: true
+    themes: [
+      {
+        "light": {
+        "primary": "#ab8cc0",
+        "secondary": "#483248",
+        "accent": "#80cac3",
+        "neutral": "#e7f1f3",
+        "base-100": "#572b7a"
+      }}
+    ]
   }
 }
 
