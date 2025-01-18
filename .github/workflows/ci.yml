@@ -39,9 +39,6 @@ jobs:
                 cd frontend-svelte
                 npm install
 
-            - name: Start frontend
-              run: docker compose up --no-build --detach frontend
-
             # - name: Run ESLint
             #   run: |
             #     cd frontend-svelte
