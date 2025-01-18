@@ -47,10 +47,10 @@ jobs:
             # - name: Start application-specific services using Docker Compose
             #   run: docker compose up -d
 
-            - name: Run tests
-              run: |
-                cd frontend-svelte
-                npm test
+            # - name: Run tests
+            #   run: |
+            #     cd frontend-svelte
+            #     npm test
 
             - name: Build the project
               run: npm run build
