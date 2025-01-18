@@ -1,3 +1,11 @@
 # Frontend
 frontend-svelte/node_modules
 frontend-svelte/package-lock
+
+# Backend
+backend-flask/venv
+
+# General
+*.pyc
+__pycache__/
+.env
