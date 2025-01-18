@@ -48,7 +48,9 @@ jobs:
             #   run: docker compose up -d
 
             - name: Run tests
-              run: npm test
+              run: |
+                cd frontend-svelte
+                npm test
 
             - name: Build the project
               run: npm run build
