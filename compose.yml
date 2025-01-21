@@ -9,6 +9,10 @@ services:
       - ./backend-flask:/app
     networks:
       - app-network
+    environment:
+      - FLASK_APP=app.main
+      - FLASK_ENV=development
+    command: flask run
 
   frontend:
     build:
