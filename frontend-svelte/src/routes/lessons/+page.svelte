@@ -1,7 +1,2 @@
-<script lang='ts'>
-    import Drawer from '$lib/components/Drawer.svelte'
-</script>
+<h1>hi</h1>
 
-<Drawer>
-    <h1>hi</h1>
-</Drawer>
