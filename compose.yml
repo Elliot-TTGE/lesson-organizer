@@ -6,7 +6,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./backend-flask:/app
+      - ./backend-flask/app:/app/app
     networks:
       - app-network
     environment:
