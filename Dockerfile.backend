@@ -11,10 +11,12 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 COPY backend-flask/ /app/
 
+COPY backend-flask/entrypoint.py /app/entrypoint.py
+
 EXPOSE 4000
 
 ENV FLASK_APP=app.main
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=4000
 
-CMD ["flask", "run"]
+CMD ["python", "/app/entrypoint.py", "--load-demo"]

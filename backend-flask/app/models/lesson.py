@@ -7,7 +7,7 @@ lesson_student = db.Table('lesson_student',
 )
 
 class Lesson(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     datetime = db.Column(db.DateTime, nullable=False, default=datetime.now)
     plan = db.Column(db.Text, nullable=False)
     concepts_taught = db.Column(db.Text, nullable=True)
