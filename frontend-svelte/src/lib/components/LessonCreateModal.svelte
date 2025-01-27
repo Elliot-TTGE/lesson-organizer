@@ -1,13 +1,31 @@
 <script lang="ts">
-    export let date = '';
-    export let time = '';
-    export let people = '';
+    import { createEventDispatcher } from 'svelte';
+    import { onMount } from 'svelte';
+    import { type Lesson } from "../../types";
+
+    let lesson: Lesson = null;
 
     let lessonCreateModal: HTMLDialogElement;
+    let date: string;
+    let time: string;
+    let plan: string;
+    let concepts_taught: string;
+    let additional_notes: string;
+    let students: string;
+
+    const dispatch = createEventDispatcher();
 
     function createLesson() {
-        // Handle lesson creation logic here
-        // closeModal();
+        const datetime = new Date(`${date}T${time}`);
+        const lesson = {
+            datetime,
+            plan,
+            concepts_taught,
+            additional_notes,
+            students: students.split(',').map(name => name.trim())
+        };
+        dispatch('create', lesson);
+        lessonCreateModal.close();
     }
 </script>
 
@@ -28,15 +46,30 @@
             </label>
             <input id="time" type="time" bind:value={time} class="input input-bordered w-full" />
 
-            <label class="label" for="people">
-                <span class="label-text">Person/People</span>
+            <label class="label" for="plan">
+                <span class="label-text">Plan</span>
             </label>
-            <input id="people" type="text" bind:value={people} class="input input-bordered w-full" />
+            <input id="plan" type="text" bind:value={plan} class="input input-bordered w-full" />
+
+            <label class="label" for="concepts_taught">
+                <span class="label-text">Concepts Taught</span>
+            </label>
+            <input id="concepts_taught" type="text" bind:value={concepts_taught} class="input input-bordered w-full" />
+
+            <label class="label" for="additional_notes">
+                <span class="label-text">Additional Notes</span>
+            </label>
+            <input id="additional_notes" type="text" bind:value={additional_notes} class="input input-bordered w-full" />
+
+            <label class="label" for="students">
+                <span class="label-text">Students (comma-separated)</span>
+            </label>
+            <input id="students" type="text" bind:value={students} class="input input-bordered w-full" />
         </div>
         <div class="modal-action">
             <form method='dialog'>
                 <button class="btn">Cancel</button>
-                <button class="btn btn-primary" on:click={createLesson}>Create</button>
+                <button type="button" class="btn btn-primary" on:click={createLesson}>Create</button>
             </form>
         </div>
     </div>
