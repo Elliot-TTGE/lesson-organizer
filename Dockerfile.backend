@@ -1,12 +1,22 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bullseye
+
+RUN apt update
 
 WORKDIR /app
 
 COPY backend-flask/requirements.txt requirements.txt
-RUN pip install -r requirements.txt
 
-COPY backend-flask /app
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY backend-flask/ /app/
+
+COPY backend-flask/entrypoint.py /app/entrypoint.py
 
 EXPOSE 4000
 
-CMD ["python", "app/main.py"]
+ENV FLASK_APP=app.main
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_RUN_PORT=4000
+
+CMD ["python", "/app/entrypoint.py", "--load-demo"]

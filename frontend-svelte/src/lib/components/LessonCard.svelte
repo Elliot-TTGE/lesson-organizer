@@ -4,10 +4,12 @@
         date: string,
         time: string,
         student: string,
-        plan: string
+        plan: string,
+        concepts: string,
+        notes: string
     }
 
-    let {weekday, date, time, student, plan} : Props = $props()
+    let {weekday, date, time, student, plan, concepts, notes} : Props = $props()
 </script>
 
 <style>
@@ -30,9 +32,11 @@
         </div>
         <div class='bg-accent mx-2 min-h-32'>
             <p>Card Concepts Taught</p>
+            <p>{concepts}</p>
         </div>
         <div class='bg-accent mx-2 min-h-32'>
             <p>Card Lesson Notes</p>
+            <p>{notes}</p>
         </div>
     </div>
 </div>
