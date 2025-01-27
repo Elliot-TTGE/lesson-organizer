@@ -14,7 +14,6 @@
             }
             const data: Lesson[] = await response.json();
             lessons = data;
-            console.log(lessons);
         } catch (error) {
             console.error('Error fetching lessons:', error);
         }
