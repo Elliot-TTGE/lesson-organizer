@@ -39,7 +39,7 @@ jobs:
     - name: Start backend
       run: |
         docker compose up --no-build --detach backend
-        sleep 20  # Increase sleep duration to ensure the backend is ready
+        sleep 10
 
     - name: Check backend logs
       run: docker compose logs backend
