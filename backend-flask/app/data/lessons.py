@@ -1,8 +1,13 @@
-from app.models.lesson import Lesson  # Assuming Lesson model is defined in app.models.lesson
-from app.db import db  
-from datetime import datetime  # Import datetime
+from app.main import db
+from app.models.lesson import Lesson
+from datetime import datetime
 
-def generate_demo_data():
+def load_demo_data():
+    # Check if there are any existing lessons in the database
+    if Lesson.query.count() > 0:
+        print("Database already has data. Skipping demo data loading.")
+        return
+
     demo_lessons = [
         {
             "datetime": datetime(2023, 10, 1, 10, 0),
@@ -34,3 +39,4 @@ def generate_demo_data():
         db.session.add(lesson)
     
     db.session.commit()
+    print("Demo data loaded successfully.")
