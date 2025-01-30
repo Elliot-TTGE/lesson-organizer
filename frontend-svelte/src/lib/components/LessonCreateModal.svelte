@@ -1,63 +1,55 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { type Lesson } from "../../types";
+    import type { ErrorObject } from '$lib/utils/index.svelte';
 
     let lessonCreateModal: HTMLDialogElement;
-    let date: string = $state("");
-    let time: string = $state("");
-    let plan: string = $state("");
-    let concepts_taught: string = $state("");
-    let additional_notes: string = $state("");
-    let students: string = $state("");
-    let error = $state({
+    let date: string = "";
+    let time: string = "";
+    let plan: string = "";
+    let concepts_taught: string = "";
+    let additional_notes: string = "";
+    let students: string = "";
+
+    let error: ErrorObject = {
         date: "",
         time: "",
         plan: "",
         concepts_taught: "",
         additional_notes: "",
         students: ""
-    });
+    };
 
-    function createLesson() {
+    function validateFields(): boolean {
         let hasError = false;
+        error = {}; // Reset errors
+
         if (date === "") {
             error.date = "Date can't be empty";
             hasError = true;
-        } else {
-            error.date = "";
         }
         if (time === "") {
             error.time = "Time can't be empty";
             hasError = true;
-        } else {
-            error.time = "";
         }
         if (plan === "") {
             error.plan = "Plan can't be empty";
             hasError = true;
-        } else {
-            error.plan = "";
         }
         if (concepts_taught === "") {
             error.concepts_taught = "Concepts taught can't be empty";
             hasError = true;
-        } else {
-            error.concepts_taught = "";
-        }
-        if (additional_notes === "") {
-            error.additional_notes = "Additional notes can't be empty";
-            hasError = true;
-        } else {
-            error.additional_notes = "";
         }
         if (students === "") {
             error.students = "Students can't be empty";
             hasError = true;
-        } else {
-            error.students = "";
         }
 
-        if (hasError) {
+        return !hasError;
+    }
+
+    function createLesson() {
+        if (!validateFields()) {
             return;
         }
 
@@ -69,12 +61,17 @@
             additional_notes,
             students: students.split(',').map(name => name.trim())
         };
-        console.log(lesson);
+
+        // Assuming onCreate is passed as a prop
+        if (typeof onCreate === 'function') {
+            onCreate(lesson);
+        }
+
         lessonCreateModal.close();
     }
 </script>
 
-<button class='btn btn-secondary' onclick={() => {lessonCreateModal.showModal()}}>
+<button class='btn btn-secondary' on:click={() => {lessonCreateModal.showModal()}}>
     <slot />    
 </button>
 <dialog bind:this={lessonCreateModal} class="modal">
@@ -137,7 +134,7 @@
         <div class="modal-action">
             <form method='dialog'>
                 <button class="btn">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick={createLesson}>Create</button>
+                <button type="button" class="btn btn-primary" on:click={createLesson}>Create</button>
             </form>
         </div>
     </div>
