@@ -1,0 +1,61 @@
+Table student {
+    id integer [primary key]
+    name varchar
+}
+
+Table lesson {
+    id integer [primary key]
+    datetime datetime
+    lesson_sequence varchar
+    concepts_taught varchar
+    notes varchar
+}
+
+Table quiz {
+    id integer [primary key]
+    name varchar
+    datetime datetime
+    score float
+    notes varchar
+    lesson_id integer [ref: > lesson.id]
+    student_id integer [ref: > student.id]
+}
+
+Table lesson_student {
+    id integer [primary key]
+    lesson_id integer [ref: > lesson.id]
+    student_id integer [ref: > student.id]
+}
+
+Table english_level {
+    id integer [primary key]
+    student_id integer [ref: > student.id]
+    start_date datetime
+    level_category varchar
+}
+
+Table stock_image {
+    id integer [primary key]
+    istock_name varchar
+    istock_id integer
+    uses varchar
+}
+
+Table user {
+    id integer [primary key]
+    first_name varchar
+    last_name varchar
+    created_date datetime
+    last_login datetime
+    password integer
+    role_id integer [ref: > user_roles.id]
+}
+
+Table user_roles {
+    id integer [primary key]
+    role_name varchar
+    created_date datetime
+}
+
+Ref: lesson.id > lesson_student.lesson_id
+Ref: student.id > lesson_student.student_id
