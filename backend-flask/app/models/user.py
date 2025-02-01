@@ -9,4 +9,4 @@ class User(db.Model):
     created_date = db.Column(db.DateTime, nullable=False)
     last_login = db.Column(db.DateTime)
     password = db.Column(db.String, nullable=False)
-    role = db.Column(db.Enum('admin', 'user', 'guest', name='user_role'), nullable=False)
+    role = db.Column(db.Enum('admin', 'assistant', 'instructor', name='user_role'), nullable=False)

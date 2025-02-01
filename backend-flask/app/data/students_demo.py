@@ -1,7 +1,7 @@
 from app.models.student import Student
 from app.db import db
 
-def load_demo_data():
+def load_demo_student():
     # Check if there are any existing students in the database
     if Student.query.count() > 0:
         print("Database already has data. Skipping demo data loading.")
