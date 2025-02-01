@@ -48,11 +48,13 @@
         return !hasError;
     }
 
-    function createLesson() {
+    async function createLesson() {
+        // Validate Input 
         if (!validateFields()) {
             return;
         }
 
+        // Create lesson object
         const datetime = new Date(`${date}T${time}`);
         const lesson = {
             datetime,
@@ -62,6 +64,25 @@
             students: students.split(',').map(name => name.trim())
         };
 
+        
+        // Create lesson
+        try {
+            const response = await fetch('http://localhost:4000/api/lessons', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(lesson)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to create lesson');
+            }
+            const newLesson = await response.json();
+            console.log('Lesson created:', newLesson);
+        } catch (error) {
+            console.error('Error creating lesson:', error);
+        }
+        
         // Assuming onCreate is passed as a prop
         if (typeof onCreate === 'function') {
             onCreate(lesson);

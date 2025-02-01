@@ -6,7 +6,7 @@
 
     let lessons: Lesson[] = [];
     
-    onMount(async () => {
+    async function fetchLessons() {
         try {
             const response = await fetch('http://localhost:4000/api/lessons');
             if (!response.ok) {
@@ -17,7 +17,13 @@
         } catch (error) {
             console.error('Error fetching lessons:', error);
         }
-    });
+    }
+
+    onMount(fetchLessons);
+
+    function handleCreate() {
+        fetchLessons(); // Refetch lessons after creating a new one
+    }
 </script>
 
 <div class='navbar bg shadow'>
@@ -25,7 +31,7 @@
     <p>Week Of: </p>
     <div class="ml-4">01/13/24</div>
     <div class='ml-auto'>
-      <LessonCreateModal>
+      <LessonCreateModal onCreate={handleCreate}>
         Create Lesson
       </LessonCreateModal>
     </div>
