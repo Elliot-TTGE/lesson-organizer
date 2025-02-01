@@ -11,8 +11,8 @@ Table student {
 Table lesson {
     id integer [pk, not null, unique, increment]
     datetime datetime [not null]
-    lesson_sequence varchar [not null]
-    concepts_taught varchar [not null]
+    plan varchar [not null]
+    concepts varchar [not null]
     created_date datetime [not null]
     notes varchar
 }
