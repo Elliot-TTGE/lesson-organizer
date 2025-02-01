@@ -1,5 +1,6 @@
 from app.models.student import Student
 from app.db import db
+from datetime import datetime, timezone
 
 def load_demo_student():
     # Check if there are any existing students in the database
@@ -8,13 +9,13 @@ def load_demo_student():
         return
 
     demo_students = [
-        Student(name='John Doe'),
-        Student(name='Jane Smith'),
-        Student(name='Alice Johnson'),
-        Student(name='Bob Brown'),
-        Student(name="Alice Johnson"),
-        Student(name="Bob Smith"),
-        Student(name="Charlie Brown")
+        Student(name='John Doe', created_date=datetime.now(timezone.utc), status='active'),
+        Student(name='Jane Smith', created_date=datetime.now(timezone.utc), status='inactive'),
+        Student(name='Alice Johnson', created_date=datetime.now(timezone.utc), status='hold'),
+        Student(name='Bob Brown', created_date=datetime.now(timezone.utc), status='trial'),
+        Student(name="Alice Johnson", created_date=datetime.now(timezone.utc), status='active'),
+        Student(name="Bob Smith", created_date=datetime.now(timezone.utc), status='inactive'),
+        Student(name="Charlie Brown", created_date=datetime.now(timezone.utc), status='hold')
     ]
     
     for student in demo_students:

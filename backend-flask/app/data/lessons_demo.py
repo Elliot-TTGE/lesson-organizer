@@ -2,7 +2,7 @@ from app.main import db
 from app.models.lesson import Lesson
 from datetime import datetime
 
-def load_demo_data():
+def load_demo_lesson():
     # Check if there are any existing lessons in the database
     if Lesson.query.count() > 0:
         print("Database already has data. Skipping demo data loading.")
