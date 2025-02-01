@@ -1,58 +1,71 @@
 name: CI
 
 on:
-    pull_request:
-
-    push:
-        branches:
-            - "main"
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                node-version: "22"
-                cache: "npm"
-                cache-dependency-path: frontend-svelte/package.json
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged
+        ports:
+          - 4000:4000
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-            - name: Build backend
-              run: docker compose build backend
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+        cache: "npm"
+        cache-dependency-path: frontend-svelte/package.json
 
-            - name: Start backend
-              run: |
-                docker compose up --no-build --detach backend
-                sleep 5
-                curl -v "http://0.0.0.0:4000"
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-            - name: Install Node dependencies
-              run: |
-                cd frontend-svelte
-                npm install
+    - name: Build backend
+      run: docker compose build backend
 
-            # - name: Run ESLint
-            #   run: |
-            #     cd frontend-svelte
-            #     npx eslint --max-warnings=0 .
+    - name: Start backend
+      run: |
+        docker compose up --no-build --detach backend
+        sleep 10
 
-            # - name: Start application-specific services using Docker Compose
-            #   run: docker compose up -d
+    - name: Check backend logs
+      run: docker compose logs backend
 
-            # - name: Run tests
-            #   run: |
-            #     cd frontend-svelte
-            #     npm test
+    - name: Test backend endpoint
+      run: curl -v "http://127.0.0.1:4000"
 
-            - name: Build the project
-              run: |
-                cd frontend-svelte
-                npm run build
+    - name: Install Node dependencies
+      run: |
+        cd frontend-svelte
+        npm install
+
+    # - name: Run ESLint
+    #   run: |
+    #     cd frontend-svelte
+    #     npx eslint --max-warnings=0 .
+
+    # - name: Start application-specific services using Docker Compose
+    #   run: docker compose up -d
+
+    # - name: Run tests
+    #   run: |
+    #     cd frontend-svelte
+    #     npm test
+
+    - name: Build the project
+      run: |
+        cd frontend-svelte
+        npm run build
