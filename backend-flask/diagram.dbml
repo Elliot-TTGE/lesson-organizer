@@ -2,10 +2,24 @@ Project lesson_organizer {
     database_type: 'SQLite'
 }
 
+enum student_status {
+    active,
+    inactive,
+    hold,
+    trial
+}
+
+enum user_role {
+    admin,
+    assisstant,
+    instructor
+}
+
 Table student {
     id integer [pk, not null, unique, increment]
     name varchar [not null]
     created_date datetime [not null]
+    status student_status
 }
 
 Table lesson {
@@ -33,7 +47,7 @@ Table lesson_student {
     student_id integer [not null, ref: > student.id]
 }
 
-Table english_level {
+Table level {
     id integer [pk, not null, unique, increment]
     student_id integer [not null, ref: > student.id]
     start_date datetime [not null]
@@ -49,24 +63,10 @@ Table stock_image {
 
 Table user {
     id integer [pk, not null, unique, increment]
-    first_name varchar
-    last_name varchar
-    created_date datetime
+    first_name varchar [not null]
+    last_name varchar [not null]
+    created_date datetime [not null]
     last_login datetime
-    password varchar
-    role_id integer [ref: > user_role.id]
+    password varchar [not null]
+    role user_role [not null]
 }
-
-Table user_role {
-    id integer [pk, not null, unique, increment]
-    role_name varchar
-    created_date datetime
-}
-
-// Relationships
-Ref: lesson.id > lesson_student.lesson_id
-Ref: student.id > lesson_student.student_id
-Ref: lesson.id > quiz.lesson_id
-Ref: student.id > quiz.student_id
-Ref: student.id > english_level.student_id
-Ref: user_role.id > user.role_id
