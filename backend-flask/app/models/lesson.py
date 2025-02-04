@@ -12,6 +12,5 @@ class Lesson(db.Model):
     created_date = db.Column(db.DateTime, nullable=False)
     notes = db.Column(db.String)
     
-    lesson_students = db.relationship('LessonStudent', back_populates='lesson', overlaps="students")
-    students = db.relationship('Student', secondary='lesson_student', back_populates='lessons', overlaps="lesson_students,lesson")
+    students = db.relationship('Student', secondary='lesson_student', back_populates='lessons')
     quizzes = db.relationship('Quiz', back_populates='lesson')

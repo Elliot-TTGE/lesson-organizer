@@ -11,7 +11,6 @@ class Student(db.Model):
     created_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.Enum('active', 'inactive', 'hold', 'trial', name='student_status'), nullable=False)
     
-    lesson_students = db.relationship('LessonStudent', back_populates='student', overlaps="lessons")
-    lessons = db.relationship('Lesson', secondary='lesson_student', back_populates='students', overlaps="lesson_students,student")
+    lessons = db.relationship('Lesson', secondary='lesson_student', back_populates='students')
     quizzes = db.relationship('Quiz', back_populates='student')
     levels = db.relationship('Level', back_populates='student')
