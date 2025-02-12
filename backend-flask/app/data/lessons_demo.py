@@ -2,7 +2,7 @@ from app.main import db
 from app.models.lesson import Lesson
 from datetime import datetime
 
-def load_demo_data():
+def load_demo_lesson():
     # Check if there are any existing lessons in the database
     if Lesson.query.count() > 0:
         print("Database already has data. Skipping demo data loading.")
@@ -12,20 +12,23 @@ def load_demo_data():
         {
             "datetime": datetime(2023, 10, 1, 10, 0),
             "plan": "Introduction to Python",
-            "concepts_taught": "Variables, Data Types",
-            "additional_notes": "Bring laptops",
+            "concepts": "Variables, Data Types",
+            "notes": "Bring laptops",
+            "created_date": datetime.now()
         },
         {
             "datetime": datetime(2023, 10, 2, 14, 0),
             "plan": "Advanced Python",
-            "concepts_taught": "Decorators, Generators",
-            "additional_notes": "Review previous lesson",
+            "concepts": "Decorators, Generators",
+            "notes": "Review previous lesson",
+            "created_date": datetime.now()
         },
         {
             "datetime": datetime(2023, 10, 3, 16, 0),
             "plan": "Data Science with Python",
-            "concepts_taught": "Pandas, NumPy",
-            "additional_notes": "Install required libraries",
+            "concepts": "Pandas, NumPy",
+            "notes": "Install required libraries",
+            "created_date": datetime.now()
         },
     ]
     
@@ -33,8 +36,9 @@ def load_demo_data():
         lesson = Lesson(
             datetime=lesson_data["datetime"],
             plan=lesson_data["plan"],
-            concepts_taught=lesson_data["concepts_taught"],
-            additional_notes=lesson_data["additional_notes"]
+            concepts=lesson_data["concepts"],
+            notes=lesson_data["notes"],
+            created_date=lesson_data["created_date"]
         )
         db.session.add(lesson)
     
