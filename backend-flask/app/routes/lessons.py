@@ -1,17 +1,20 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
 from app.db import db
 from app.models.lesson import Lesson
 from app.models.schema import LessonSchema
+from app.routes.utils import response_wrapper
 
 lessons_bp = Blueprint('lessons', __name__)
 
 @lessons_bp.route('/lessons', methods=['GET'])
+@response_wrapper
 def get_lessons():
     lessons = Lesson.query.all()
     lesson_schema = LessonSchema(many=True)
-    return jsonify(lesson_schema.dump(lessons))
+    return lesson_schema.dump(lessons)
 
 @lessons_bp.route('/lessons', methods=['POST'])
+@response_wrapper
 def create_lesson():
     data = request.get_json()
     lesson_schema = LessonSchema()
@@ -24,4 +27,4 @@ def create_lesson():
     )
     db.session.add(new_lesson)
     db.session.commit()
-    return jsonify(lesson_schema.dump(new_lesson)), 201
+    return lesson_schema.dump(new_lesson)
