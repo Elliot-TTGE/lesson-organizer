@@ -1,7 +1,9 @@
 from flask import jsonify
+from functools import wraps
 
 def response_wrapper(func):
-    def wrapper(*args, **kwargs):
+    @wraps(func)
+    def wrapped_function(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
             response = {
@@ -15,5 +17,5 @@ def response_wrapper(func):
                 "message": str(e)
             }
             return jsonify(response), 500
-    return wrapper
+    return wrapped_function
                 
