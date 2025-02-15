@@ -3,14 +3,15 @@ export interface Student {
   name: string;
   created_date: string;
   status: 'active' | 'inactive' | 'hold' | 'trial';
+  levels: Level[];
 }
 
 export interface Lesson {
   id: number;
   datetime: string;
   plan: string;
-  concepts_taught: string;
-  additional_notes: string;
+  concepts: string;
+  notes: string;
   students: Student[];
   created_date: string;
 }

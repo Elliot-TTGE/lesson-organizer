@@ -3,17 +3,13 @@
   import LessonCard from "$lib/components/LessonCard.svelte";
   import LessonCreateModal from "$lib/components/LessonCreateModal.svelte";
   import type { Lesson } from "../types";
+  import { fetchLessons } from "../controller"
 
   let lessons: Lesson[] = [];
 
   onMount(async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/lessons");
-      if (!response.ok) {
-        throw new Error("Failed to fetch lessons");
-      }
-      const data: Lesson[] = await response.json();
-      lessons = data;
+      lessons = await fetchLessons();
     } catch (error) {
       console.error("Error fetching lessons:", error);
     }
@@ -45,8 +41,8 @@
         })}
         student={lesson.students.map((student) => student.name).join(", ")}
         plan={lesson.plan}
-        concepts={lesson.concepts_taught}
-        notes={lesson.additional_notes}
+        concepts={lesson.concepts}
+        notes={lesson.notes}
       />
     </div>
   {/each}
