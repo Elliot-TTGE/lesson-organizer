@@ -39,7 +39,7 @@
           hour: "2-digit",
           minute: "2-digit",
         })}
-        student={lesson.students.map((student) => student.name).join(", ")}
+        student={lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ")}
         plan={lesson.plan}
         concepts={lesson.concepts}
         notes={lesson.notes}

@@ -9,7 +9,7 @@ export default {
   daisyui: {
     themes: [
       {
-        light: {
+        ttge: {
           primary: "#ab8cc0",
           secondary: "#483248",
           accent: "#80cac3",

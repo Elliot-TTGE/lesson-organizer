@@ -75,7 +75,7 @@ export async function fetchLessons(params: QueryParams = {}): Promise<Lesson[]> 
     return await apiRequest<Lesson[]>('/lessons', 'GET', null, {}, params);
 }
 
-export async function createLesson(lesson: Lesson): Promise<Lesson> {
+export async function createLesson(lesson: Partial<Lesson>): Promise<Lesson> {
     return await apiRequest<Lesson>('/lessons', 'POST', lesson);
 }
 
