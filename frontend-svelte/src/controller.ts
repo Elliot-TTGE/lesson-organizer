@@ -1,6 +1,6 @@
 import type { Student, Lesson, Quiz, Level, User } from './types/index.d.ts';
 
-const BASE_URL = 'http://192.168.68.64:4000';
+const BASE_URL = 'http://192.168.68.51:4000';
 
 interface RequestOptions {
     method: string;
@@ -25,7 +25,7 @@ function buildQueryString(params: QueryParams): string {
 }
 
 async function apiRequest<T>(endpoint: string, method: string = 'GET', body: any = null, headers: { [key: string]: string } = {}, params: QueryParams = {}): Promise<T> {
-    let url = `${BASE_URL}${endpoint}`;
+    let url = `${BASE_URL}/api${endpoint}`;
     if (Object.keys(params).length > 0) {
         const queryString = buildQueryString(params);
         url += `?${queryString}`;

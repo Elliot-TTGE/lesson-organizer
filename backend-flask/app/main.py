@@ -8,7 +8,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lesson_organizer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
-CORS(app)
+
+# Configure CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 app.register_blueprint(lessons_bp, url_prefix='/api')
 app.register_blueprint(students_bp, url_prefix='/api')
