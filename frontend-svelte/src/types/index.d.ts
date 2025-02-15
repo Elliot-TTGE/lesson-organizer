@@ -1,6 +1,7 @@
 export interface Student {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
   created_date: string;
   status: 'active' | 'inactive' | 'hold' | 'trial';
   levels: Level[];

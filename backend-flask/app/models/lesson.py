@@ -7,8 +7,8 @@ class Lesson(db.Model):
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     datetime = db.Column(db.DateTime, nullable=False)
-    plan = db.Column(db.String, nullable=False)
-    concepts = db.Column(db.String, nullable=False)
+    plan = db.Column(db.String)
+    concepts = db.Column(db.String)
     created_date = db.Column(db.DateTime, nullable=False)
     notes = db.Column(db.String)
     

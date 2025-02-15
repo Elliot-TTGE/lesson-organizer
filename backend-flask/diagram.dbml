@@ -17,7 +17,8 @@ enum user_role {
 
 Table student {
     id integer [pk, not null, unique, increment]
-    name varchar [not null]
+    first_name varchar [not null]
+    last_name varchar
     created_date datetime [not null]
     status student_status
 }
@@ -25,8 +26,8 @@ Table student {
 Table lesson {
     id integer [pk, not null, unique, increment]
     datetime datetime [not null]
-    plan varchar [not null]
-    concepts varchar [not null]
+    plan varchar
+    concepts varchar
     created_date datetime [not null]
     notes varchar
 }

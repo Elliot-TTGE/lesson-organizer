@@ -9,13 +9,13 @@ def load_demo_student():
         return
 
     demo_students = [
-        Student(name='John Doe', created_date=datetime.now(timezone.utc), status='active'),
-        Student(name='Jane Smith', created_date=datetime.now(timezone.utc), status='inactive'),
-        Student(name='Alice Johnson', created_date=datetime.now(timezone.utc), status='hold'),
-        Student(name='Bob Brown', created_date=datetime.now(timezone.utc), status='trial'),
-        Student(name="Alice Johnson", created_date=datetime.now(timezone.utc), status='active'),
-        Student(name="Bob Smith", created_date=datetime.now(timezone.utc), status='inactive'),
-        Student(name="Charlie Brown", created_date=datetime.now(timezone.utc), status='hold')
+        Student(first_name='John', last_name='Doe', created_date=datetime.now(timezone.utc), status='active'),
+        Student(first_name='Jane', last_name='Smith', created_date=datetime.now(timezone.utc), status='inactive'),
+        Student(first_name='Alice', last_name='Johnson', created_date=datetime.now(timezone.utc), status='hold'),
+        Student(first_name='Bob', last_name='Brown', created_date=datetime.now(timezone.utc), status='trial'),
+        Student(first_name='Alice', last_name='Johnson', created_date=datetime.now(timezone.utc), status='active'),
+        Student(first_name='Bob', last_name='Smith', created_date=datetime.now(timezone.utc), status='inactive'),
+        Student(first_name='Charlie', last_name='Brown', created_date=datetime.now(timezone.utc), status='hold')
     ]
     
     for student in demo_students:

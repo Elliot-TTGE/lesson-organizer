@@ -20,7 +20,7 @@ def load_demo_quiz():
         quiz_date = datetime.now() - timedelta(weeks=random.randint(3, 5))
         for _ in range(3):  # Create 3 quizzes per student
             demo_quizzes.append({
-                "name": f"Quiz for {student.name}",
+                "name": f"Quiz for {student.first_name + ' ' + student.last_name}",
                 "datetime": quiz_date,
                 "score": random.uniform(50, 100),
                 "notes": "Demo quiz notes",

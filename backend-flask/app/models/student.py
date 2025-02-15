@@ -7,7 +7,8 @@ class Student(db.Model):
     __tablename__ = 'student'
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String, nullable=False)
+    first_name = db.Column(db.String, nullable=False)
+    last_name = db.Column(db.String)
     created_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.Enum('active', 'inactive', 'hold', 'trial', name='student_status'), nullable=False)
     

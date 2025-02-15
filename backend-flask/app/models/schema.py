@@ -2,7 +2,8 @@ from marshmallow import Schema, fields
 
 class StudentSchema(Schema):
     id = fields.Int(dump_only=True)
-    name = fields.Str(required=True)
+    first_name = fields.Str(required=True)
+    last_name = fields.Str()
     created_date = fields.DateTime(required=True)
     status = fields.Str(required=True)
     lessons = fields.List(fields.Nested('LessonSchema', exclude=('students',)))
@@ -12,9 +13,9 @@ class StudentSchema(Schema):
 class LessonSchema(Schema):
     id = fields.Int(dump_only=True)
     datetime = fields.DateTime(required=True)
-    plan = fields.Str(required=True)
-    concepts = fields.Str(required=True)
-    created_date = fields.DateTime(required=True)
+    plan = fields.Str()
+    concepts = fields.Str()
+    created_date = fields.DateTime(dump_only=True)
     notes = fields.Str()
     students = fields.List(fields.Nested(StudentSchema, exclude=('lessons',)))
     quizzes = fields.List(fields.Nested('QuizSchema', exclude=('lesson',)))
@@ -28,14 +29,14 @@ class QuizSchema(Schema):
     lesson_id = fields.Int(required=True)
     student_id = fields.Int(required=True)
     lesson = fields.Nested(LessonSchema, only=('id', 'datetime', 'plan', 'concepts'))
-    student = fields.Nested(StudentSchema, only=('id', 'name', 'status'))
+    student = fields.Nested(StudentSchema, only=('id', 'first_name', 'last_name', 'status'))
 
 class LevelSchema(Schema):
     id = fields.Int(dump_only=True)
     student_id = fields.Int(required=True)
     start_date = fields.DateTime(required=True)
     level_category = fields.Str(required=True)
-    student = fields.Nested(StudentSchema, only=('id', 'name', 'status'))
+    student = fields.Nested(StudentSchema, only=('id', 'first_name', 'last_name', 'status'))
 
 class UserSchema(Schema):
     id = fields.Int(dump_only=True)
