@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createLesson } from "../../controller";
+  import { createLesson } from "../../api/lesson";
   import type { Lesson } from "../../types";
 
   export let date = "";

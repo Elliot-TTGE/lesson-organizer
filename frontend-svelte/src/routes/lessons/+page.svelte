@@ -1,5 +1,5 @@
 <script lang='ts'>
-    import { fetchStudents } from "../../controller";
+    import { fetchStudents } from "../../api/student";
     import { onMount } from "svelte";
     import type { Student } from "../../types";
 
@@ -11,5 +11,5 @@
 
 </script>
 {#each students as student}
-    <h1>{student.name} {student.id}</h1>
+    <h1>{student.first_name + ' ' + student.last_name} {student.id}</h1>
 {/each}
