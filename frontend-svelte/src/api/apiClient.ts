@@ -1,6 +1,4 @@
-import type { Student, Lesson, Quiz, Level, User } from '../types/index';
-
-const BASE_URL = 'http://192.168.68.51:4000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface QueryParams {
     [key: string]: string | number | boolean;
@@ -58,40 +56,4 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
     }
 
     throw new Error('Unexpected response format');
-}
-
-// Student
-
-// Lesson
-
-
-
-// Quiz
-
-export async function fetchQuizzes(params: QueryParams = {}): Promise<Quiz[]> {
-    return await apiRequest<Quiz[]>('/quizzes', 'GET', null, {}, params);
-}
-
-export async function createQuiz(quiz: Quiz): Promise<Quiz> {
-    return await apiRequest<Quiz>('/quizzes', 'POST', quiz);
-}
-
-// Level
-
-export async function fetchLevels(params: QueryParams = {}): Promise<Level[]> {
-    return await apiRequest<Level[]>('/levels', 'GET', null, {}, params);
-}
-
-export async function createLevel(level: Level): Promise<Level> {
-    return await apiRequest<Level>('/levels', 'POST', level);
-}
-
-// User
-
-export async function fetchUsers(params: QueryParams = {}): Promise<User[]> {
-    return await apiRequest<User[]>('/students', 'GET', null, {}, params);
-}
-
-export async function createUser(user: User): Promise<User> {
-    return await apiRequest<User>('/users', 'POST', user);
 }
