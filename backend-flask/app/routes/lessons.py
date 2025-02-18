@@ -3,21 +3,14 @@ from app.db import db
 from app.models.lesson import Lesson
 from app.models.schema import LessonSchema
 from app.routes.utils import response_wrapper
-from datetime import datetime
+from datetime import datetime, timezone
 
 lessons_bp = Blueprint('lessons', __name__)
 
 @lessons_bp.route('/lessons', methods=['GET'])
 @response_wrapper
 def get_lessons():
-    query_params = request.args.to_dict()
-    query = Lesson.query
-
-    for key, value in query_params.items():
-        if hasattr(Lesson, key):
-            query = query.filter(getattr(Lesson, key) == value)
-
-    lessons = query.all()
+    lessons = Lesson.query.all()
     lesson_schema = LessonSchema(many=True)
     return lesson_schema.dump(lessons)
 
@@ -31,7 +24,7 @@ def create_lesson():
         datetime=lesson['datetime'],
         plan=lesson['plan'],
         concepts=lesson['concepts'],
-        created_date=datetime.now(),
+        created_date=datetime.now(timezone.utc),
         notes=lesson['notes']
     )
     db.session.add(new_lesson)

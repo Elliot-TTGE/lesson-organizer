@@ -31,18 +31,7 @@
   {#each lessons as lesson}
     <div class="flex flex-col space-y-4">
       <LessonCard
-        weekday={new Date(lesson.datetime).toLocaleDateString("en-US", {
-          weekday: "long",
-        })}
-        date={new Date(lesson.datetime).toLocaleDateString()}
-        time={new Date(lesson.datetime).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-        student={lesson.students.map((student) => student.name).join(", ")}
-        plan={lesson.plan}
-        concepts={lesson.concepts}
-        notes={lesson.notes}
+        lesson={lesson}
       />
     </div>
   {/each}

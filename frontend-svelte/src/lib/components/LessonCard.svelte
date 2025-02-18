@@ -1,15 +1,21 @@
 <script lang="ts">
-  interface Props {
-    weekday: string;
-    date: string;
-    time: string;
-    student: string;
-    plan: string;
-    concepts: string;
-    notes: string;
-  }
+  import type { Lesson } from "../../types";
 
-  let { weekday, date, time, student, plan, concepts, notes }: Props = $props();
+  let { lesson }: { lesson: Lesson } = $props();
+
+  let weekday: string = new Date(lesson.datetime).toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+  let date: string = new Date(lesson.datetime).toLocaleDateString("en-US");
+  let time: string = new Date(lesson.datetime).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
+  let plan: string = lesson.plan;
+  let concepts: string = lesson.concepts;
+  let notes: string = lesson.notes;
+
 </script>
 
 <div class="m-4 w-64 rounded bg-neutral">

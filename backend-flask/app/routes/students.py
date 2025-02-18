@@ -10,14 +10,7 @@ students_bp = Blueprint('students', __name__)
 @students_bp.route('/students', methods=['GET'])
 @response_wrapper
 def get_students():
-    query_params = request.args.to_dict()
-    query = Student.query
-
-    for key, value in query_params.items():
-        if hasattr(Student, key):
-            query = query.filter(getattr(Student, key) == value)
-
-    students = query.all()
+    students = Student.query.all()
     student_schema = StudentSchema(many=True)
     return student_schema.dump(students)
 
