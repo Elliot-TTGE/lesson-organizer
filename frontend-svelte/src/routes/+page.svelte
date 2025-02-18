@@ -3,7 +3,7 @@
   import LessonCard from "$lib/components/LessonCard.svelte";
   import LessonCreateModal from "$lib/components/LessonCreateModal.svelte";
   import type { Lesson } from "../types";
-  import { fetchLessons } from "../controller"
+  import { fetchLessons } from "../api/lesson"
 
   let lessons: Lesson[] = [];
 

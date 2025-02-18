@@ -1,21 +1,22 @@
-import type { Student, Lesson, Quiz, Level, User } from './types/index.d.ts';
+import type { Student, Lesson, Quiz, Level, User } from '../types/index';
 
 const BASE_URL = 'http://192.168.68.51:4000';
 
-interface RequestOptions {
-    method: string;
-    headers: { [key: string]: string };
-    body?: string;
-}
-
-interface QueryParams {
+export interface QueryParams {
     [key: string]: string | number | boolean;
-}
+  }
+  
 
 interface JSendResponse<T> {
     status: 'success' | 'fail' | 'error';
     data?: T;
     message?: string;
+}
+
+interface RequestOptions {
+    method: string;
+    headers: { [key: string]: string };
+    body?: string;
 }
 
 function buildQueryString(params: QueryParams): string {
@@ -24,7 +25,7 @@ function buildQueryString(params: QueryParams): string {
         .join('&');
 }
 
-async function apiRequest<T>(endpoint: string, method: string = 'GET', body: any = null, headers: { [key: string]: string } = {}, params: QueryParams = {}): Promise<T> {
+export async function apiRequest<T>(endpoint: string, method: string = 'GET', body: any = null, headers: { [key: string]: string } = {}, params: QueryParams = {}): Promise<T> {
     let url = `${BASE_URL}/api${endpoint}`;
     if (Object.keys(params).length > 0) {
         const queryString = buildQueryString(params);
@@ -61,23 +62,9 @@ async function apiRequest<T>(endpoint: string, method: string = 'GET', body: any
 
 // Student
 
-export async function fetchStudents(params: QueryParams = {}): Promise<Student[]> {
-    return await apiRequest<Student[]>('/students', 'GET', null, {}, params);
-}
-
-export async function createStudent(student: Student): Promise<Student> {
-    return await apiRequest<Student>('/students', 'POST', student);
-}
-
 // Lesson
 
-export async function fetchLessons(params: QueryParams = {}): Promise<Lesson[]> {
-    return await apiRequest<Lesson[]>('/lessons', 'GET', null, {}, params);
-}
 
-export async function createLesson(lesson: Partial<Lesson>): Promise<Lesson> {
-    return await apiRequest<Lesson>('/lessons', 'POST', lesson);
-}
 
 // Quiz
 
