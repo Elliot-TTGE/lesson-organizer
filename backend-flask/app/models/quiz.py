@@ -8,8 +8,8 @@ class Quiz(db.Model):
     datetime = db.Column(db.DateTime, nullable=False)
     score = db.Column(db.Float, nullable=False)
     notes = db.Column(db.String)
-    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'))
     
     lesson = db.relationship('Lesson', back_populates='quizzes')
     student = db.relationship('Student', back_populates='quizzes')
