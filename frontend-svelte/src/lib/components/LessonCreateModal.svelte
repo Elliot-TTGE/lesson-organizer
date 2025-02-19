@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createLesson } from "../../api/lesson";
   import type { Lesson } from "../../types";
+  import { lessonState } from "$lib/states/lessonState.svelte";
 
   export let date = "";
   export let time = "";
@@ -31,9 +32,8 @@
 
     try {
       const createdLesson = await createLesson(newLesson);
-      console.log("Lesson created:", createdLesson);
+      lessonState.lessons.push(createdLesson);
       lessonCreateModal.close();
-      location.reload()
     } catch (error) {
       console.error("Error creating lesson:", error);
     }
@@ -43,6 +43,11 @@
 <button
   class="btn btn-secondary"
   on:click={() => {
+    date = "";
+    time = "";
+    plan = "";
+    concepts = "";
+    notes = "";
     lessonCreateModal.showModal();
   }}
 >
