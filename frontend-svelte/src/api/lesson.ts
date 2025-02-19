@@ -9,3 +9,7 @@ export async function fetchLessons(params: QueryParams = {}): Promise<Lesson[]> 
 export async function createLesson(lesson: Partial<Lesson>): Promise<Lesson> {
     return await apiRequest<Lesson>('/lessons', 'POST', lesson);
 }
+
+export async function deleteLesson(id: number): Promise<void> {
+    await apiRequest<void>(`/lessons/${id}`, 'DELETE');
+}

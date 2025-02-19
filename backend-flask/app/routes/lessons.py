@@ -42,8 +42,9 @@ def update_lesson(id):
     return lesson_schema.dump(updated_lesson)
 
 @lessons_bp.route('/lessons/<int:id>', methods=['DELETE'])
+@response_wrapper
 def delete_lesson(id):
     lesson = Lesson.query.get_or_404(id)
     db.session.delete(lesson)
     db.session.commit()
-    return jsonify({"message": "Lesson deleted successfully"}), 204
+    return '', 204

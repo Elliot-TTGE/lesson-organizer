@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
+  import { deleteLesson } from "../../api/lesson";
+  import { lessonState } from "$lib/states/lessonState.svelte";
 
   let { lesson }: { lesson: Lesson } = $props();
 
@@ -16,14 +18,27 @@
   let concepts: string = lesson.concepts;
   let notes: string = lesson.notes;
 
+  async function handleDelete() {
+    if (confirm("Are you sure you want to delete this lesson?")) {
+      await deleteLesson(lesson.id);
+      lessonState.lessons = lessonState.lessons.filter(l => l.id !== lesson.id);
+    }
+  }
 </script>
 
 <div class="m-4 w-64 rounded bg-neutral">
+  <div class="flex justify-end space-x-2 mb-2">
+    <button onclick={handleDelete} class="btn btn-ghost btn-sm text-error items-center p-1">
+      <span class="mr-2">Delete</span>
+    </button>
+  </div>
   <div class="flex flex-col space-y-2 p-2">
     <p>{weekday}</p>
     <p>{date}:</p>
     <p>{time}:</p>
     <p>{student}</p>
+  </div>
+  <div class="flex flex-col space-y-2 p-2">
     <div>
       <p>Today's plan:</p>
       <p class="min-h-24">

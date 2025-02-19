@@ -4,12 +4,11 @@
   import LessonCreateModal from "$lib/components/LessonCreateModal.svelte";
   import type { Lesson } from "../types";
   import { fetchLessons } from "../api/lesson"
-
-  let lessons: Lesson[] = [];
+import { lessonState } from "$lib/states/lessonState.svelte";
 
   onMount(async () => {
     try {
-      lessons = await fetchLessons();
+      lessonState.lessons = await fetchLessons();
     } catch (error) {
       console.error("Error fetching lessons:", error);
     }
@@ -28,7 +27,7 @@
   </div>
 </div>
 <div class="flex flex-row">
-  {#each lessons as lesson}
+  {#each lessonState.lessons as lesson (lesson.id)}
     <div class="flex flex-col space-y-4">
       <LessonCard
         lesson={lesson}
