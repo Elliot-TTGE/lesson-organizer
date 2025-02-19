@@ -46,6 +46,10 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    if (response.status === 204) {
+        return {} as T;
+    }
     
     const jsonResponse: JSendResponse<T> = await response.json();
 
