@@ -25,6 +25,8 @@ services:
     command: npm run dev
     networks:
       - app-network
+    depends_on:
+      - backend
 
 networks:
   app-network:
