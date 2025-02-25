@@ -30,7 +30,7 @@ import { lessonState } from "$lib/states/lessonState.svelte";
   {#each lessonState.lessons as lesson (lesson.id)}
     <div class="flex flex-col space-y-4">
       <LessonCard
-        lesson={lesson}
+        bind:lesson={lesson}
       />
     </div>
   {/each}
