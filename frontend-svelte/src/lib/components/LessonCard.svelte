@@ -2,7 +2,6 @@
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson } from "../../api/lesson";
   import { lessonState } from "$lib/states/lessonState.svelte";
-  import { onMount } from 'svelte';
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -56,10 +55,13 @@
   }
 
   function initializeDateTimeInput(datetime: string) {
+    const localDate = new Date(datetime);
+    const offset = localDate.getTimezoneOffset() * 60000; // offset in milliseconds
+    const localISOTime = new Date(localDate.getTime() - offset).toISOString().slice(0, 16);
     return {
-      dateInput: new Date(datetime).toISOString().split('T')[0],
-      timeInput: new Date(datetime).toISOString().split('T')[1].slice(0,5),
-    }
+      dateInput: localISOTime.split('T')[0],
+      timeInput: localISOTime.split('T')[1],
+    };
   }
 </script>
 
