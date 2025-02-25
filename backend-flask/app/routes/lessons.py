@@ -5,14 +5,28 @@ from app.models.schema import LessonSchema
 from app.models.student import Student
 from app.models.quiz import Quiz
 from app.routes.utils import response_wrapper
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 lessons_bp = Blueprint('lessons', __name__)
 
 @lessons_bp.route('/lessons', methods=['GET'])
 @response_wrapper
 def get_lessons():
-    lessons = Lesson.query.all()
+    initial_date_str = request.args.get('initial_date')
+    range_length = request.args.get('range_length', type=int, default=7)
+
+    if initial_date_str:
+        print(initial_date_str, flush=True)
+        try:
+            initial_date = datetime.fromisoformat(initial_date_str)
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
+    else:
+        initial_date = datetime.now(timezone.utc)
+
+    end_date = initial_date + timedelta(days=range_length)
+
+    lessons = Lesson.query.filter(Lesson.datetime >= initial_date, Lesson.datetime < end_date).all()
     lesson_schema = LessonSchema(many=True)
     return lesson_schema.dump(lessons)
 
