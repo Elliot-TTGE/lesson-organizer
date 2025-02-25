@@ -13,3 +13,7 @@ export async function createLesson(lesson: Partial<Lesson>): Promise<Lesson> {
 export async function deleteLesson(id: number): Promise<void> {
     await apiRequest<void>(`/lessons/${id}`, 'DELETE');
 }
+
+export async function updateLesson(lesson: Lesson): Promise<Lesson> {
+    return await apiRequest<Lesson>(`/lessons/${lesson.id}`, 'PUT', lesson);
+}

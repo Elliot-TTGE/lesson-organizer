@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, post_dump
+from marshmallow import Schema, fields, post_dump, EXCLUDE
 
 class StudentSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -9,6 +9,9 @@ class StudentSchema(Schema):
     lessons = fields.List(fields.Nested('LessonSchema', exclude=('students',)))
     quizzes = fields.List(fields.Nested('QuizSchema', exclude=('student',)))
     levels = fields.List(fields.Nested('LevelSchema', exclude=('student',)))
+    
+    class Meta:
+        unknown = EXCLUDE
 
     @post_dump
     def add_utc_suffix(self, data, **kwargs):
@@ -23,8 +26,11 @@ class LessonSchema(Schema):
     concepts = fields.Str()
     created_date = fields.DateTime(dump_only=True)
     notes = fields.Str()
-    students = fields.List(fields.Nested(StudentSchema, exclude=('lessons',)))
-    quizzes = fields.List(fields.Nested('QuizSchema', exclude=('lesson',)))
+    students = fields.List(fields.Nested('StudentSchema', exclude=('lessons',)), dump_only=True)
+    quizzes = fields.List(fields.Nested('QuizSchema', exclude=('lesson',)), dump_only=True)
+    
+    class Meta:
+        unknown = EXCLUDE
     
     @post_dump
     def add_utc_suffix(self, data, **kwargs):
@@ -45,6 +51,9 @@ class QuizSchema(Schema):
     lesson = fields.Nested(LessonSchema, only=('id', 'datetime', 'plan', 'concepts'))
     student = fields.Nested(StudentSchema, only=('id', 'first_name', 'last_name', 'status'))
 
+    class Meta:
+        unknown = EXCLUDE
+
     @post_dump
     def add_utc_suffix(self, data, **kwargs):
         if 'datetime' in data and data['datetime']:
@@ -57,6 +66,9 @@ class LevelSchema(Schema):
     start_date = fields.DateTime(required=True)
     level_category = fields.Str(required=True)
     student = fields.Nested(StudentSchema, only=('id', 'first_name', 'last_name', 'status'))
+    
+    class Meta:
+        unknown = EXCLUDE
     
     @post_dump
     def add_utc_suffix(self, data, **kwargs):
@@ -72,6 +84,9 @@ class UserSchema(Schema):
     last_login = fields.DateTime()
     password = fields.Str(required=True)
     role = fields.Str(required=True)
+    
+    class Meta:
+        unknown = EXCLUDE
 
     @post_dump
     def add_utc_suffix(self, data, **kwargs):

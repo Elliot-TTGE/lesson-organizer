@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from app.db import db
 from app.models.lesson import Lesson
 from app.models.schema import LessonSchema
+from app.models.student import Student
+from app.models.quiz import Quiz
 from app.routes.utils import response_wrapper
 from datetime import datetime, timezone
 
@@ -37,9 +39,24 @@ def update_lesson(id):
     lesson = Lesson.query.get_or_404(id)
     data = request.get_json()
     lesson_schema = LessonSchema()
-    updated_lesson = lesson_schema.load(data, instance=lesson)
+    updated_data = lesson_schema.load(data, partial=True)
+    
+    if 'datetime' in updated_data:
+        lesson.datetime = updated_data['datetime']
+    if 'plan' in updated_data:
+        lesson.plan = updated_data['plan']
+    if 'concepts' in updated_data:
+        lesson.concepts = updated_data['concepts']
+    if 'notes' in updated_data:
+        lesson.notes = updated_data['notes']
+    
+    if 'students' in data:
+        lesson.students = [Student.query.get(student['id']) for student in data['students']]
+    if 'quizzes' in data:
+        lesson.quizzes = [Quiz.query.get(quiz['id']) for quiz in data['quizzes']]
+    
     db.session.commit()
-    return lesson_schema.dump(updated_lesson)
+    return lesson_schema.dump(lesson), 200
 
 @lessons_bp.route('/lessons/<int:id>', methods=['DELETE'])
 @response_wrapper
