@@ -5,8 +5,9 @@
   import SelectWeek from "$lib/components/SelectWeek.svelte";
   import { fetchLessons } from "../api/lesson"
   import { lessonState } from "$lib/states/lessonState.svelte";
+  import { getStartOfWeekInUTC } from "$lib/utils/dateUtils";
 
-  let startDate: Date = $state(new Date())
+  let startDate: Date = $state(getStartOfWeekInUTC(new Date()))
 
   onMount(async () => {
     getLessons();
