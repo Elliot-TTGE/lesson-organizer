@@ -32,7 +32,7 @@
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
-    lesson.datetime = datetime;
+    lesson = updatedLesson;
     isEditing = false;
   }
 
