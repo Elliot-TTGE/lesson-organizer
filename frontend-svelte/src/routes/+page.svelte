@@ -17,11 +17,6 @@
   })
 
   async function getLessons(date: Date = startDate) {
-    // Adjust to get week day belongs to
-    const day = date.getDay();
-    const diff = date.getDate() - day;
-    date = new Date(date.setDate(diff));
-
     try {
       let newLessons = await fetchLessons({"initial_date": date.toISOString()});
       if (JSON.stringify(lessonState.lessons) !== JSON.stringify(newLessons)) {
