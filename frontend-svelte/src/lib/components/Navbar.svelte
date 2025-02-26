@@ -3,5 +3,4 @@
 >
   <a class="btn btn-primary text-xl" href="/">Lesson Calendar</a>
   <a class="btn btn-primary text-xl" href="/lessons">Student View</a>
-  <a class="btn btn-primary text-xl" href="/hello">Hello</a>
 </div>

@@ -2,35 +2,47 @@
   import { onMount } from "svelte";
   import LessonCard from "$lib/components/LessonCard.svelte";
   import LessonCreateModal from "$lib/components/LessonCreateModal.svelte";
-  import type { Lesson } from "../types";
+  import SelectWeek from "$lib/components/SelectWeek.svelte";
   import { fetchLessons } from "../api/lesson"
-import { lessonState } from "$lib/states/lessonState.svelte";
+  import { lessonState } from "$lib/states/lessonState.svelte";
+
+  let startDate: Date = $state(new Date())
 
   onMount(async () => {
+    getLessons();
+  });
+
+  $effect(() => {
+    getLessons();
+  })
+
+  async function getLessons(date: Date = startDate) {
     try {
-      lessonState.lessons = await fetchLessons();
+      let newLessons = await fetchLessons({"initial_date": date.toISOString()});
+      if (JSON.stringify(lessonState.lessons) !== JSON.stringify(newLessons)) {
+        lessonState.lessons = newLessons;
+      }
     } catch (error) {
       console.error("Error fetching lessons:", error);
     }
-  });
+  }
 </script>
 
 <div class="bg navbar shadow">
   <div
     class="flex w-full border-4 border-secondary bg-primary px-16 py-4 shadow ring-accent"
   >
-    <p>Week Of:</p>
-    <div class="ml-4">01/13/24</div>
+    <SelectWeek bind:startDate={startDate} />
     <div class="ml-auto">
       <LessonCreateModal>Create Lesson</LessonCreateModal>
     </div>
   </div>
 </div>
 <div class="flex flex-row">
-  {#each lessonState.lessons as lesson (lesson.id)}
+  {#each lessonState.lessons as lesson, i (lesson.id)}
     <div class="flex flex-col space-y-4">
       <LessonCard
-        bind:lesson={lesson}
+        bind:lesson={lessonState.lessons[i]}
       />
     </div>
   {/each}
