@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson } from "../../api/lesson";
-  import { lessonState } from "$lib/states/lessonState.svelte";
+  import { lessonState, updateLessonInState } from "$lib/states/lessonState.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -32,7 +32,7 @@
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
-    lesson = updatedLesson;
+    updateLessonInState(updatedLesson)
     isEditing = false;
   }
 

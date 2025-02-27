@@ -5,9 +5,7 @@
   import SelectWeek from "$lib/components/SelectWeek.svelte";
   import { fetchLessons } from "../api/lesson"
   import { lessonState } from "$lib/states/lessonState.svelte";
-  import { getStartOfWeekInUTC } from "$lib/utils/dateUtils";
-
-  let startDate: Date = $state(getStartOfWeekInUTC(new Date()))
+  import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
 
   onMount(async () => {
     getLessons();
@@ -17,7 +15,7 @@
     getLessons();
   })
 
-  async function getLessons(date: Date = startDate) {
+  async function getLessons(date: Date = lessonWeekStartDate.current) {
     try {
       let newLessons = await fetchLessons({"initial_date": date.toISOString()});
       if (JSON.stringify(lessonState.lessons) !== JSON.stringify(newLessons)) {
@@ -33,7 +31,7 @@
   <div
     class="flex w-full border-4 border-secondary bg-primary px-16 py-4 shadow ring-accent"
   >
-    <SelectWeek bind:startDate={startDate} />
+    <SelectWeek bind:startDate={lessonWeekStartDate.current} />
     <div class="ml-auto">
       <LessonCreateModal>Create Lesson</LessonCreateModal>
     </div>
