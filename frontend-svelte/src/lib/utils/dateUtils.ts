@@ -11,3 +11,11 @@ export function getStartOfWeekInUTC(date: Date): Date {
     
     return utcSunday;
 }
+
+export function isWithinOneWeek(date1: Date, date2: Date): boolean {
+    const startOfWeek1 = getStartOfWeekInUTC(date1);
+    const startOfWeek2 = getStartOfWeekInUTC(date2);
+    
+    const diffInDays = Math.abs((startOfWeek2.getTime() - startOfWeek1.getTime()) / (1000 * 60 * 60 * 24));
+    return diffInDays < 7;
+}

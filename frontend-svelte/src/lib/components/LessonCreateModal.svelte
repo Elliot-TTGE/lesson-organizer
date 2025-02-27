@@ -1,7 +1,8 @@
 <script lang="ts">
   import { createLesson } from "../../api/lesson";
   import type { Lesson } from "../../types";
-  import { lessonState } from "$lib/states/lessonState.svelte";
+  import { lessonState, addLessonToState } from "$lib/states/lessonState.svelte";
+  import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
 
   export let date = "";
   export let time = "";
@@ -32,7 +33,7 @@
 
     try {
       const createdLesson = await createLesson(newLesson);
-      lessonState.lessons.push(createdLesson);
+      addLessonToState(createdLesson);
       lessonCreateModal.close();
     } catch (error) {
       console.error("Error creating lesson:", error);
