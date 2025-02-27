@@ -29,7 +29,7 @@
 
 <div class="bg navbar shadow">
   <div
-    class="flex w-full border-4 border-secondary bg-primary px-16 py-4 shadow ring-accent"
+    class="flex w-full border-4 border-secondary bg-primary px-4 py-4 shadow ring-accent"
   >
     <SelectWeek bind:startDate={lessonWeekStartDate.current} />
     <div class="ml-auto">
