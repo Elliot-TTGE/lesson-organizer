@@ -23,7 +23,7 @@
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
       await deleteLesson(lesson.id);
-      lessonState.lessons = lessonState.lessons.filter(l => l.id !== lesson.id);
+      lessonState.current = lessonState.current.filter(l => l.id !== lesson.id);
       isEditing = false;
     }
   }

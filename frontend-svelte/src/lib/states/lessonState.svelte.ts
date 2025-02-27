@@ -3,23 +3,23 @@ import { isWithinOneWeek } from "$lib/utils/dateUtils";
 import { lessonWeekStartDate } from "./lessonWeekStartDate.svelte";
 
 interface LessonState {
-  lessons: Lesson[];
+  current: Lesson[];
 }
 
-export const lessonState = $state<LessonState>({ lessons: [] });
+export const lessonState = $state<LessonState>({current: [] });
 
 export function addLessonToState(newLesson: Lesson){
   if (isWithinOneWeek(lessonWeekStartDate.current, new Date(newLesson.datetime))) {
-    lessonState.lessons.push(newLesson);
+    lessonState.current.push(newLesson);
   }
 }
 
 export function updateLessonInState(updatedLesson: Lesson) {
   if (isWithinOneWeek(lessonWeekStartDate.current, new Date(updatedLesson.datetime))) {
-    lessonState.lessons = lessonState.lessons.map(lesson =>
+    lessonState.current = lessonState.current.map(lesson =>
       lesson.id === updatedLesson.id ? updatedLesson : lesson
     );
   } else {
-    lessonState.lessons = lessonState.lessons.filter(lesson => lesson.id !== updatedLesson.id);
+    lessonState.current = lessonState.current.filter(lesson => lesson.id !== updatedLesson.id);
   }
 }
