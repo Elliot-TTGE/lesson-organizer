@@ -57,77 +57,87 @@
 <dialog bind:this={lessonCreateModal} class="modal">
   <div class="modal-box bg-base-100 w-full max-w-4xl">
     <h3 class="text-lg font-bold text-base-content">Create a New Lesson</h3>
-    <div class="py-4 flex flex-row space-x-4">
-      <div class="flex flex-col space-y-4 w-1/2">
-        <label class="label" for="date">
-          <span class="label-text">Date</span>
-        </label>
-        <input
-          id="date"
-          type="date"
-          bind:value={date}
-          class="input input-bordered w-full bg-secondary"
-          required
-        />
-        {#if dateWarning}
-          <p class="text-error">Date is required.</p>
-        {/if}
-
-        <label class="label" for="plan">
-          <span class="label-text">Plan</span>
-        </label>
-        <textarea
-          id="plan"
-          bind:value={plan}
-          class="textarea textarea-bordered w-full bg-secondary"
-          rows="3"
-        ></textarea>
-
-        <label class="label" for="notes">
-          <span class="label-text">Notes</span>
-        </label>
-        <textarea
-          id="notes"
-          bind:value={notes}
-          class="textarea textarea-bordered w-full bg-secondary"
-          rows="3"
-        ></textarea>
+    <div class="py-4 flex flex-col space-y-4">
+      <div class="flex flex-row space-x-4 w-full">
+        <div class="flex flex-col space-y-4 w-1/2">
+          <label class="label" for="date">
+            <span class="label-text">Date</span>
+          </label>
+          <input
+            id="date"
+            type="date"
+            bind:value={date}
+            class="input input-bordered w-full bg-secondary"
+            required
+          />
+          {#if dateWarning}
+            <p class="text-error">Date is required.</p>
+          {/if}
+        </div>
+        <div class="flex flex-col space-y-4 w-1/2">
+          <label class="label" for="time">
+            <span class="label-text">Time</span>
+          </label>
+          <input
+            id="time"
+            type="time"
+            bind:value={time}
+            class="input input-bordered w-full bg-secondary"
+            required
+          />
+          {#if timeWarning}
+            <p class="text-error">Time is required.</p>
+          {/if}
+        </div>
       </div>
-      <div class="flex flex-col space-y-4 w-1/2">
-        <label class="label" for="time">
-          <span class="label-text">Time</span>
-        </label>
-        <input
-          id="time"
-          type="time"
-          bind:value={time}
-          class="input input-bordered w-full bg-secondary"
-          required
-        />
-        {#if timeWarning}
-          <p class="text-error">Time is required.</p>
-        {/if}
-
-        <label class="label" for="concepts">
-          <span class="label-text">Concepts</span>
-        </label>
-        <textarea
-          id="concepts"
-          bind:value={concepts}
-          class="textarea textarea-bordered w-full bg-secondary"
-          rows="3"
-        ></textarea>
-
-        <!-- <label class="label" for="students">
-          <span class="label-text">Students (comma-separated)</span>
-        </label>
-        <textarea
-          id="students"
-          type="text"
-          bind:value={students}
-          class="textarea textarea-bordered w-full bg-secondary"
-          rows="3"
-        ></textarea> -->
+      <div class="flex flex-row space-x-4 w-full">
+        <div class="flex flex-col space-y-4 w-1/2">
+          <label class="label" for="plan">
+            <span class="label-text">Plan</span>
+          </label>
+          <textarea
+            id="plan"
+            bind:value={plan}
+            class="textarea textarea-bordered w-full bg-secondary"
+            rows="3"
+          ></textarea>
+        </div>
+        <div class="flex flex-col space-y-4 w-1/2">
+          <label class="label" for="concepts">
+            <span class="label-text">Concepts</span>
+          </label>
+          <textarea
+            id="concepts"
+            bind:value={concepts}
+            class="textarea textarea-bordered w-full bg-secondary"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+      <div class="flex flex-row space-x-4 w-full">
+        <div class="flex flex-col space-y-4 w-1/2">
+          <label class="label" for="notes">
+            <span class="label-text">Notes</span>
+          </label>
+          <textarea
+            id="notes"
+            bind:value={notes}
+            class="textarea textarea-bordered w-full bg-secondary"
+            rows="3"
+          ></textarea>
+        </div>
+        <div class="flex flex-col space-y-4 w-1/2">
+          <!-- <label class="label" for="students">
+            <span class="label-text">Students (comma-separated)</span>
+          </label>
+          <textarea
+            id="students"
+            type="text"
+            bind:value={students}
+            class="textarea textarea-bordered w-full bg-secondary"
+            rows="3"
+          ></textarea> -->
+        </div>
       </div>
     </div>
     <div class="modal-action">
