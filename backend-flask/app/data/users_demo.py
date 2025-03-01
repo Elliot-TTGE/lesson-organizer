@@ -9,6 +9,7 @@ def load_demo_user():
             last_name='User',
             created_date=datetime.now(timezone.utc),
             last_login=datetime.now(timezone.utc),
+            email='admin123@test',
             password='admin123',
             role='admin'
         ),
@@ -17,6 +18,7 @@ def load_demo_user():
             last_name='User',
             created_date=datetime.now(timezone.utc),
             last_login=datetime.now(timezone.utc),
+            email='assistant123@test',
             password='assistant123',
             role='assistant'
         ),
@@ -25,6 +27,7 @@ def load_demo_user():
             last_name='User',
             created_date=datetime.now(timezone.utc),
             last_login=datetime.now(timezone.utc),
+            email='instructor123@test',
             password='instructor123',
             role='instructor'
         )

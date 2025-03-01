@@ -68,6 +68,7 @@ Table user {
     last_name varchar [not null]
     created_date datetime [not null]
     last_login datetime
+    email varchar [not null]
     password varchar [not null]
     role user_role [not null]
 }
