@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson } from "../../api/lesson";
-  import { lessonState, updateLessonInState } from "$lib/states/lessonState.svelte";
+  import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -23,7 +23,7 @@
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
       await deleteLesson(lesson.id);
-      lessonState.current = lessonState.current.filter(l => l.id !== lesson.id);
+      removeLessonFromState(lesson.id);
       isEditing = false;
     }
   }

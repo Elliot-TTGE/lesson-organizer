@@ -3,33 +3,21 @@
   import LessonCard from "$lib/components/LessonCard.svelte";
   import LessonCreateModal from "$lib/components/LessonCreateModal.svelte";
   import SelectWeek from "$lib/components/SelectWeek.svelte";
-  import { fetchLessons } from "../api/lesson"
-  import { lessonState } from "$lib/states/lessonState.svelte";
+  import { fetchCurrentWeekLessons, lessonState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
 
   onMount(async () => {
-    getLessons();
+    await fetchCurrentWeekLessons();
   });
 
   $effect(() => {
-    getLessons();
-  })
-
-  async function getLessons(date: Date = lessonWeekStartDate.current) {
-    try {
-      let newLessons = await fetchLessons({"initial_date": date.toISOString()});
-      if (JSON.stringify(lessonState.current) !== JSON.stringify(newLessons)) {
-        lessonState.current = newLessons;
-      }
-    } catch (error) {
-      console.error("Error fetching lessons:", error);
-    }
-  }
+    fetchCurrentWeekLessons();
+  });
 </script>
 
 <div class="bg navbar shadow">
   <div
-    class="flex w-full border-4 border-secondary bg-primary px-16 py-4 shadow ring-accent"
+    class="flex w-full border-4 border-secondary bg-primary px-4 py-4 shadow ring-accent"
   >
     <SelectWeek bind:startDate={lessonWeekStartDate.current} />
     <div class="ml-auto">
@@ -37,12 +25,15 @@
     </div>
   </div>
 </div>
-<div class="flex flex-row">
-  {#each lessonState.current as lesson, i (lesson.id)}
-    <div class="flex flex-col space-y-4">
-      <LessonCard
-        bind:lesson={lessonState.current[i]}
-      />
-    </div>
+<div class="flex flex-row flex-wrap">
+  {#each lessonState.current as lessons}
+    {#if lessons.length > 0}
+      <div class="flex flex-col space-y-4 m-2">
+        <h2 class="text-lg font-bold">{new Date(lessons[0].datetime).toLocaleDateString("en-US", {weekday: "long"})}</h2>
+        {#each lessons as lesson, i (lesson.id)}
+          <LessonCard bind:lesson={lessons[i]} />
+        {/each}
+      </div>
+    {/if}
   {/each}
 </div>
