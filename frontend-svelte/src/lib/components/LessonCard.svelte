@@ -19,7 +19,6 @@
   let concepts: string = $state(lesson.concepts);
   let notes: string = $state(lesson.notes);
 
-
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
       await deleteLesson(lesson.id);
@@ -65,7 +64,7 @@
   }
 </script>
 
-<div class="m-4 w-64 rounded bg-neutral">
+<div class="w-full rounded bg-neutral">
   <div class="flex justify-end space-x-2 mb-2">
     {#if isEditing}
       <button onclick={handleConfirm} class="btn btn-ghost btn-sm text-success items-center p-1">
@@ -135,5 +134,4 @@
     field-sizing: content;  /* Only works on Chromium browsers as of 02/22/2025 */
     width: 100%;
   }
-  
 </style>
