@@ -16,6 +16,18 @@
 
 <div class="flex items-center">
     <button class="btn btn-secondary" onclick={() => changeWeek(-7)}>&lt;</button>
-    <input type="date" class="input mx-2 bg-secondary" value={startDate.toISOString().slice(0, 10)} onblur={(e: Event) => updateStartDate(new Date((e.target as HTMLInputElement).value))}/>
+    <input 
+        type="date" 
+        class="input mx-2 bg-secondary" 
+        value={startDate.toISOString().slice(0, 10)} 
+        onblur={(e: Event) => {
+        const value = (e.target as HTMLInputElement).value;
+        if (value) {
+            updateStartDate(new Date((e.target as HTMLInputElement).value));
+        } else {
+            updateStartDate(new Date());
+        }
+        }}
+    />
     <button class="btn btn-secondary" onclick={() => changeWeek(7)}>&gt;</button>
 </div>
