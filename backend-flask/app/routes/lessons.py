@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from app.db import db
 from app.models.lesson import Lesson
 from app.models.schema import LessonSchema
@@ -10,6 +11,7 @@ from datetime import datetime, timezone, timedelta
 lessons_bp = Blueprint('lessons', __name__)
 
 @lessons_bp.route('/lessons', methods=['GET'])
+@jwt_required()
 @response_wrapper
 def get_lessons():
     initial_date_str = request.args.get('initial_date')
@@ -31,6 +33,7 @@ def get_lessons():
     return lesson_schema.dump(lessons)
 
 @lessons_bp.route('/lessons', methods=['POST'])
+@jwt_required()
 @response_wrapper
 def create_lesson():
     data = request.get_json()
@@ -48,6 +51,7 @@ def create_lesson():
     return lesson_schema.dump(new_lesson), 201
 
 @lessons_bp.route('/lessons/<int:id>', methods=['PUT'])
+@jwt_required()
 @response_wrapper
 def update_lesson(id):
     lesson = Lesson.query.get_or_404(id)
@@ -73,6 +77,7 @@ def update_lesson(id):
     return lesson_schema.dump(lesson), 200
 
 @lessons_bp.route('/lessons/<int:id>', methods=['DELETE'])
+@jwt_required()
 @response_wrapper
 def delete_lesson(id):
     lesson = Lesson.query.get_or_404(id)
