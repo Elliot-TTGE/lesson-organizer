@@ -14,13 +14,13 @@ def login():
     
     if user and user.verify_password(password):
         access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=1))
-        return jsonify(access_token=access_token), 200
+        return jsonify(status='success', data={'access_token': access_token}), 200
     else:
-        return jsonify({"msg": "Bad email or password"}), 401
+        return jsonify(status='fail', message='Bad email or password'), 401
 
 @user_bp.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
-    return jsonify(logged_in_as=user.email), 200
+    return jsonify(status='success', data={'logged_in_as': user.email}), 200

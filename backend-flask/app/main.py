@@ -23,6 +23,7 @@ security = Security(app, user_datastore)
 
 # Initialize JWT
 jwt = JWTManager(app)
+app.config['JWT_VERIFY_SUB'] = False
 
 # Configure CORS
 CORS(app, resources={r"/api/*": {"origins": "*"}})
