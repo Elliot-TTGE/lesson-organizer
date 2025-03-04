@@ -45,7 +45,7 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
 
     const response = await fetch(url, options);
     if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw response;
     }
 
     if (response.status === 204) {
