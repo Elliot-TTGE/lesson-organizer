@@ -19,6 +19,12 @@
       }
     }
   }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      handleLogin();
+    }
+  }
 </script>
 
 <div class="flex items-center justify-center min-h-screen bg-base-300">
@@ -53,6 +59,7 @@
           bind:value={password}
           class="input input-bordered"
           placeholder="Enter your password"
+          onkeydown={handleKeyDown}
           required
         />
       </div>
