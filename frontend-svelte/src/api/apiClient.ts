@@ -2,8 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export interface QueryParams {
     [key: string]: string | number | boolean;
-  }
-  
+}
 
 interface JSendResponse<T> {
     status: 'success' | 'fail' | 'error';
@@ -30,11 +29,13 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
         url += `?${queryString}`;
     }
     
+    const token = localStorage.getItem('token');
     const options: RequestOptions = {
         method,
         headers: {
             'Content-Type': 'application/json',
-            ...headers
+            ...headers,
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
     };
 
@@ -56,7 +57,7 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
     if (jsonResponse.status === 'success') {
         return jsonResponse.data as T;
     } else if (jsonResponse.status === 'fail' || jsonResponse.status === 'error') {
-        throw new Error(jsonResponse.message || 'An error occured while reading errored json response.');
+        throw new Error(jsonResponse.message || 'An error occurred while reading errored json response.');
     }
 
     throw new Error('Unexpected response format');

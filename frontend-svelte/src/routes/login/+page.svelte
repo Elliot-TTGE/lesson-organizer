@@ -1,10 +1,23 @@
 <script lang="ts">
+  import { login } from '../../api/authentication';
+  import { goto } from '$app/navigation';
+
   let email = "";
   let password = "";
+  let errorMessage = "";
 
-  function handleLogin() {
-    // Implement login logic here
-    console.log("Logging in with", email, password);
+  async function handleLogin() {
+    try {
+      const response = await login(email, password);
+      localStorage.setItem('token', response.access_token);
+      goto('/lessons');
+    } catch (error) {
+      console.error('Error logging in:', error);
+      errorMessage = 'An error occurred. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+    }
   }
 </script>
 
@@ -12,6 +25,11 @@
   <div class="card w-96 bg-base-100 shadow-xl">
     <div class="card-body">
       <h2 class="card-title">Login</h2>
+      {#if errorMessage}
+        <div class="alert alert-error">
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
       <div class="form-control">
         <label class="label" for="email">
           <span class="label-text">Email</span>
@@ -39,7 +57,7 @@
         />
       </div>
       <div class="form-control mt-6">
-        <button class="btn btn-primary" on:click={handleLogin}>Login</button>
+        <button class="btn btn-primary" onclick={handleLogin}>Login</button>
       </div>
     </div>
   </div>
