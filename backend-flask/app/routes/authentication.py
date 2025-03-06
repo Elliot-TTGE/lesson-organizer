@@ -1,12 +1,17 @@
 from flask import Blueprint, request, jsonify
-from flask_security import auth_required, current_user
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+
+from flask_jwt_extended import (
+    jwt_required, get_jwt_identity,
+    create_access_token,
+    set_access_cookies,
+    unset_jwt_cookies
+)
 from datetime import timedelta
 from app.models.user import User
 
-user_bp = Blueprint('user', __name__)
+auth_bp = Blueprint('auth', __name__)
 
-@user_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['POST'])
 def login():
     email = request.json.get('email')
     password = request.json.get('password')
@@ -14,11 +19,20 @@ def login():
     
     if user and user.verify_password(password):
         access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=1))
-        return jsonify(status='success', data={'access_token': access_token}), 200
+        
+        response = jsonify(status='success', data={'access_token': access_token})
+        set_access_cookies(response, access_token)
+        return response, 200
     else:
         return jsonify(status='fail', message='Bad email or password'), 401
 
-@user_bp.route('/protected', methods=['GET'])
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    response = jsonify(status='success', message='Logged out successfully')
+    unset_jwt_cookies(response)
+    return response, 200
+
+@auth_bp.route('/protected', methods=['GET'])
 @jwt_required()
 def protected():
     current_user_id = get_jwt_identity()

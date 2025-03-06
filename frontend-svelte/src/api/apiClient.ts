@@ -14,12 +14,20 @@ interface RequestOptions {
     method: string;
     headers: { [key: string]: string };
     body?: string;
+    credentials?: RequestCredentials
 }
 
 function buildQueryString(params: QueryParams): string {
     return Object.entries(params)
         .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
         .join('&');
+}
+
+function getCookie(name: string): string | null {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
 }
 
 export async function apiRequest<T>(endpoint: string, method: string = 'GET', body: any = null, headers: { [key: string]: string } = {}, params: QueryParams = {}): Promise<T> {
@@ -29,14 +37,17 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
         url += `?${queryString}`;
     }
     
-    const token = localStorage.getItem('token');
+    const token = getCookie('token');
+    const csrfToken = getCookie('csrf_access_token');
     const options: RequestOptions = {
         method,
         headers: {
             'Content-Type': 'application/json',
             ...headers,
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+        },
+        credentials: "include"
     };
 
     if (body) {

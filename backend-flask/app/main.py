@@ -6,7 +6,7 @@ from .db import db
 from .routes.lessons import lessons_bp
 from .routes.students import students_bp
 from .models.user import User
-from .routes.user import user_bp
+from .routes.authentication import auth_bp
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lesson_organizer.db'
@@ -15,22 +15,29 @@ app.config['SECRET_KEY'] = 'super-secret'
 app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-salt'
 app.config['JWT_SECRET_KEY'] = 'another-super-secret'
 
+# Initialize JWT
+app.config['JWT_VERIFY_SUB'] = False
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = False
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True
+app.config["JWT_COOKIE_SECURE"] = False # DISABLE IN PRODUCTION
+
 db.init_app(app)
 
 # Setup Flask-Security
 user_datastore = SQLAlchemyUserDatastore(db, User, None)
 security = Security(app, user_datastore)
 
-# Initialize JWT
+
 jwt = JWTManager(app)
-app.config['JWT_VERIFY_SUB'] = False
 
 # Configure CORS
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
 
 app.register_blueprint(lessons_bp, url_prefix='/api')
 app.register_blueprint(students_bp, url_prefix='/api')
-app.register_blueprint(user_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api')
 
 @app.route('/')
 def hello_world():
