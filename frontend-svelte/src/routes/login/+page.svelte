@@ -9,7 +9,6 @@
   async function handleLogin() {
     try {
       const response = await login(email, password);
-      localStorage.setItem('token', response.access_token);
       goto('/lessons');
     } catch (error) {
       console.error('Error logging in:', error);

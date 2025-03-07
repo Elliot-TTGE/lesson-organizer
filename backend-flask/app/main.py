@@ -18,7 +18,6 @@ app.config['JWT_SECRET_KEY'] = 'another-super-secret'
 # Initialize JWT
 app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = False
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config["JWT_COOKIE_SECURE"] = False # DISABLE IN PRODUCTION
