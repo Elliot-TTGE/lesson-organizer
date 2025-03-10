@@ -82,6 +82,7 @@ class UserSchema(Schema):
     last_name = fields.Str(required=True)
     created_date = fields.DateTime(required=True)
     last_login = fields.DateTime()
+    email = fields.Str(required=True)
     password = fields.Str(required=True)
     role = fields.Str(required=True)
     
