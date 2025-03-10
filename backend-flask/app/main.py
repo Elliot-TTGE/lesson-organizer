@@ -20,7 +20,9 @@ app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
-app.config["JWT_COOKIE_SECURE"] = False # DISABLE IN PRODUCTION
+app.config["JWT_COOKIE_SECURE"] = False # Set True in production
+app.config["JWT_COOKIE_HTTPONLY"] = True
+app.config["JWT_COOKIE_SAMESITE"] = 'Lax'
 
 db.init_app(app)
 
