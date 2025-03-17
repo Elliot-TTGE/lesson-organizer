@@ -26,43 +26,10 @@ services:
     command: npm run dev
     networks:
       - app-network
-    environment:
-      - VITE_API_BASE_URL=http://lessonorganizer:4000
     depends_on:
       - backend
 
-  tailscale:
-    container_name: tailscaled
-    image: tailscale/tailscale
-    hostname: lessonorganizer
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    volumes:
-      - /dev/net/tun:/dev/net/tun
-      - ./tailscale/varlib:/var/lib
-      - ./tailscale/tmp:/tmp
-    environment:
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_AUTH_KEY=
-      - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
 
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    networks:
-      - app-network
-    ports:
-      - "80:80"
-      # - "443:443"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - backend
 
 
 networks:
