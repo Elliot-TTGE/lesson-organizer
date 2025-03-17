@@ -1,0 +1,11 @@
+{
+	auto_https off
+}
+
+lessonorganizer.com {
+	reverse_proxy frontend:5173
+}
+
+api.lessonorganizer.com {
+	reverse_proxy backend:4000
+}
