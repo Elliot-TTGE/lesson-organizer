@@ -1,4 +1,18 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "ttge";
+  default: true; /* set as default */
+  prefersdark: false; /* set as default dark mode (prefers-color-scheme:dark) */
+  color-scheme: light; /* color of browser-provided UI */
+
+  --color-base-100: #572b7a;
+  --color-primary: #ab8cc0;
+  --color-secondary: #483248;
+  --color-accent: #80cac3;
+  --color-neutral: #e7f1f3;
+}
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,
