@@ -64,7 +64,7 @@
   }
 </script>
 
-<div class="w-full rounded bg-neutral">
+<div class="w-full rounded-sm bg-neutral">
   <div class="flex justify-end space-x-2 mb-2">
     {#if isEditing}
       <button onclick={handleConfirm} class="btn btn-ghost btn-sm text-success items-center p-1">
