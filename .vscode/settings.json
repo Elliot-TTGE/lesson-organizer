@@ -1,3 +1,11 @@
 {
-    "dbmlERDPreviewer.preferredTheme": "dark"
+    "dbmlERDPreviewer.preferredTheme": "dark",
+    "files.associations": {
+        "*.css": "tailwindcss"
+    },
+    "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "./.vscode/daisyui.md"
+    }
+  ]
 }
