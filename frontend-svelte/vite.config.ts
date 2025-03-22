@@ -1,9 +1,13 @@
-import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
+import { sveltekit } from "@sveltejs/kit/vite";
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [
+    sveltekit(),
+    tailwindcss()
+  ],
   server: {
-    allowedHosts: ['lessonorganizer']
+    allowedHosts: ['127.0.0.1:4000', 'lessonorganizer']
   }
 });
