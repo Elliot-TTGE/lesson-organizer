@@ -25,10 +25,10 @@
     </div>
   </div>
 </div>
-<div class="flex flex-row flex-wrap">
+<div class="flex flex-row flex-wrap gap-2 p-2">
   {#each lessonState.current as lessons}
     {#if lessons.length > 0}
-      <div class="flex flex-col space-y-4 m-2 flex-1">
+      <div class="flex flex-col space-y-4 grow-0 shrink-0 basis-[calc(16.666%_-_0.5rem)]">
         <h2 class="text-lg font-bold">{new Date(lessons[0].datetime).toLocaleDateString("en-US", {weekday: "long"})}</h2>
         {#each lessons as lesson, i (lesson.id)}
           <LessonCard bind:lesson={lessons[i]} />
@@ -37,10 +37,3 @@
     {/if}
   {/each}
 </div>
-
-<style>
-  .flex-1 {
-    flex: 1 1 0;
-    min-width: 15rem; /* Adjust this value as needed */
-  }
-</style>
