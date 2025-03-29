@@ -15,19 +15,21 @@
     "@sveltejs/adapter-auto": "^3.1.1",
     "@sveltejs/kit": "^2.15.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tailwindcss/vite": "^4.0.14",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
     "@typescript-eslint/parser": "^5.0.0",
-    "autoprefixer": "^10.4.20",
-    "daisyui": "^4.12.23",
+    "daisyui": "^5.0.6",
     "esbuild": "^0.25.0",
-    "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "prettier-plugin-svelte": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "svelte": "^5.17.3",
     "svelte-check": "^4.1.3",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.0.14",
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "svelte-lexical": "^0.5.2"
   }
 }
