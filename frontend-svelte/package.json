@@ -12,9 +12,11 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@friendofsvelte/tipex": "^0.0.8-dev.0",
     "@sveltejs/adapter-auto": "^3.1.1",
     "@sveltejs/kit": "^2.15.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.0.14",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
     "@typescript-eslint/parser": "^5.0.0",
@@ -28,8 +30,5 @@
     "tailwindcss": "^4.0.14",
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
-  },
-  "dependencies": {
-    "svelte-lexical": "^0.5.2"
   }
 }

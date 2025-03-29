@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# filepath: /Users/elliota/Development/lesson-organizer/run.sh
-
 # Function to display usage
 usage() {
-  echo "Usage: $0 {dev|prod}"
+  echo "Usage: $0 {dev|prod|clean}"
   exit 1
 }
 
@@ -24,6 +22,11 @@ case $MODE in
   prod)
     echo "Running in production mode..."
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+    ;;
+  clean)
+    echo "Cleaning up Docker containers, images, and volumes..."
+    docker-compose down --volumes --rmi all
+    echo "Cleanup complete."
     ;;
   *)
     usage

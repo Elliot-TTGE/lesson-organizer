@@ -2,6 +2,13 @@
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson } from "../../api/lesson";
   import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
+  import { Tipex } from "@friendofsvelte/tipex";
+  import type { Editor } from "@tiptap/core";
+  import "@friendofsvelte/tipex/styles/Tipex.css";
+  import "@friendofsvelte/tipex/styles/ProseMirror.css";
+  import "@friendofsvelte/tipex/styles/Controls.css";
+  import "@friendofsvelte/tipex/styles/EditLink.css";
+  import "@friendofsvelte/tipex/styles/CodeBlock.css";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -19,6 +26,9 @@
   let concepts: string = $state(lesson.concepts);
   let notes: string = $state(lesson.notes);
 
+  let notesEditor: Editor | undefined = $state();
+  const notesContent = $derived(notesEditor?.getHTML());
+
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
       await deleteLesson(lesson.id);
@@ -29,6 +39,7 @@
 
   async function handleConfirm() {
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
+    notes = notesContent ?? "";
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
     updateLessonInState(updatedLesson)
@@ -113,9 +124,16 @@
     <div class="mx-2 min-h-32 bg-accent h-auto">
       <p class="font-bold">Card Lesson Notes</p>
       {#if isEditing}
-        <textarea rows="4" class="invisible-textarea" bind:value={notes}></textarea>
+        <Tipex 
+          body={notes}
+          controls={true}
+          floating={false}
+          style="margin-top: 1rem; margin-bottom: 0;"
+          class="h-[40vh]"
+          bind:tipex={notesEditor}
+        />
       {:else}
-        <p>{notes}</p>
+        <div class="prose">{@html notes}</div>
       {/if}
     </div>
   </div>

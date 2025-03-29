@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
 @plugin "daisyui"{
     themes: false;
 }
@@ -38,4 +40,5 @@
     --depth: 1;
     --noise: 0;
 }
-    
+
+@config "./tailwind.config.js";
