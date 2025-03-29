@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
-  import { deleteLesson, updateLesson } from "../../api/lesson";
+  import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
@@ -43,6 +43,24 @@
     notes = lesson.notes;
   }
 
+  async function handleCopyToNextWeek() {
+    const currentLessonDate = new Date(lesson.datetime);
+
+    // Calculate the same day of the week in the next week
+    const nextWeekDate = new Date(currentLessonDate);
+    nextWeekDate.setDate(currentLessonDate.getDate() + 7);
+
+    // Create a new lesson object with the updated date
+    const newLesson = {
+      ...lesson,
+      id: undefined, // Ensure a new ID is generated
+      datetime: nextWeekDate.toISOString(),
+    };
+
+    // Save the new lesson to the backend
+    const createdLesson = await createLesson(newLesson);
+  }
+
   function initializeDateTime(datetime: string) {
     return {
       date: new Date(datetime).toLocaleDateString("en-US"),
@@ -74,6 +92,10 @@
         <span class="mr-2">Cancel</span>
       </button>
     {:else}
+      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-sm text-success items-center p-1">
+        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" />
+        <span>Next Week</span>
+      </button>
       <button onclick={() => isEditing = true} class="btn btn-ghost btn-sm text-info items-center p-1">
         <span class="mr-2">Edit</span>
       </button>
