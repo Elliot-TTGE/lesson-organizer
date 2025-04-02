@@ -124,7 +124,7 @@
       {/if}
     </div>
     <div class="mx-2 min-h-32 bg-accent">
-      <p class="font-bold">Card Concepts Taught</p>
+      <p class="font-bold">Concepts Taught</p>
       {#if isEditing}
         <textarea rows="4" class="invisible-textarea" bind:value={concepts}></textarea>
       {:else}
@@ -132,7 +132,7 @@
       {/if}
     </div>
     <div class="mx-2 min-h-32 bg-accent h-auto">
-      <p class="font-bold">Card Lesson Notes</p>
+      <p class="font-bold">Lesson Notes</p>
       {#if isEditing}
         <textarea rows="4" class="invisible-textarea" bind:value={notes}></textarea>
       {:else}
