@@ -1,0 +1,14 @@
+[
+    {
+        "version": "v0.2",
+        "date": "April 2, 2025",
+        "changes": [
+            "LessonCards now have a fixed size.",
+            "Added a button to copy a lesson into the next week at the same time.",
+            "Removed \"Card\" text on lesson card.",
+            "Fixed bug where updated the date of a lesson within the same week context would not move the lesson visually.",
+            "Added changelog page.",
+            "Extended login token expiration duration."
+        ]
+    }
+]
