@@ -85,23 +85,22 @@
 <div class="w-full rounded-sm bg-neutral">
   <div class="flex justify-end space-x-2 mb-2">
     {#if isEditing}
-      <button onclick={handleConfirm} class="btn btn-ghost btn-sm text-success items-center p-1">
+      <button onclick={handleConfirm} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
         <span class="mr-2">Confirm</span>
       </button>
-      <button onclick={handleCancel} class="btn btn-ghost btn-sm text-warning items-center p-1">
+      <button onclick={handleCancel} class="btn btn-ghost btn-accent btn-sm text-warning items-center p-1">
         <span class="mr-2">Cancel</span>
       </button>
     {:else}
-      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-sm text-success items-center p-1">
+      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
         <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" />
-        <span>Next Week</span>
       </button>
-      <button onclick={() => isEditing = true} class="btn btn-ghost btn-sm text-info items-center p-1">
-        <span class="mr-2">Edit</span>
+      <button onclick={() => isEditing = true} class="btn btn-ghost btn-accent btn-sm text-info items-center p-1">
+        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" />
       </button>
     {/if}
-    <button onclick={handleDelete} class="btn btn-ghost btn-sm text-error items-center p-1">
-      <span class="mr-2">Delete</span>
+    <button onclick={handleDelete} class="btn btn-ghost btn-accent btn-sm text-error items-center p-1">
+      <img src="/images/icons/trash3.svg" alt="Trash Icon"/>
     </button>
   </div>
   <div class="flex flex-col space-y-2 p-2">
