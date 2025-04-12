@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
-  import { deleteLesson, updateLesson } from "../../api/lesson";
+  import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import { Tipex } from "@friendofsvelte/tipex";
   import type { Editor } from "@tiptap/core";
@@ -54,6 +54,24 @@
     notes = lesson.notes;
   }
 
+  async function handleCopyToNextWeek() {
+    const currentLessonDate = new Date(lesson.datetime);
+
+    // Calculate the same day of the week in the next week
+    const nextWeekDate = new Date(currentLessonDate);
+    nextWeekDate.setDate(currentLessonDate.getDate() + 7);
+
+    // Create a new lesson object with the updated date
+    const newLesson = {
+      ...lesson,
+      id: undefined, // Ensure a new ID is generated
+      datetime: nextWeekDate.toISOString(),
+    };
+
+    // Save the new lesson to the backend
+    const createdLesson = await createLesson(newLesson);
+  }
+
   function initializeDateTime(datetime: string) {
     return {
       date: new Date(datetime).toLocaleDateString("en-US"),
@@ -78,19 +96,22 @@
 <div class="w-full rounded-sm bg-neutral">
   <div class="flex justify-end space-x-2 mb-2">
     {#if isEditing}
-      <button onclick={handleConfirm} class="btn btn-ghost btn-sm text-success items-center p-1">
+      <button onclick={handleConfirm} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
         <span class="mr-2">Confirm</span>
       </button>
-      <button onclick={handleCancel} class="btn btn-ghost btn-sm text-warning items-center p-1">
+      <button onclick={handleCancel} class="btn btn-ghost btn-accent btn-sm text-warning items-center p-1">
         <span class="mr-2">Cancel</span>
       </button>
     {:else}
-      <button onclick={() => isEditing = true} class="btn btn-ghost btn-sm text-info items-center p-1">
-        <span class="mr-2">Edit</span>
+      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
+        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" />
+      </button>
+      <button onclick={() => isEditing = true} class="btn btn-ghost btn-accent btn-sm text-info items-center p-1">
+        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" />
       </button>
     {/if}
-    <button onclick={handleDelete} class="btn btn-ghost btn-sm text-error items-center p-1">
-      <span class="mr-2">Delete</span>
+    <button onclick={handleDelete} class="btn btn-ghost btn-accent btn-sm text-error items-center p-1">
+      <img src="/images/icons/trash3.svg" alt="Trash Icon"/>
     </button>
   </div>
   <div class="flex flex-col space-y-2 p-2">
@@ -114,7 +135,7 @@
       {/if}
     </div>
     <div class="mx-2 min-h-32 bg-accent">
-      <p class="font-bold">Card Concepts Taught</p>
+      <p class="font-bold">Concepts Taught</p>
       {#if isEditing}
         <textarea rows="4" class="invisible-textarea" bind:value={concepts}></textarea>
       {:else}
@@ -122,7 +143,7 @@
       {/if}
     </div>
     <div class="mx-2 min-h-32 bg-accent h-auto">
-      <p class="font-bold">Card Lesson Notes</p>
+      <p class="font-bold">Lesson Notes</p>
       {#if isEditing}
         <Tipex 
           body={notes}

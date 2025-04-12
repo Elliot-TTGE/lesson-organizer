@@ -22,17 +22,17 @@ export function addLessonToState(newLesson: Lesson) {
 }
 
 export function updateLessonInState(updatedLesson: Lesson) {
-  const dayIndex = new Date(updatedLesson.datetime).getDay();
+  const newDayIndex = new Date(updatedLesson.datetime).getDay();
 
+  // Remove the lesson from its original day
+  lessonState.current.forEach((lessons, index) => {
+    lessonState.current[index] = lessons.filter(lesson => lesson.id !== updatedLesson.id);
+  });
+
+  // Add the updated lesson to the new day
   if (isWithinOneWeek(lessonWeekStartDate.current, new Date(updatedLesson.datetime))) {
-    lessonState.current[dayIndex] = lessonState.current[dayIndex].map(lesson =>
-      lesson.id === updatedLesson.id ? updatedLesson : lesson
-    );
-    lessonState.current[dayIndex] = sortLessonsByDatetime(lessonState.current[dayIndex]);
-  } else {
-    lessonState.current.forEach((lessons, index) => {
-      lessonState.current[index] = lessons.filter(lesson => lesson.id !== updatedLesson.id);
-    });
+    lessonState.current[newDayIndex].push(updatedLesson);
+    lessonState.current[newDayIndex] = sortLessonsByDatetime(lessonState.current[newDayIndex]);
   }
 }
 

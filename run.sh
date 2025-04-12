@@ -17,11 +17,11 @@ MODE=$1
 case $MODE in
   dev)
     echo "Running in development mode..."
-    docker-compose --env-file .env.dev up
+    docker compose --env-file .env.dev up
     ;;
   prod)
     echo "Running in production mode..."
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+    docker compose -f compose.yml -f compose.prod.yml --env-file .env.prod up -d
     ;;
   clean)
     echo "Cleaning up Docker containers, images, and volumes..."

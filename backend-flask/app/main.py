@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
+from datetime import timedelta
 from .db import db
 from .routes.lessons import lessons_bp
 from .routes.students import students_bp
@@ -18,6 +19,7 @@ app.config['JWT_SECRET_KEY'] = 'another-super-secret'
 # Initialize JWT
 app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config["JWT_COOKIE_SECURE"] = False # Set True in production
