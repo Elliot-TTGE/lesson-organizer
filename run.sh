@@ -21,8 +21,7 @@ case $MODE in
     BASE_COMMAND="docker compose --env-file .env.dev"
     ;;
   prod)
-    echo "Running in production mode..."
-    docker compose -f compose.yml -f compose.prod.yml --env-file .env.prod up -d
+    BASE_COMMAND="docker compose -f compose.yml -f compose.prod.yml --env-file .env.prod"
     ;;
   clean)
     echo "Cleaning up Docker containers, images, and volumes..."
