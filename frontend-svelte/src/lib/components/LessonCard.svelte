@@ -6,9 +6,9 @@
   import type { Editor } from "@tiptap/core";
   import "@friendofsvelte/tipex/styles/Tipex.css";
   import "@friendofsvelte/tipex/styles/ProseMirror.css";
-  import "@friendofsvelte/tipex/styles/Controls.css";
   import "@friendofsvelte/tipex/styles/EditLink.css";
   import "@friendofsvelte/tipex/styles/CodeBlock.css";
+  import "$lib/styles/TipexControls.css"
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -28,6 +28,10 @@
 
   let notesEditor: Editor | undefined = $state();
   const notesContent = $derived(notesEditor?.getHTML());
+  let conceptsEditor: Editor | undefined = $state();
+  const conceptsContent = $derived(conceptsEditor?.getHTML());
+  let planEditor: Editor | undefined = $state();
+  const planContent = $derived(planEditor?.getHTML());
 
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
@@ -40,6 +44,8 @@
   async function handleConfirm() {
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
     notes = notesContent ?? "";
+    concepts = conceptsContent ?? "";
+    plan = planContent ?? "";
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
     updateLessonInState(updatedLesson)
@@ -126,37 +132,67 @@
     <p>{student}</p>
   </div>
   <div class="flex flex-col space-y-2 p-2">
-    <div>
-      <p class="font-bold">Today's plan:</p>
-      {#if isEditing}
-        <textarea rows="4" bind:value={plan} class="min-h-24 invisible-textarea"></textarea>
-      {:else}
-        <p class="min-h-24">{plan}</p>
-      {/if}
-    </div>
-    <div class="mx-2 min-h-32 bg-accent">
-      <p class="font-bold">Concepts Taught</p>
-      {#if isEditing}
-        <textarea rows="4" class="invisible-textarea" bind:value={concepts}></textarea>
-      {:else}
-        <p>{concepts}</p>
-      {/if}
-    </div>
-    <div class="mx-2 min-h-32 bg-accent h-auto">
-      <p class="font-bold">Lesson Notes</p>
-      {#if isEditing}
-        <Tipex 
-          body={notes}
-          controls={true}
-          floating={false}
-          style="margin-top: 1rem; margin-bottom: 0;"
-          class="h-[40vh]"
-          bind:tipex={notesEditor}
-        />
-      {:else}
+    {#if isEditing}
+      <Tipex 
+        body={plan}
+        controls={true}
+        floating={false}
+        style="margin-top: 1rem; margin-bottom: 0;"
+        class="h-[20vh]"
+        bind:tipex={planEditor}
+      >
+        {#snippet head()}
+          <div class="text-lg font-bold text-secondary mb-2">
+            Today's Plan:
+          </div>
+        {/snippet}
+      </Tipex>
+    {:else}
+      <p class="font-bold">Today's Plan:</p>
+      <div class="prose invisible-textarea">{@html plan}</div>
+    {/if}
+    {#if isEditing}
+      <Tipex 
+        body={concepts}
+        controls={true}
+        floating={false}
+        style="margin-top: 1rem; margin-bottom: 0;"
+        class="h-[20vh]"
+        bind:tipex={conceptsEditor}
+      >
+        {#snippet head()}
+          <div class="text-lg font-bold text-secondary mb-2">
+            Concepts Taught
+          </div>
+        {/snippet}
+      </Tipex>
+    {:else}
+      <div class="mx-2 min-h-32 bg-accent h-auto">
+        <p class="font-bold">Concepts Taught</p>
+        <div class="prose">{@html concepts}</div>
+      </div>
+    {/if}
+    {#if isEditing}
+      <Tipex 
+        body={notes}
+        controls={true}
+        floating={false}
+        style="margin-top: 1rem; margin-bottom: 0;"
+        class="h-[20vh]"
+        bind:tipex={notesEditor}
+      >
+        {#snippet head()}
+          <div class="text-lg font-bold text-secondary mb-2">
+            Lesson Notes
+          </div>
+        {/snippet}
+      </Tipex>
+    {:else}
+      <div class="mx-2 min-h-32 bg-accent h-auto">
+        <p class="font-bold">Lesson Notes</p>
         <div class="prose">{@html notes}</div>
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 </div>
 
