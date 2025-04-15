@@ -3,17 +3,30 @@
   import type { Lesson } from "../../types";
   import { lessonState, addLessonToState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
+  import { Tipex } from "@friendofsvelte/tipex";
+  import type { Editor } from "@tiptap/core";
 
-  export let date = "";
-  export let time = "";
-  export let plan = "";
-  export let concepts = "";
-  export let notes = "";
-  // export let students = "";
+  let { children } = $props();
+
+  let date = $state("");
+  let time = $state("");
+  let plan = $state("");
+  let concepts = $state("");
+  let notes = $state("");
 
   let lessonCreateModal: HTMLDialogElement;
-  let dateWarning = false;
-  let timeWarning = false;
+  let dateWarning = $state(false);
+  let timeWarning = $state(false);
+
+  // Editor states
+  let planEditor: Editor | undefined = $state();
+  const planContent = $derived(planEditor?.getHTML());
+
+  let conceptsEditor: Editor | undefined = $state();
+  const conceptsContent = $derived(conceptsEditor?.getHTML());
+
+  let notesEditor: Editor | undefined = $state();
+  const notesContent = $derived(notesEditor?.getHTML());
 
   async function handleCreateLesson() {
     dateWarning = date === "";
@@ -26,9 +39,9 @@
     const datetime = new Date(`${date}T${time}`).toISOString();
     const newLesson: Partial<Lesson> = {
       datetime,
-      plan,
-      concepts,
-      notes,
+      plan: planContent,
+      concepts: conceptsContent,
+      notes: notesContent,
     };
 
     try {
@@ -43,7 +56,7 @@
 
 <button
   class="btn btn-secondary"
-  on:click={() => {
+  onclick={() => {
     date = "";
     time = "";
     plan = "";
@@ -52,7 +65,7 @@
     lessonCreateModal.showModal();
   }}
 >
-  <slot />
+  {@render children?.()}
 </button>
 <dialog bind:this={lessonCreateModal} class="modal">
   <div class="modal-box bg-base-100 w-full max-w-4xl">
@@ -92,57 +105,60 @@
       </div>
       <div class="flex flex-row space-x-4 w-full">
         <div class="flex flex-col space-y-4 w-1/2">
-          <label class="label" for="plan">
-            <span class="label-text">Plan</span>
-          </label>
-          <textarea
-            id="plan"
-            bind:value={plan}
-            class="textarea textarea-bordered w-full bg-secondary"
-            rows="3"
-          ></textarea>
+          <Tipex 
+            body={plan}
+            controls={true}
+            floating={false}
+            class="h-[20vh]"
+            bind:tipex={planEditor}
+          >
+            {#snippet head()}
+              <div class="text-lg font-bold text-secondary mb-2 px-2">
+                Today's Plan
+              </div>
+            {/snippet}
+          </Tipex>
         </div>
         <div class="flex flex-col space-y-4 w-1/2">
-          <label class="label" for="concepts">
-            <span class="label-text">Concepts</span>
-          </label>
-          <textarea
-            id="concepts"
-            bind:value={concepts}
-            class="textarea textarea-bordered w-full bg-secondary"
-            rows="3"
-          ></textarea>
+          <Tipex 
+            body={concepts}
+            controls={true}
+            floating={false}
+            class="h-[20vh]"
+            bind:tipex={conceptsEditor}
+          >
+            {#snippet head()}
+              <div class="text-lg font-bold text-secondary mb-2 px-2">
+                Concepts Taught
+              </div>
+            {/snippet}
+          </Tipex>
         </div>
       </div>
       <div class="flex flex-row space-x-4 w-full">
         <div class="flex flex-col space-y-4 w-1/2">
-          <label class="label" for="notes">
-            <span class="label-text">Notes</span>
-          </label>
-          <textarea
-            id="notes"
-            bind:value={notes}
-            class="textarea textarea-bordered w-full bg-secondary"
-            rows="3"
-          ></textarea>
+          <Tipex 
+            body={notes}
+            controls={true}
+            floating={false}
+            class="h-[20vh]"
+            bind:tipex={notesEditor}
+          >
+            {#snippet head()}
+              <div class="text-lg font-bold text-secondary mb-2 px-2">
+                Lesson Notes
+              </div>
+            {/snippet}
+          </Tipex>
         </div>
         <div class="flex flex-col space-y-4 w-1/2">
-          <!-- <label class="label" for="students">
-            <span class="label-text">Students (comma-separated)</span>
-          </label>
-          <textarea
-            id="students"
-            type="text"
-            bind:value={students}
-            class="textarea textarea-bordered w-full bg-secondary"
-            rows="3"
-          ></textarea> -->
+          <!-- Student Section -->
         </div>
       </div>
     </div>
     <div class="modal-action">
-      <button class="btn" on:click={() => lessonCreateModal.close()}>Cancel</button>
-      <button class="btn btn-primary" on:click={handleCreateLesson}>Create</button>
+      <button class="btn" onclick={() => lessonCreateModal.close()}>Cancel</button>
+      <button class="btn btn-primary" onclick={handleCreateLesson}>Create</button>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop">
