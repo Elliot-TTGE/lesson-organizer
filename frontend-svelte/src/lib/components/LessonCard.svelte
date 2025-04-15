@@ -99,64 +99,69 @@
   }
 </script>
 
-<div class="w-full rounded-sm bg-neutral">
-  <div class="flex justify-end space-x-2 mb-2">
+<div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
+  <!-- Action Buttons -->
+  <div class="flex justify-end space-x-2">
     {#if isEditing}
-      <button onclick={handleConfirm} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
-        <span class="mr-2">Confirm</span>
-      </button>
-      <button onclick={handleCancel} class="btn btn-ghost btn-accent btn-sm text-warning items-center p-1">
-        <span class="mr-2">Cancel</span>
-      </button>
+      <button onclick={handleConfirm} class="btn btn-success btn-sm">Confirm</button>
+      <button onclick={handleCancel} class="btn btn-warning btn-sm">Cancel</button>
     {:else}
-      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
-        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" />
+      <button onclick={handleCopyToNextWeek} class="btn btn-info btn-sm">
+        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
       </button>
-      <button onclick={() => isEditing = true} class="btn btn-ghost btn-accent btn-sm text-info items-center p-1">
-        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" />
+      <button onclick={() => isEditing = true} class="btn btn-accent btn-sm">
+        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
       </button>
     {/if}
-    <button onclick={handleDelete} class="btn btn-ghost btn-accent btn-sm text-error items-center p-1">
-      <img src="/images/icons/trash3.svg" alt="Trash Icon"/>
+    <button onclick={handleDelete} class="btn btn-error btn-sm">
+      <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
     </button>
   </div>
-  <div class="flex flex-col space-y-2 p-2">
-    {#if isEditing}
-      <input type="date" bind:value={dateInput} class="input input-bordered" />
-      <input type="time" bind:value={timeInput} class="input input-bordered" />
-    {:else}
-      <p>{weekday}</p>
-      <p>{date}:</p>
-      <p>{time}:</p>
-    {/if}
-    <p>{student}</p>
-  </div>
-  <div class="flex flex-col space-y-2 p-2">
+
+  <!-- Date Section -->
+  {#if isEditing}
+    <input type="date" bind:value={dateInput} class="input input-bordered w-36" />
+    <input type="time" bind:value={timeInput} class="input input-bordered w-28" />
+  {:else}
+    <div class="flex items-center justify-between bg-neutral p-4 rounded-lg shadow-sm">
+      <div>
+        <p class="text-lg font-semibold text-secondary">{weekday}</p>
+        <p class="text-sm text-secondary">{date} at {time}</p>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Plan Section -->
+  <div class="card bg-neutral shadow-md">
     {#if isEditing}
       <Tipex 
-        body={plan}
-        controls={true}
-        floating={false}
-        style="margin-top: 1rem; margin-bottom: 0;"
-        class="h-[20vh]"
-        bind:tipex={planEditor}
+      body={plan}
+      controls={true}
+      floating={false}
+      class="h-[20vh]"
+      bind:tipex={planEditor}
       >
-        {#snippet head()}
-          <div class="text-lg font-bold text-secondary mb-2">
-            Today's Plan:
-          </div>
-        {/snippet}
-      </Tipex>
+      {#snippet head()}
+      <div class="text-lg font-bold text-secondary mb-2">
+        Today's Plan
+      </div>
+      {/snippet}
+    </Tipex>
     {:else}
-      <p class="font-bold">Today's Plan:</p>
-      <div class="prose invisible-textarea">{@html plan}</div>
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Today's Plan</h2>
+        <div class="prose">{@html plan}</div>
+      </div>
     {/if}
+  </div>
+
+  <!-- Concepts Taught Section -->
+  <div class="card bg-neutral shadow-md">
     {#if isEditing}
       <Tipex 
         body={concepts}
         controls={true}
         floating={false}
-        style="margin-top: 1rem; margin-bottom: 0;"
         class="h-[20vh]"
         bind:tipex={conceptsEditor}
       >
@@ -167,17 +172,20 @@
         {/snippet}
       </Tipex>
     {:else}
-      <div class="mx-2 min-h-32 bg-accent h-auto">
-        <p class="font-bold">Concepts Taught</p>
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Concepts Taught</h2>
         <div class="prose">{@html concepts}</div>
       </div>
     {/if}
+  </div>
+
+  <!-- Notes Section -->
+  <div class="card bg-neutral shadow-md">
     {#if isEditing}
       <Tipex 
         body={notes}
         controls={true}
         floating={false}
-        style="margin-top: 1rem; margin-bottom: 0;"
         class="h-[20vh]"
         bind:tipex={notesEditor}
       >
@@ -188,8 +196,8 @@
         {/snippet}
       </Tipex>
     {:else}
-      <div class="mx-2 min-h-32 bg-accent h-auto">
-        <p class="font-bold">Lesson Notes</p>
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Lesson Notes</h2>
         <div class="prose">{@html notes}</div>
       </div>
     {/if}
@@ -197,16 +205,7 @@
 </div>
 
 <style>
-  p, .invisible-textarea {
-    color: darkorchid;
-  }
-
-  .invisible-textarea {
-    border: none;
-    background: transparent;
-    resize: none;
-    outline: none;
-    field-sizing: content;  /* Only works on Chromium browsers as of 02/22/2025 */
-    width: 100%;
+  .prose {
+    color: var(--color-neutral-content);
   }
 </style>
