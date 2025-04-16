@@ -5,10 +5,10 @@
   import { Tipex } from "@friendofsvelte/tipex";
   import type { Editor } from "@tiptap/core";
   import "@friendofsvelte/tipex/styles/Tipex.css";
-  import "@friendofsvelte/tipex/styles/ProseMirror.css";
   import "@friendofsvelte/tipex/styles/EditLink.css";
   import "@friendofsvelte/tipex/styles/CodeBlock.css";
   import "$lib/styles/TipexControls.css"
+  import "$lib/styles/TipexProse.css"
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -138,7 +138,7 @@
       body={plan}
       controls={true}
       floating={false}
-      class="h-[20vh]"
+      class="h-[30vh]"
       bind:tipex={planEditor}
       >
       {#snippet head()}
@@ -146,11 +146,14 @@
         Today's Plan
       </div>
       {/snippet}
+      {#snippet utilities()}
+        <!-- Remove utilities prop -->
+      {/snippet}
     </Tipex>
     {:else}
       <div class="card-body">
         <h2 class="card-title text-secondary">Today's Plan</h2>
-        <div class="prose">{@html plan}</div>
+        <div class="rich-editor">{@html plan}</div>
       </div>
     {/if}
   </div>
@@ -162,13 +165,16 @@
         body={concepts}
         controls={true}
         floating={false}
-        class="h-[20vh]"
+        class="h-[30vh]"
         bind:tipex={conceptsEditor}
       >
         {#snippet head()}
           <div class="text-lg font-bold text-secondary mb-2">
             Concepts Taught
           </div>
+        {/snippet}
+        {#snippet utilities()}
+          <!-- Remove utilities prop -->
         {/snippet}
       </Tipex>
     {:else}
@@ -186,13 +192,16 @@
         body={notes}
         controls={true}
         floating={false}
-        class="h-[20vh]"
+        class="h-[30vh]"
         bind:tipex={notesEditor}
       >
         {#snippet head()}
           <div class="text-lg font-bold text-secondary mb-2">
             Lesson Notes
           </div>
+        {/snippet}
+        {#snippet utilities()}
+          <!-- Remove utilities prop -->
         {/snippet}
       </Tipex>
     {:else}
