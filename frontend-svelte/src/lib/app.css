@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @plugin "daisyui"{
     themes: false;
 }
@@ -38,4 +39,67 @@
     --depth: 1;
     --noise: 0;
 }
-    
+
+@config "./tailwind.config.js";
+
+.rich-editor {
+  color: var(--color-neutral-content); 
+  line-height: 1.125; 
+  word-wrap: break-word; 
+  overflow-wrap: break-word; 
+}
+
+.rich-editor h1 {
+  font-size: 1.5rem; 
+}
+
+.rich-editor h2 {
+  font-size: 1.125rem; 
+}
+
+.rich-editor a {
+  color: var(--color-accent); 
+  
+}
+
+.rich-editor p {
+  margin: 0; /* Remove default margin */
+  line-height: 1.5; /* Adjust line height for consistent spacing */
+}
+
+.rich-editor p:empty {
+  margin-top: 1rem; /* Add spacing only between consecutive <p> elements */
+  display: block,
+}
+
+.rich-editor img {
+  border-radius: 0.5rem; 
+}
+
+.rich-editor code {
+    border-radius: 0.25rem;
+    --tw-bg-opacity: 1;
+    background-color: rgb(229 231 235 / var(--tw-bg-opacity));
+    padding: 0.25rem;
+    --tw-text-opacity: 1;
+    color: rgb(30 64 175 / var(--tw-text-opacity));
+}
+
+.rich-editor ul,
+.rich-editor ol {
+  margin-left: 1.5rem; 
+}
+
+.rich-editor ul {
+    list-style-type: disc; 
+    margin-left: 1.5rem; 
+  }
+  
+.rich-editor ol {
+list-style-type: decimal; 
+margin-left: 1.5rem; 
+}
+
+.rich-editor li {
+  margin-bottom: 0.25rem; 
+}

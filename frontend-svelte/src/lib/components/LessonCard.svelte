@@ -2,6 +2,7 @@
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
+  import TipexEditor from "./TipexEditor.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -82,77 +83,80 @@
   }
 </script>
 
-<div class="w-full rounded-sm bg-neutral">
-  <div class="flex justify-end space-x-2 mb-2">
+<div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
+  <!-- Action Buttons -->
+  <div class="flex justify-end space-x-2">
     {#if isEditing}
-      <button onclick={handleConfirm} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
-        <span class="mr-2">Confirm</span>
-      </button>
-      <button onclick={handleCancel} class="btn btn-ghost btn-accent btn-sm text-warning items-center p-1">
-        <span class="mr-2">Cancel</span>
-      </button>
+      <button onclick={handleConfirm} class="btn btn-success btn-sm">Confirm</button>
+      <button onclick={handleCancel} class="btn btn-warning btn-sm">Cancel</button>
     {:else}
-      <button onclick={handleCopyToNextWeek} class="btn btn-ghost btn-accent btn-sm text-success items-center p-1">
-        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" />
+      <button onclick={handleCopyToNextWeek} class="btn btn-info btn-sm">
+        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
       </button>
-      <button onclick={() => isEditing = true} class="btn btn-ghost btn-accent btn-sm text-info items-center p-1">
-        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" />
+      <button onclick={() => isEditing = true} class="btn btn-accent btn-sm">
+        <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
       </button>
     {/if}
-    <button onclick={handleDelete} class="btn btn-ghost btn-accent btn-sm text-error items-center p-1">
-      <img src="/images/icons/trash3.svg" alt="Trash Icon"/>
+    <button onclick={handleDelete} class="btn btn-error btn-sm">
+      <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
     </button>
   </div>
-  <div class="flex flex-col space-y-2 p-2">
+
+  <!-- Date Section -->
+  {#if isEditing}
+    <input type="date" bind:value={dateInput} class="input input-bordered w-36" />
+    <input type="time" bind:value={timeInput} class="input input-bordered w-28" />
+  {:else}
+    <div class="flex items-center justify-between bg-neutral p-4 rounded-lg shadow-sm">
+      <div>
+        <p class="text-lg font-semibold text-secondary">{weekday}</p>
+        <p class="text-sm text-secondary">{date} at {time}</p>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Plan Section -->
+  <div class="card bg-neutral shadow-md">
     {#if isEditing}
-      <input type="date" bind:value={dateInput} class="input input-bordered" />
-      <input type="time" bind:value={timeInput} class="input input-bordered" />
+      <TipexEditor
+        bind:body={plan}
+        heading="Today's Plan"
+      />
     {:else}
-      <p>{weekday}</p>
-      <p>{date}:</p>
-      <p>{time}:</p>
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Today's Plan</h2>
+        <div class="rich-editor">{@html plan}</div>
+      </div>
     {/if}
-    <p>{student}</p>
   </div>
-  <div class="flex flex-col space-y-2 p-2">
-    <div>
-      <p class="font-bold">Today's plan:</p>
-      {#if isEditing}
-        <textarea rows="4" bind:value={plan} class="min-h-24 invisible-textarea"></textarea>
-      {:else}
-        <p class="min-h-24">{plan}</p>
-      {/if}
-    </div>
-    <div class="mx-2 min-h-32 bg-accent">
-      <p class="font-bold">Concepts Taught</p>
-      {#if isEditing}
-        <textarea rows="4" class="invisible-textarea" bind:value={concepts}></textarea>
-      {:else}
-        <p>{concepts}</p>
-      {/if}
-    </div>
-    <div class="mx-2 min-h-32 bg-accent h-auto">
-      <p class="font-bold">Lesson Notes</p>
-      {#if isEditing}
-        <textarea rows="4" class="invisible-textarea" bind:value={notes}></textarea>
-      {:else}
-        <p>{notes}</p>
-      {/if}
-    </div>
+
+  <!-- Concepts Taught Section -->
+  <div class="card bg-neutral shadow-md">
+    {#if isEditing}
+      <TipexEditor 
+        bind:body={concepts}
+        heading="Concepts Taught"
+      />
+    {:else}
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Concepts Taught</h2>
+        <div class="rich-editor">{@html concepts}</div>
+      </div>
+    {/if}
+  </div>
+
+  <!-- Notes Section -->
+  <div class="card bg-neutral shadow-md">
+    {#if isEditing}
+      <TipexEditor 
+        bind:body={notes}
+        heading="Lesson Notes"
+      />
+    {:else}
+      <div class="card-body">
+        <h2 class="card-title text-secondary">Lesson Notes</h2>
+        <div class="rich-editor">{@html notes}</div>
+      </div>
+    {/if}
   </div>
 </div>
-
-<style>
-  p, .invisible-textarea {
-    color: darkorchid;
-  }
-
-  .invisible-textarea {
-    border: none;
-    background: transparent;
-    resize: none;
-    outline: none;
-    field-sizing: content;  /* Only works on Chromium browsers as of 02/22/2025 */
-    width: 100%;
-  }
-</style>

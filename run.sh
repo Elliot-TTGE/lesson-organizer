@@ -2,7 +2,7 @@
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 {dev|prod} [docker-compose-commands...]"
+  echo "Usage: $0 {dev|prod|clean} [docker-compose-commands...]"
   exit 1
 }
 
@@ -22,6 +22,11 @@ case $MODE in
     ;;
   prod)
     BASE_COMMAND="docker compose -f compose.yml -f compose.prod.yml --env-file .env.prod"
+    ;;
+  clean)
+    echo "Cleaning up Docker containers, images, and volumes..."
+    docker-compose down --volumes --rmi all
+    echo "Cleanup complete."
     ;;
   *)
     usage
