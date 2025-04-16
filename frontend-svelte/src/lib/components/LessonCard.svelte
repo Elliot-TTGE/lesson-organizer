@@ -2,13 +2,7 @@
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
-  import { Tipex } from "@friendofsvelte/tipex";
-  import type { Editor } from "@tiptap/core";
-  import "@friendofsvelte/tipex/styles/Tipex.css";
-  import "@friendofsvelte/tipex/styles/EditLink.css";
-  import "@friendofsvelte/tipex/styles/CodeBlock.css";
-  import "$lib/styles/TipexControls.css"
-  import "$lib/styles/TipexProse.css"
+  import TipexEditor from "./TipexEditor.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -26,13 +20,6 @@
   let concepts: string = $state(lesson.concepts);
   let notes: string = $state(lesson.notes);
 
-  let notesEditor: Editor | undefined = $state();
-  const notesContent = $derived(notesEditor?.getHTML());
-  let conceptsEditor: Editor | undefined = $state();
-  const conceptsContent = $derived(conceptsEditor?.getHTML());
-  let planEditor: Editor | undefined = $state();
-  const planContent = $derived(planEditor?.getHTML());
-
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
       await deleteLesson(lesson.id);
@@ -43,9 +30,6 @@
 
   async function handleConfirm() {
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
-    notes = notesContent ?? "";
-    concepts = conceptsContent ?? "";
-    plan = planContent ?? "";
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
     updateLessonInState(updatedLesson)
@@ -134,22 +118,10 @@
   <!-- Plan Section -->
   <div class="card bg-neutral shadow-md">
     {#if isEditing}
-      <Tipex 
-      body={plan}
-      controls={true}
-      floating={false}
-      class="h-[30vh]"
-      bind:tipex={planEditor}
-      >
-      {#snippet head()}
-      <div class="text-lg font-bold text-secondary mb-2">
-        Today's Plan
-      </div>
-      {/snippet}
-      {#snippet utilities()}
-        <!-- Remove utilities prop -->
-      {/snippet}
-    </Tipex>
+      <TipexEditor
+        bind:body={plan}
+        heading="Today's Plan"
+      />
     {:else}
       <div class="card-body">
         <h2 class="card-title text-secondary">Today's Plan</h2>
@@ -161,26 +133,14 @@
   <!-- Concepts Taught Section -->
   <div class="card bg-neutral shadow-md">
     {#if isEditing}
-      <Tipex 
-        body={concepts}
-        controls={true}
-        floating={false}
-        class="h-[30vh]"
-        bind:tipex={conceptsEditor}
-      >
-        {#snippet head()}
-          <div class="text-lg font-bold text-secondary mb-2">
-            Concepts Taught
-          </div>
-        {/snippet}
-        {#snippet utilities()}
-          <!-- Remove utilities prop -->
-        {/snippet}
-      </Tipex>
+      <TipexEditor 
+        bind:body={concepts}
+        heading="Concepts Taught"
+      />
     {:else}
       <div class="card-body">
         <h2 class="card-title text-secondary">Concepts Taught</h2>
-        <div class="prose">{@html concepts}</div>
+        <div class="rich-editor">{@html concepts}</div>
       </div>
     {/if}
   </div>
@@ -188,33 +148,15 @@
   <!-- Notes Section -->
   <div class="card bg-neutral shadow-md">
     {#if isEditing}
-      <Tipex 
-        body={notes}
-        controls={true}
-        floating={false}
-        class="h-[30vh]"
-        bind:tipex={notesEditor}
-      >
-        {#snippet head()}
-          <div class="text-lg font-bold text-secondary mb-2">
-            Lesson Notes
-          </div>
-        {/snippet}
-        {#snippet utilities()}
-          <!-- Remove utilities prop -->
-        {/snippet}
-      </Tipex>
+      <TipexEditor 
+        bind:body={notes}
+        heading="Lesson Notes"
+      />
     {:else}
       <div class="card-body">
         <h2 class="card-title text-secondary">Lesson Notes</h2>
-        <div class="prose">{@html notes}</div>
+        <div class="rich-editor">{@html notes}</div>
       </div>
     {/if}
   </div>
 </div>
-
-<style>
-  .prose {
-    color: var(--color-neutral-content);
-  }
-</style>

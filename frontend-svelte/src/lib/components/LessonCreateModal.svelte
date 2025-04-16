@@ -3,8 +3,7 @@
   import type { Lesson } from "../../types";
   import { lessonState, addLessonToState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
-  import { Tipex } from "@friendofsvelte/tipex";
-  import type { Editor } from "@tiptap/core";
+  import TipexEditor from "./TipexEditor.svelte";
 
   let { children } = $props();
 
@@ -18,16 +17,6 @@
   let dateWarning = $state(false);
   let timeWarning = $state(false);
 
-  // Editor states
-  let planEditor: Editor | undefined = $state();
-  const planContent = $derived(planEditor?.getHTML());
-
-  let conceptsEditor: Editor | undefined = $state();
-  const conceptsContent = $derived(conceptsEditor?.getHTML());
-
-  let notesEditor: Editor | undefined = $state();
-  const notesContent = $derived(notesEditor?.getHTML());
-
   async function handleCreateLesson() {
     dateWarning = date === "";
     timeWarning = time === "";
@@ -39,9 +28,9 @@
     const datetime = new Date(`${date}T${time}`).toISOString();
     const newLesson: Partial<Lesson> = {
       datetime,
-      plan: planContent,
-      concepts: conceptsContent,
-      notes: notesContent,
+      plan,
+      concepts,
+      notes,
     };
 
     try {
@@ -105,60 +94,27 @@
       </div>
       <div class="flex flex-row space-x-4 w-full">
         <div class="flex flex-col space-y-4 w-1/2">
-          <Tipex 
-            body={plan}
-            controls={true}
-            floating={false}
-            class="h-[20vh]"
-            bind:tipex={planEditor}
-          >
-            {#snippet head()}
-              <div class="text-lg font-bold text-secondary mb-2 px-2">
-                Today's Plan
-              </div>
-            {/snippet}
-            {#snippet utilities()}
-              <!-- Remove utilities prop -->
-            {/snippet}
-          </Tipex>
+          <TipexEditor
+            bind:body={plan}
+            heading="Today's Plan"
+            height="h-[20vh]"
+          />
         </div>
         <div class="flex flex-col space-y-4 w-1/2">
-          <Tipex 
-            body={concepts}
-            controls={true}
-            floating={false}
-            class="h-[20vh]"
-            bind:tipex={conceptsEditor}
-          >
-            {#snippet head()}
-              <div class="text-lg font-bold text-secondary mb-2 px-2">
-                Concepts Taught
-              </div>
-            {/snippet}
-            {#snippet utilities()}
-              <!-- Remove utilities prop -->
-            {/snippet}
-          </Tipex>
+          <TipexEditor
+            bind:body={concepts}
+            heading="Concepts Taught"
+            height="h-[20vh]"
+          />
         </div>
       </div>
       <div class="flex flex-row space-x-4 w-full">
         <div class="flex flex-col space-y-4 w-1/2">
-          <Tipex 
-            body={notes}
-            controls={true}
-            floating={false}
-            class="h-[20vh]"
-            bind:tipex={notesEditor}
-          >
-            {#snippet head()}
-              <div class="text-lg font-bold text-secondary mb-2 px-2">
-                Lesson Notes
-              </div>
-            {/snippet}
-            {#snippet utilities()}
-              <!-- Remove utilities prop -->
-            {/snippet}
-          </Tipex>
+          <TipexEditor
+            bind:body={notes}
+            heading="Lesson Notes"
+            height="h-[20vh]"
+          />
         </div>
         <div class="flex flex-col space-y-4 w-1/2">
           <!-- Student Section -->
