@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
-  import { lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
+  import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import TipexEditor from "./TipexEditor.svelte";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
@@ -19,6 +19,8 @@
   let plan: string = $state(lesson.plan);
   let concepts: string = $state(lesson.concepts);
   let notes: string = $state(lesson.notes);
+
+  let copyToDate: string = $state(new Date().toISOString().split('T')[0]);
 
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
@@ -44,22 +46,19 @@
     notes = lesson.notes;
   }
 
-  async function handleCopyToNextWeek() {
-    const currentLessonDate = new Date(lesson.datetime);
+  async function handleCopy() {
+    const lessonTime = new Date(lesson.datetime).toTimeString().split(' ')[0];
 
-    // Calculate the same day of the week in the next week
-    const nextWeekDate = new Date(currentLessonDate);
-    nextWeekDate.setDate(currentLessonDate.getDate() + 7);
+    const combinedDateTime = new Date(`${copyToDate}T${lessonTime}`).toISOString();
 
-    // Create a new lesson object with the updated date
     const newLesson = {
       ...lesson,
-      id: undefined, // Ensure a new ID is generated
-      datetime: nextWeekDate.toISOString(),
+      id: undefined,
+      datetime: combinedDateTime,
     };
 
-    // Save the new lesson to the backend
     const createdLesson = await createLesson(newLesson);
+    addLessonToState(createdLesson);
   }
 
   function initializeDateTime(datetime: string) {
@@ -90,9 +89,15 @@
       <button onclick={handleConfirm} class="btn btn-success btn-sm">Confirm</button>
       <button onclick={handleCancel} class="btn btn-warning btn-sm">Cancel</button>
     {:else}
-      <button onclick={handleCopyToNextWeek} class="btn btn-info btn-sm">
-        <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
-      </button>
+      <div class="dropdown">
+        <button tabindex="0" class="btn btn-info btn-sm">
+          <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
+        </button>
+        <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md">
+          <input type="date" bind:value={copyToDate} class="input input-bordered w-full mb-2" />
+          <button onclick={handleCopy} class="btn btn-success btn-sm w-full">Confirm</button>
+        </div>
+      </div>
       <button onclick={() => isEditing = true} class="btn btn-accent btn-sm">
         <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
       </button>
