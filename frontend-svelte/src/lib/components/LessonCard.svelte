@@ -3,6 +3,7 @@
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import TipexEditor from "./TipexEditor.svelte";
+  import { initializeDateTimeInput } from "$lib/utils/dateUtils";
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
@@ -13,14 +14,13 @@
   }));
 
   // This is a bit hacky, but I didn't have time to make a cleaner solution
-  let { dateInput, timeInput } = $state(initializeDateTimeInput(lesson.datetime));
+  let { date: dateInput, date: timeInput } = $state(initializeDateTimeInput(lesson.datetime));
+  let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
 
   let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
   let plan: string = $state(lesson.plan);
   let concepts: string = $state(lesson.concepts);
   let notes: string = $state(lesson.notes);
-
-  let copyToDate: string = $state(new Date().toISOString().split('T')[0]);
 
   async function handleDelete() {
     if (confirm("Are you sure you want to delete this lesson?")) {
@@ -40,16 +40,14 @@
 
   function handleCancel() {
     isEditing = false;
-    ({ dateInput, timeInput } = initializeDateTimeInput(lesson.datetime));
+    ({ date: dateInput, time: timeInput } = initializeDateTimeInput(lesson.datetime));
     plan = lesson.plan;
     concepts = lesson.concepts;
     notes = lesson.notes;
   }
 
   async function handleCopy() {
-    const lessonTime = new Date(lesson.datetime).toTimeString().split(' ')[0];
-
-    const combinedDateTime = new Date(`${copyToDate}T${lessonTime}`).toISOString();
+    const combinedDateTime = new Date(`${copyToDate}T${copyToTime}`).toISOString();
 
     const newLesson = {
       ...lesson,
@@ -70,16 +68,6 @@
       }),
     };
   }
-
-  function initializeDateTimeInput(datetime: string) {
-    const localDate = new Date(datetime);
-    const offset = localDate.getTimezoneOffset() * 60000; // offset in milliseconds
-    const localISOTime = new Date(localDate.getTime() - offset).toISOString().slice(0, 16);
-    return {
-      dateInput: localISOTime.split('T')[0],
-      timeInput: localISOTime.split('T')[1],
-    };
-  }
 </script>
 
 <div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
@@ -95,6 +83,7 @@
         </button>
         <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md">
           <input type="date" bind:value={copyToDate} class="input input-bordered w-full mb-2" />
+          <input type="time" bind:value={copyToTime} class="input input-bordered w-full mb-2" />
           <button onclick={handleCopy} class="btn btn-success btn-sm w-full">Confirm</button>
         </div>
       </div>
