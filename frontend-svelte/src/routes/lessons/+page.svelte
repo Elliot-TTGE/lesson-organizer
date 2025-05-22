@@ -5,6 +5,7 @@
   import SelectWeek from "$lib/components/SelectWeek.svelte";
   import { fetchCurrentWeekLessons, lessonState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
+  import ExportWeek from "$lib/components/ExportWeek.svelte";
 
   onMount(async () => {
     await fetchCurrentWeekLessons();
@@ -17,9 +18,10 @@
 
 <div class="bg navbar shadow-sm">
   <div
-    class="flex w-full border-4 border-secondary bg-primary px-4 py-4 shadow-sm ring-accent"
+    class="flex w-full border-4 border-secondary bg-primary px-4 py-4 shadow-sm ring-accent gap-2"
   >
     <SelectWeek bind:startDate={lessonWeekStartDate.current} />
+    <ExportWeek bind:startDate={lessonWeekStartDate.current}/>
     <div class="ml-auto">
       <LessonCreateModal>Create Lesson</LessonCreateModal>
     </div>

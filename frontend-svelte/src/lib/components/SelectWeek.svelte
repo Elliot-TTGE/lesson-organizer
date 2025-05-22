@@ -3,14 +3,10 @@
 
     let { startDate = $bindable()}: { startDate: Date } = $props();
 
-    function updateStartDate(newStartDate: Date) {
-        startDate = getStartOfWeekInUTC(newStartDate);
-    }
-
     function changeWeek(offset: number) {
         const newStartDate = new Date(startDate);
         newStartDate.setDate(newStartDate.getDate() + offset);
-        updateStartDate(newStartDate);
+        startDate = getStartOfWeekInUTC(newStartDate);
     }
 </script>
 
@@ -23,9 +19,9 @@
         onblur={(e: Event) => {
         const value = (e.target as HTMLInputElement).value;
         if (value) {
-            updateStartDate(new Date((e.target as HTMLInputElement).value));
+            startDate = getStartOfWeekInUTC(new Date((e.target as HTMLInputElement).value));
         } else {
-            updateStartDate(new Date());
+            startDate = getStartOfWeekInUTC(new Date());
         }
         }}
     />
