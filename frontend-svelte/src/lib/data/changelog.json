@@ -1,5 +1,13 @@
 [
     {
+        "version": "v0.4",
+        "date": "April 18, 2025",
+        "changes": [
+            "Updated reschedule button to allow the user to choose the date for the new lesson.",
+            "Added the TTGE logo to the navigation bar."
+        ]
+    },
+    {
         "version": "v0.3",
         "date": "April 16, 2025",
         "changes": [
