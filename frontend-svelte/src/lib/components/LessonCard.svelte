@@ -98,9 +98,9 @@
 
   <!-- Delete Confirmation Modal -->
   {#if showDeleteModal}
-    <dialog class="modal modal-open">
+    <dialog class="modal modal-open" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">Confirm Deletion</h3>
+        <h3 id="delete-modal-title" class="font-bold text-lg">Confirm Deletion</h3>
         <p class="py-4">Are you sure you want to delete this lesson?</p>
         <div class="modal-action">
           <button onclick={handleDelete} class="btn btn-error">Delete</button>
