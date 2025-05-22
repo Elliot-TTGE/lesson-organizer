@@ -7,6 +7,7 @@
 
   let { lesson = $bindable() }: { lesson: Lesson } = $props();
   let isEditing: boolean = $state(false);
+  let showDeleteModal: boolean = $state(false);
 
   let { date, time } = $derived(initializeDateTime(lesson.datetime));
   let weekday: string = $derived(new Date(lesson.datetime).toLocaleDateString("en-US", {
@@ -14,7 +15,7 @@
   }));
 
   // This is a bit hacky, but I didn't have time to make a cleaner solution
-  let { date: dateInput, date: timeInput } = $state(initializeDateTimeInput(lesson.datetime));
+  let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput(lesson.datetime));
   let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
 
   let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
@@ -23,18 +24,17 @@
   let notes: string = $state(lesson.notes);
 
   async function handleDelete() {
-    if (confirm("Are you sure you want to delete this lesson?")) {
-      await deleteLesson(lesson.id);
-      removeLessonFromState(lesson.id);
-      isEditing = false;
-    }
+    await deleteLesson(lesson.id);
+    removeLessonFromState(lesson.id);
+    isEditing = false;
+    showDeleteModal = false;
   }
 
   async function handleConfirm() {
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
     const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
     await updateLesson(updatedLesson);
-    updateLessonInState(updatedLesson)
+    updateLessonInState(updatedLesson);
     isEditing = false;
   }
 
@@ -91,10 +91,24 @@
         <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
       </button>
     {/if}
-    <button onclick={handleDelete} class="btn btn-error btn-sm">
+    <button onclick={() => showDeleteModal = true} class="btn btn-error btn-sm">
       <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
     </button>
   </div>
+
+  <!-- Delete Confirmation Modal -->
+  {#if showDeleteModal}
+    <dialog class="modal modal-open">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">Confirm Deletion</h3>
+        <p class="py-4">Are you sure you want to delete this lesson?</p>
+        <div class="modal-action">
+          <button onclick={handleDelete} class="btn btn-error">Delete</button>
+          <button onclick={() => showDeleteModal = false} class="btn">Cancel</button>
+        </div>
+      </div>
+    </dialog>
+  {/if}
 
   <!-- Date Section -->
   {#if isEditing}
