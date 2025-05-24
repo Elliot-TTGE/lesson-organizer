@@ -1,7 +1,8 @@
 <div
-  class="navbar sticky top-0 z-50 flex flex-1 space-x-4 bg-base-100 shadow-sm outline outline-4 outline-secondary"
+  class="navbar fixed top-0 z-50 flex flex-1 space-x-4 bg-base-300 shadow-sm outline-4 outline-base-200 h-16"
 >
-  <a class="btn btn-primary text-xl" href="/lessons">Lesson Calendar</a>
+  <a class="btn btn-primary text-xl" href="/lessons">Calendar</a>
+  <a class="btn btn-primary text-xl" href="/students">Students</a>
   <a class="btn btn-primary text-xl" href="/changelog">Changelog</a>
   <a class="ml-auto flex items-center btn btn-primary btn-active" href="https://towardthegoalenglish.com">
     <img

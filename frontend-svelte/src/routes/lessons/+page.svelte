@@ -17,7 +17,7 @@
   });
 </script>
 
-<div class="bg navbar shadow-sm">
+<div class="bg navbar shadow-sm mt-16">
   <div
     class="flex w-full border-4 border-secondary bg-primary px-4 py-4 shadow-sm ring-accent gap-2"
   >
