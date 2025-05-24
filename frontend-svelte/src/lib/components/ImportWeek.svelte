@@ -65,7 +65,7 @@
                     const created = await createLesson(lesson);
                     addLessonToState(created);
                 } catch (e) {
-                    // Optionally handle error
+
                 }
             }
         };
