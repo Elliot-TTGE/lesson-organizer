@@ -19,8 +19,11 @@ Table student {
     id integer [pk, not null, unique, increment]
     first_name varchar [not null]
     last_name varchar
+    level integer [ref: > level.id]
     created_date datetime [not null]
     status student_status
+    notes varchar
+    date_started datetime
 }
 
 Table lesson {
@@ -38,6 +41,7 @@ Table quiz {
     datetime datetime [not null]
     score real [not null]
     notes varchar
+    unit id [ref: > unit.id]
     lesson_id integer [not null, ref: > lesson.id]
     student_id integer [not null, ref: > student.id]
 }
@@ -48,11 +52,21 @@ Table lesson_student {
     student_id integer [not null, ref: > student.id]
 }
 
+Table unit {
+    id integer [pk, not null, unique, increment]
+    varchar name [not null]
+    level id [ref: > level.id]
+}
+
 Table level {
     id integer [pk, not null, unique, increment]
-    student_id integer [not null, ref: > student.id]
     start_date datetime [not null]
-    level_category varchar [not null]
+    curriculum integer [ref: > curriculum.id]
+}
+
+Table curriculum {
+    id integer [pk, not null, unique, increment]
+    varchar name [not null]
 }
 
 Table stock_image {
