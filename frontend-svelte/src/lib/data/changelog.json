@@ -1,9 +1,13 @@
 [
     {
-        "version": "v0.4.1",
+        "version": "v0.5",
         "date": "May 24, 2025",
-        "change": [
-            "Updated reschedule button to allow the user to choose the time for the new lesson."
+        "changes": [
+            "Updated reschedule button to allow the user to choose the time for the new lesson.",
+            "Added ability to import lessons into the current week.",
+            "Added ability to export the current week's lessons.",
+            "Fixed bug where you could not delete lessons if popups for the site were disabled on the browser.",
+            "Fixed bug where login tokens would not expire at the correct time."
         ]
     },
     {
@@ -11,7 +15,8 @@
         "date": "May 18, 2025",
         "changes": [
             "Updated reschedule button to allow the user to choose the date for the new lesson.",
-            "Added the TTGE logo to the navigation bar."
+            "Added the TTGE logo to the navigation bar.",
+            "Fixed bug where Saturday lessons would sometimes not populate when adding to the current week."
         ]
     },
     {
