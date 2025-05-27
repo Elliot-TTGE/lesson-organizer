@@ -16,26 +16,26 @@ services:
       - TS_AUTH_KEY=${TS_AUTH_KEY}
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
 
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    networks:
-      - app-network
-    ports:
-      - "80:80"
-      # - "443:443"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - backend
+  # caddy:
+  #   image: caddy:latest
+  #   container_name: caddy
+  #   networks:
+  #     - app-network
+  #   ports:
+  #     - "80:80"
+  #     # - "443:443"
+  #   volumes:
+  #     - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   depends_on:
+  #     - frontend
+  #     - backend
 
 networks:
   app-network:
     driver: bridge
 
-volumes:
-  caddy_data:
-  caddy_config:
+# volumes:
+#   caddy_data:
+#   caddy_config:
