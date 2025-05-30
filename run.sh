@@ -28,6 +28,17 @@ case $MODE in
     docker-compose down --volumes --rmi all
     echo "Cleanup complete."
     ;;
+  backup)
+    TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+    BACKUP_FILE="backup-$TIMESTAMP.db"
+    echo "Backing up database to ./db_backups/$BACKUP_FILE"
+    docker run --rm \
+      -v lesson-organizer_backend_db:/db \
+      -v "$(pwd)/db_backups":/backup \
+      alpine \
+      cp /db/lesson_organizer.db /backup/$BACKUP_FILE
+    echo "Backup complete."
+    ;;
   *)
     usage
     ;;

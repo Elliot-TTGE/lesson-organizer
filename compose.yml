@@ -6,6 +6,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
+      - ./backend-flask:/app
       - backend_db:/app/instance
     networks:
       - app-network
