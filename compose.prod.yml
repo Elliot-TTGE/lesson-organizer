@@ -15,6 +15,15 @@ services:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_AUTH_KEY=${TS_AUTH_KEY}
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
+      
+  backend:
+    volumes:
+      - ./db_backups:/backup
+    environment:
+      - FLASK_ENV=production
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      cron && exec python app/main.py
 
   # caddy:
   #   image: caddy:latest
