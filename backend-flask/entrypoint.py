@@ -4,12 +4,7 @@ import subprocess
 from app.main import app, db
 from app.data.load_demo_data import load_demo_data
 
-if __name__ == '__main__':
-    # Start cron in the background
-    #print("Starting cronjobs...", flush=True)
-    #subprocess.Popen(["cron"])
-    #print("Cronjobs started.", flush=True)
-    
+if __name__ == '__main__':    
     # Wait for the database to be ready
     time.sleep(5)
 

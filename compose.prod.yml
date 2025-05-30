@@ -17,13 +17,25 @@ services:
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
       
   backend:
-    volumes:
-      - ./db_backups:/backup
     environment:
       - FLASK_ENV=production
-    entrypoint: ["/bin/sh", "-c"]
-    command: |
-      cron && exec python app/main.py
+    volumes:
+      - backend_db:/app/instance
+
+  cron-backup:
+    image: alpine:latest
+    container_name: cron-backup
+    volumes:
+      - ./db_backups:/db_backups
+      - backend_db:/db_source:ro
+    entrypoint: |
+      /bin/sh -c '
+        echo "0 3 * * 0 cp /db_source/lesson_organizer.db /db_backups/backup-\$(date +\\%F_\\%H-\\%M-\\%S).db && find /db_backups -name \"backup-*.db\" -mtime +90 -delete" > /etc/crontabs/root
+        crond -f -d 8
+      '
+    depends_on:
+      - backend
+    restart: unless-stopped
 
   # caddy:
   #   image: caddy:latest
@@ -45,6 +57,5 @@ networks:
   app-network:
     driver: bridge
 
-# volumes:
-#   caddy_data:
-#   caddy_config:
+volumes:
+  backend_db:

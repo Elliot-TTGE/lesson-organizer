@@ -1,1 +1,0 @@
-51 1 * * * cp /app/instance/lesson_organizer.db /backup/backup-$(date +\%Y-\%m-%d).db && find /backup -name 'backup-*.db' -mtime +90 -delete
