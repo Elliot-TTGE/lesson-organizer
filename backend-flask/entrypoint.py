@@ -4,7 +4,7 @@ import subprocess
 from app.main import app, db
 from app.data.load_demo_data import load_demo_data
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     # Wait for the database to be ready
     time.sleep(5)
 
