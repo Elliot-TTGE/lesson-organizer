@@ -5,6 +5,9 @@ frontend-svelte/package-lock
 # Backend
 backend-flask/venv
 
+# Backups
+db_backups
+
 # General
 *.pyc
 __pycache__/

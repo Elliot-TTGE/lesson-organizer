@@ -15,27 +15,47 @@ services:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_AUTH_KEY=${TS_AUTH_KEY}
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
-
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    networks:
-      - app-network
-    ports:
-      - "80:80"
-      # - "443:443"
+      
+  backend:
+    environment:
+      - FLASK_ENV=production
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - backend_db:/app/instance
+
+  cron-backup:
+    image: alpine:latest
+    container_name: cron-backup
+    volumes:
+      - ./db_backups:/db_backups
+      - backend_db:/db_source:ro
+    entrypoint: |
+      /bin/sh -c '
+        echo "0 3 * * 0 cp /db_source/lesson_organizer.db /db_backups/backup-\$(date +\\%F_\\%H-\\%M-\\%S).db && find /db_backups -name \"backup-*.db\" -mtime +90 -delete" > /etc/crontabs/root
+        crond -f -d 8
+      '
     depends_on:
-      - frontend
       - backend
+    restart: unless-stopped
+
+  # caddy:
+  #   image: caddy:latest
+  #   container_name: caddy
+  #   networks:
+  #     - app-network
+  #   ports:
+  #     - "80:80"
+  #     # - "443:443"
+  #   volumes:
+  #     - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   depends_on:
+  #     - frontend
+  #     - backend
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  caddy_data:
-  caddy_config:
+  backend_db:

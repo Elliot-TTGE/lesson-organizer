@@ -6,7 +6,8 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./backend-flask/app:/app/app
+      - ./backend-flask:/app
+      - backend_db:/app/instance
     networks:
       - app-network
     environment:
@@ -39,6 +40,7 @@ networks:
     driver: bridge
 
 volumes:
+  backend_db:
   node_modules:
   frontend-cache:
   caddy_data:
