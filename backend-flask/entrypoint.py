@@ -1,6 +1,5 @@
 import time
 import sys
-import subprocess
 from app.main import app, db
 from app.data.load_demo_data import load_demo_data
 
