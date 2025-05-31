@@ -1,14 +1,14 @@
 <script lang="ts">
     import type { Student } from "../../types";
 
-    let students: Number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7];
+    let students: Number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8];
 
     function onMount() {
         // Fetch all students from database.
     }
 </script>
 
-<div class="sticky mt-16 z-10 top-16">
+<div class="sticky z-10 mt-16 top-16 bg-base-200">
     <div class="flex bg-base-200">
         <div class="flex">
             <!-- Options for student search -->
@@ -36,6 +36,7 @@
     <table class="table border bg-base-200 border-base-200">
         <thead class="sticky z-10 top-32">
             <tr>
+                <th>#</th>
                 <th>Name</th>
                 <th>Level</th>
                 <th>Next Lesson</th>
@@ -46,10 +47,11 @@
     </table>
 </div>
 <div class="overflow-y-auto">
-    <table class="table border border-base-200">
+    <table class="table table-zebra border border-base-200">
         <tbody>
             {#each students as student}
                 <tr>
+                    <td>{student}</td>
                     <td>student.name</td>
                     <td>student.level</td>
                     <td>student.nextLesson</td>
