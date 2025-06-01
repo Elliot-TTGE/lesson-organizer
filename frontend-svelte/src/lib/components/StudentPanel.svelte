@@ -1,7 +1,21 @@
 <script lang="ts">
     import type { Student } from "../../types";
+    import StudentCard from "./StudentCard.svelte";
 
     let students: Number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8];
+
+    let showModal = $state(false);
+    let selectedStudent = $state<Number | null>(null);
+
+    function openModal(student: Number) {
+        showModal = true;
+        selectedStudent = student;
+    }
+
+    function closeModal() {
+        showModal = false;
+        selectedStudent = null;
+    }
 
     function onMount() {
         // Fetch all students from database.
@@ -58,10 +72,25 @@
                     <td>student.lastLesson</td>
                     <td>student.lastQuiz</td>
                     <td>
-                        <button class="btn btn-primary btn-sm">Edit</button>
+                        <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
                     </td>
                 </tr>
             {/each}
         </tbody>
     </table>
 </div>
+
+{#if showModal}
+    <dialog open class="modal modal-middle">
+        <div class="modal-box bg-neutral text-neutral-content max-w-[85vw] h-[85vw]">
+            <!-- Replace the div below with your new StudentCard component -->
+            <div class="modal-action justify-end p-0 mb-2">
+                <button class="btn" onclick={closeModal}>Close</button>
+            </div>
+            <StudentCard student={selectedStudent} />
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button onclick={closeModal}>close</button>
+        </form>
+    </dialog>
+{/if}
