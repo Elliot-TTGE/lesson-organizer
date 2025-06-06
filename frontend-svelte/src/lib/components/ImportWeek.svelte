@@ -6,6 +6,10 @@
 
     function parseCSV(csv: string): Partial<Lesson>[] {
         const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        if (result.errors.length > 0) {
+            console.error("CSV parsing errors:", result.errors);
+            return [];
+        }
         return (result.data as Record<string, string>[]).map(obj => ({
             id: obj.id ? Number(obj.id) : undefined,
             datetime: obj.datetime ? new Date(obj.datetime).toISOString() : "",
