@@ -17,7 +17,7 @@
         }));
     }
 
-    function triggerDownload(blob: Blob, extension: string, mimeType: string) {
+    function triggerDownload(blob: Blob, extension: string) {
         const dateStr = getStartOfWeekInUTC(startDate).toISOString().split("T")[0];
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
