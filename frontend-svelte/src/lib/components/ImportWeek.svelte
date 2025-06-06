@@ -2,28 +2,23 @@
     import type { Lesson, Student } from "../../types";
     import { createLesson } from "../../api/lesson";
     import { addLessonToState } from "$lib/states/lessonState.svelte";
+    import Papa from "papaparse";
 
     function parseCSV(csv: string): Partial<Lesson>[] {
-        const [headerLine, ...lines] = csv.trim().split("\n");
-        const headers = headerLine.split(",");
-        return lines
-            .filter(Boolean)
-            .map(line => {
-                const values = line.split(",");
-                const obj: Record<string, string> = {};
-                headers.forEach((header, i) => {
-                    obj[header] = values[i] || "";
-                });
-                return {
-                    id: obj.id ? Number(obj.id) : undefined,
-                    datetime: obj.datetime ? new Date(obj.datetime).toISOString() : "",
-                    created_date: obj.created_date ? new Date(obj.created_date).toISOString() : "",
-                    students: [],
-                    plan: obj.plan || "",
-                    concepts: obj.concepts || "",
-                    notes: obj.notes || ""
-                };
-            });
+        const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
+        if (result.errors.length > 0) {
+            console.error("CSV parsing errors:", result.errors);
+            return [];
+        }
+        return (result.data as Record<string, string>[]).map(obj => ({
+            id: obj.id ? Number(obj.id) : undefined,
+            datetime: obj.datetime ? new Date(obj.datetime).toISOString() : "",
+            created_date: obj.created_date ? new Date(obj.created_date).toISOString() : "",
+            students: [],
+            plan: obj.plan || "",
+            concepts: obj.concepts || "",
+            notes: obj.notes || ""
+        }));
     }
 
     function parseJSON(json: string): Partial<Lesson>[] {
