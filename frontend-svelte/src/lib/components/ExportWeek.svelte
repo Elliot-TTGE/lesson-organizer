@@ -1,38 +1,44 @@
 <script lang="ts">
     import { lessonState } from "$lib/states/lessonState.svelte";
     import { getStartOfWeekInUTC } from "$lib/utils/dateUtils";
+    import Papa from "papaparse";
 
     let { startDate = $bindable() }: { startDate: Date } = $props();
 
-    function exportWeekAsJSON() {
-        const jsonBlob = new Blob([JSON.stringify(lessonState.current.flat(), null, 2)], {
-            type: "application/json",
-        });
+    function getExportData() {
+        return lessonState.current.flat().map((lesson) => ({
+            id: lesson.id,
+            datetime: new Date(lesson.datetime).toISOString(),
+            created_date: lesson.created_date,
+            students: lesson.students,
+            plan: lesson.plan,
+            concepts: lesson.concepts,
+            notes: lesson.notes,
+        }));
+    }
+
+    function triggerDownload(blob: Blob, extension: string, mimeType: string) {
+        const dateStr = getStartOfWeekInUTC(startDate).toISOString().split("T")[0];
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(jsonBlob);
-        link.download = `lessons-week-${getStartOfWeekInUTC(startDate).toISOString().split("T")[0]}.json`;
+        link.href = URL.createObjectURL(blob);
+        link.download = `lessons-week-${dateStr}.${extension}`;
         link.click();
         URL.revokeObjectURL(link.href);
     }
 
+    function exportWeekAsJSON() {
+        const data = getExportData();
+        const jsonBlob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json",
+        });
+        triggerDownload(jsonBlob, "json", "application/json");
+    }
+
     function exportWeekAsCSV() {
-        const headers = ["id", "datetime", "created_date", "students", "plan", "concepts", "notes"];
-        const rows = lessonState.current.flat().map((lesson) => [
-            lesson.id || "",
-            new Date(lesson.datetime).toISOString(),
-            lesson.created_date || "",
-            lesson.students || "",
-            lesson.plan || "",
-            lesson.concepts || "",
-            lesson.notes || "",
-        ]);
-        const csvContent = [headers, ...rows].map((row) => row.join(",")).join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `lessons-week-${getStartOfWeekInUTC(startDate).toISOString().split("T")[0]}.csv`;
-        link.click();
-        URL.revokeObjectURL(link.href);
+        const data = getExportData();
+        const csv = Papa.unparse(data, { quotes: true });
+        const csvBlob = new Blob([csv], { type: "text/csv" });
+        triggerDownload(csvBlob, "csv", "text/csv");
     }
 </script>
 
