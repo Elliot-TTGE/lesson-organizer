@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Student } from "../../types";
     import StudentCard from "./StudentCard.svelte";
+    import StudentCreateModal from "./StudentCreateModal.svelte";
 
     let students: Number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -23,11 +24,8 @@
 </script>
 
 <div class="sticky z-10 mt-16 top-16 bg-base-200">
-    <div class="flex bg-base-200">
-        <div class="flex">
-            <!-- Options for student search -->
-        </div>
-        <fieldset class="fieldset ml-auto mr-[2rem] w-[25rem] mb-2">
+    <div class="flex bg-base-200 mb-2">
+        <fieldset class="fielset mr-auto ml-8 w-100">
             <p class="fieldset-legend">Find a student</p>
             <label class="input input-accent">
                 <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -45,6 +43,12 @@
                 <input type="search" placeholder="Search"/>
             </label>
         </fieldset>
+        <div class="flex items-center">
+            <div class="mr-8">
+                <StudentCreateModal>New Student</StudentCreateModal>
+            </div>
+            <!-- Options for student search -->
+        </div>
     </div>
 
     <table class="table border bg-base-200 border-base-200">

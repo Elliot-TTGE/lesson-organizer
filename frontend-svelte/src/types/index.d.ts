@@ -3,8 +3,10 @@ export interface Student {
   first_name: string;
   last_name: string;
   created_date: string;
+  started_date: string;
   status: 'active' | 'inactive' | 'hold' | 'trial';
   levels: Level[];
+  notes: string;
 }
 
 export interface Lesson {
