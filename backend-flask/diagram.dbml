@@ -2,11 +2,10 @@ Project lesson_organizer {
     database_type: 'SQLite'
 }
 
-enum student_status {
-    active
-    inactive
-    hold
-    trial
+Table student_status {
+    id integer [pk, not null, unique, increment]
+    name varchar
+    changed_at datetime
 }
 
 enum user_role {
@@ -19,11 +18,21 @@ Table student {
     id integer [pk, not null, unique, increment]
     first_name varchar [not null]
     last_name varchar
-    level integer [ref: > level.id]
     created_date datetime [not null]
-    status student_status
-    notes varchar
+    status integer [ref: > student_status.id]
+    notes_general varchar
+    notes_strengths varchar
+    notes_weaknesses varchar
+    notes_future varchar
     date_started datetime
+    classes_per_week integer
+}
+
+Table student_level {
+    id integer [pk, not null, unique, increment]
+    student integer [ref: > student.id]
+    level integer [ref: > level.id]
+    start_date datetime
 }
 
 Table lesson {
@@ -35,15 +44,21 @@ Table lesson {
     notes varchar
 }
 
+Table student_lesson_quiz {
+    id integer [pk, not null, unique, increment]
+    student integer [ref: > student.id]
+    lesson_id integer [not null, ref: > lesson.id]
+    quiz integer [ref: > quiz.id]
+    points integer
+    notes varchar
+
+}
+
 Table quiz {
     id integer [pk, not null, unique, increment]
     name varchar [not null]
-    datetime datetime [not null]
-    score real [not null]
-    notes varchar
+    max_points integer [not null]
     unit id [ref: > unit.id]
-    lesson_id integer [not null, ref: > lesson.id]
-    student_id integer [not null, ref: > student.id]
 }
 
 Table lesson_student {
@@ -54,13 +69,13 @@ Table lesson_student {
 
 Table unit {
     id integer [pk, not null, unique, increment]
-    varchar name [not null]
+    name varchar [not null]
     level id [ref: > level.id]
 }
 
 Table level {
     id integer [pk, not null, unique, increment]
-    start_date datetime [not null]
+    name varchar
     curriculum integer [ref: > curriculum.id]
 }
 
