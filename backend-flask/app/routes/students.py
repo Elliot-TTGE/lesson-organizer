@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.main import db
-from app.models.student import Student
-from app.models.schema import StudentSchema
+from app.models.student_model import Student
+from app.schemas.schemas import StudentSchema
 from app.routes.utils import response_wrapper
 from datetime import datetime
 
