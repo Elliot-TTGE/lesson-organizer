@@ -4,6 +4,7 @@ Flask-JWT-Extended>=4.7.1
 flask-cors>=5.0.0
 marshmallow>=3.25.1
 marshmallow-sqlalchemy
+Flask-Migrate
 SQLAlchemy>=2.0.37
 Flask-SQLAlchemy>=3.1.1
 setuptools
