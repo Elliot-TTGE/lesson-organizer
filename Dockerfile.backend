@@ -19,4 +19,4 @@ ENV FLASK_APP=app.main
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=4000
 
-CMD ["python", "-u", "/app/entrypoint.py", "--load-demo"]
+CMD ["python", "-u", "/app/entrypoint.py", "--load-init"]
