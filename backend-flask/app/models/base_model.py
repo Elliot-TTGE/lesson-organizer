@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
 from app.db import db
 
 class BaseModel(db.Model):
     __abstract__ = True
-    id = db.Column(db.Integer, primary_key=True, auto_increment=True)
-    created_date = db.Column(db.Datetime, nullable=False)
-    updated_date = db.Column(db.Datetime, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    created_date = db.Column(db.Datetime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.Datetime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
