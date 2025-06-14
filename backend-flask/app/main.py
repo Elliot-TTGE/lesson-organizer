@@ -6,7 +6,7 @@ from datetime import timedelta
 from .db import db
 from .routes.lessons import lessons_bp
 from .routes.students import students_bp
-from .models.user import User
+from .models.user_model import User
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
 app = Flask(__name__)

@@ -1,14 +1,13 @@
 from app.db import db
+from app.models.base_model import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
 
-class User(db.Model):
+class User(BaseModel):
     __tablename__ = 'user'
     
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
-    created_date = db.Column(db.DateTime, nullable=False)
     last_login = db.Column(db.DateTime)
     email = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
