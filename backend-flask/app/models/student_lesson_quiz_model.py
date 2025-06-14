@@ -9,8 +9,3 @@ class StudentLessonQuiz(BaseModel):
     quiz_id = db.Column(db.Integer, db.ForeignKey("quiz.id", ondelete="SET NULL"), nullable=True)
     points = db.Column(db.Integer)
     notes = db.Column(db.String)
-
-    # Relationships
-    student = db.relationship("Student", back_populates="quizzes")
-    lesson = db.relationship("Lesson", back_populates="student_lesson_quizzes")
-    quiz = db.relationship("Quiz", back_populates="student_lesson_quizzes")

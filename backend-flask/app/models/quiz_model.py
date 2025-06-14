@@ -10,4 +10,16 @@ class Quiz(BaseModel):
 
     # Relationships
     unit = db.relationship("Unit", back_populates="quizzes")
-    student_lesson_quizzes = db.relationship("StudentLessonQuiz", back_populates="quiz", cascade="all, delete-orphan")
+    lessons = db.relationship(
+        "Lesson",
+        secondary="student_lesson_quiz",
+        primaryjoin="Quiz.id==StudentLessonQuiz.quiz_id",
+        secondaryjoin="Lesson.id==StudentLessonQuiz.lesson_id",
+        back_populates="quizzes"
+    )
+    students = db.relationship(
+        "Student",
+        secondary="student_lesson_quiz",
+        primaryjoin="Quiz.id==StudentLessonQuiz.quiz_id",
+        secondaryjoin="Student.id==StudentLessonQuiz.student_id"
+    )

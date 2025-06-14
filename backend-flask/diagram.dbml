@@ -63,7 +63,7 @@ Table student_lesson_quiz {
     id integer [pk, not null, unique, increment]
     student_id integer [not null, ref: > student.id]
     lesson_id integer [not null, ref: > lesson.id]
-    quiz integer [ref: > quiz.id]
+    quiz_id integer [ref: > quiz.id]
     points integer
     notes varchar
 }

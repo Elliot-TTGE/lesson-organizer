@@ -17,11 +17,6 @@ class Lesson(BaseModel):
     )
     quizzes = db.relationship(
         "Quiz",
-        back_populates="lesson",
-        cascade="all, delete-orphan"
-    )
-    student_lesson_quizzes = db.relationship(
-        "StudentLessonQuiz",
-        back_populates="lesson",
-        cascade="all, delete-orphan"
+        secondary="student_lesson_quiz",
+        back_populates="lessons"
     )
