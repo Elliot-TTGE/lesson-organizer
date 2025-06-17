@@ -15,6 +15,7 @@ services:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_AUTH_KEY=${TS_AUTH_KEY}
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
+    restart: unless-stopped
       
   backend:
     environment:
