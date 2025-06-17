@@ -1,5 +1,15 @@
 [
     {
+        "version": "v0.6",
+        "date": "June 17, 2025",
+        "changes": [
+            "Fixed bug where backend data does not persist between updates.",
+            "Added backup functionality to production server database.",
+            "Fixed bug where CSV exports would not parse commas and other characters in data correcrtly.",
+            "Fixed bug where production server would not automatically power on after power loss."
+        ]
+    },
+    {
         "version": "v0.5",
         "date": "May 24, 2025",
         "changes": [
