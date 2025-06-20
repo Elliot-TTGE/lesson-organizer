@@ -1,8 +1,8 @@
+from app.models.base_model import BaseModel
 from app.db import db
 
-class LessonStudent(db.Model):
+class LessonStudent(BaseModel):
     __tablename__ = 'lesson_student'
     
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     lesson_id = db.Column(db.Integer, db.ForeignKey('lesson.id', ondelete='CASCADE'), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=False)

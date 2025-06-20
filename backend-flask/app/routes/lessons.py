@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app.db import db
-from app.models.lesson import Lesson
-from app.models.schema import LessonSchema
-from app.models.student import Student
-from app.models.quiz import Quiz
+from app.models.lesson_model import Lesson
+from app.schemas.schemas import LessonSchema
+from app.models.student_model import Student
+from app.models.quiz_model import Quiz
 from app.routes.utils import response_wrapper
 from datetime import datetime, timezone, timedelta
 
