@@ -11,6 +11,7 @@ from app.models.quiz_model import Quiz
 from app.models.student_lesson_quiz_model import StudentLessonQuiz
 from app.models.user_model import User
 from app.models.stock_image_model import StockImage
+from app.models.lesson_model import Lesson
 
 class StudentSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
@@ -28,6 +29,16 @@ class StudentStatusHistorySchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = StudentStatusHistory
     # exclude = ("student",)  # Prevent duplicate Student during serialization
+
+class LessonSchema(BaseSchema):
+    class Meta(BaseSchema.Meta):
+        model=Lesson
+
+    def on_bind_field(self, field_name, field_obj):
+        if field_name == "students":
+            field_obj.dump_only = False
+        else:
+            super().on_bind_field(field_name, field_obj)
 
 class CurriculumSchema(BaseSchema):
     class Meta(BaseSchema.Meta):

@@ -1,5 +1,6 @@
-from marshmallow import Schema, fields, post_dump, EXCLUDE
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow import post_dump, EXCLUDE
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
+from marshmallow_sqlalchemy.fields import Nested
 from app.db import db
 import re
 
@@ -12,6 +13,10 @@ class BaseSchema(SQLAlchemyAutoSchema):
         load_instance = True
         include_relationships = True
 
+    id = auto_field(dump_only=True)
+    created_date = auto_field(dump_only=True)
+    updated_date = auto_field(dump_only=True)
+
     @post_dump
     def add_utc_suffix(self, data, **kwargs):
         # Add 'Z' to all datetime fields that are present and not already suffixed
@@ -22,4 +27,10 @@ class BaseSchema(SQLAlchemyAutoSchema):
                 and not value.endswith('Z')
             ):
                 data[key] = value + 'Z'
-            return data
+        return data
+
+    def on_bind_field(self, field_name, field_obj):
+        # If the field is a Nested (relationship), set it as dump_only
+        if isinstance(field_obj, Nested):
+            field_obj.dump_only = True
+        super().on_bind_field(field_name, field_obj)

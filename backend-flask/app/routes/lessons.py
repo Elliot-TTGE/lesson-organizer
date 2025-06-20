@@ -1,3 +1,57 @@
+"""
+Routes for managing lessons.
+
+Blueprint: lessons_bp
+
+Routes:
+-------
+
+GET /lessons
+    Retrieves a list of lessons within a specified date range.
+    Query Parameters:
+        - initial_date (str, optional): The start date in ISO format (YYYY-MM-DD). Defaults to current UTC date if not provided.
+        - range_length (int, optional): Number of days in the range. Defaults to 7.
+    Response:
+        - 200: List of lessons serialized by LessonSchema.
+        - 400: Error if initial_date is not in ISO format.
+
+POST /lessons
+    Creates a new lesson.
+    Request JSON Body:
+        {
+            "lesson": { ... },         # Lesson fields as defined in LessonSchema
+            "student_ids": [1, 2, ...] # Optional list of student IDs to associate with the lesson
+        }
+    Response:
+        - 201: The created lesson serialized by LessonSchema.
+
+PUT /lessons/<int:id>
+    Updates an existing lesson.
+    URL Parameters:
+        - id (int): ID of the lesson to update.
+    Request JSON Body:
+        {
+            "lesson": { ... },         # Fields to update as defined in LessonSchema
+            "student_ids": [1, 2, ...] # Optional list of student IDs to associate with the lesson
+        }
+    Response:
+        - 200: The updated lesson serialized by LessonSchema.
+        - 404: If lesson with given ID does not exist.
+
+DELETE /lessons/<int:id>
+    Deletes a lesson.
+    URL Parameters:
+        - id (int): ID of the lesson to delete.
+    Response:
+        - 204: No content on successful deletion.
+        - 404: If lesson with given ID does not exist.
+
+Formatting Requirements:
+------------------------
+- Dates must be provided in ISO format (YYYY-MM-DD).
+- Request bodies for POST and PUT must be JSON with "lesson" and optional "student_ids" keys.
+- All responses are JSON-formatted unless otherwise specified (e.g., DELETE returns empty body).
+"""
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app.db import db
@@ -10,6 +64,7 @@ from datetime import datetime, timezone, timedelta
 
 lessons_bp = Blueprint('lessons', __name__)
 
+
 @lessons_bp.route('/lessons', methods=['GET'])
 @jwt_required()
 @response_wrapper
@@ -18,7 +73,6 @@ def get_lessons():
     range_length = request.args.get('range_length', type=int, default=7)
 
     if initial_date_str:
-        print(initial_date_str, flush=True)
         try:
             initial_date = datetime.fromisoformat(initial_date_str)
         except ValueError:
@@ -37,18 +91,16 @@ def get_lessons():
 @response_wrapper
 def create_lesson():
     data = request.get_json()
+    lesson_data = data.get("lesson", {})
+    student_ids = data.get("student_ids", [])
+
     lesson_schema = LessonSchema()
-    lesson = lesson_schema.load(data)
-    new_lesson = Lesson(
-        datetime=lesson['datetime'],
-        plan=lesson['plan'],
-        concepts=lesson['concepts'],
-        created_date=datetime.now(timezone.utc),
-        notes=lesson['notes']
-    )
-    db.session.add(new_lesson)
+    lesson = lesson_schema.load(lesson_data, instance=lesson, partial=True)
+    if student_ids:
+        lesson.students = Student.query.filter(Student.id.in_(student_ids)).all()
+    db.session.add(lesson)
     db.session.commit()
-    return lesson_schema.dump(new_lesson), 201
+    return lesson_schema.dump(lesson), 201
 
 @lessons_bp.route('/lessons/<int:id>', methods=['PUT'])
 @jwt_required()
@@ -56,25 +108,15 @@ def create_lesson():
 def update_lesson(id):
     lesson = Lesson.query.get_or_404(id)
     data = request.get_json()
+    lesson_data = data.get("lesson", {})
+    student_ids = data.get("student_ids", [])
+
     lesson_schema = LessonSchema()
-    updated_data = lesson_schema.load(data, partial=True)
-    
-    if 'datetime' in updated_data:
-        lesson.datetime = updated_data['datetime']
-    if 'plan' in updated_data:
-        lesson.plan = updated_data['plan']
-    if 'concepts' in updated_data:
-        lesson.concepts = updated_data['concepts']
-    if 'notes' in updated_data:
-        lesson.notes = updated_data['notes']
-    
-    if 'students' in data:
-        lesson.students = [Student.query.get(student['id']) for student in data['students']]
-    if 'quizzes' in data:
-        lesson.quizzes = [Quiz.query.get(quiz['id']) for quiz in data['quizzes']]
-    
+    updated_lesson = lesson_schema.load(lesson_data, instance=lesson, partial=True)
+    if student_ids:
+        lesson.students = Student.query.filter(Student.id.in_(student_ids)).all()
     db.session.commit()
-    return lesson_schema.dump(lesson), 200
+    return lesson_schema.dump(updated_lesson), 200
 
 @lessons_bp.route('/lessons/<int:id>', methods=['DELETE'])
 @jwt_required()
