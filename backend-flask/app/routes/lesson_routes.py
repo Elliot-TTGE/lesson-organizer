@@ -1,57 +1,3 @@
-"""
-Routes for managing lessons.
-
-Blueprint: lessons_bp
-
-Routes:
--------
-
-GET /lessons
-    Retrieves a list of lessons within a specified date range.
-    Query Parameters:
-        - initial_date (str, optional): The start date in ISO format (YYYY-MM-DD). Defaults to current UTC date if not provided.
-        - range_length (int, optional): Number of days in the range. Defaults to 7.
-    Response:
-        - 200: List of lessons serialized by LessonSchema.
-        - 400: Error if initial_date is not in ISO format.
-
-POST /lessons
-    Creates a new lesson.
-    Request JSON Body:
-        {
-            "lesson": { ... },         # Lesson fields as defined in LessonSchema
-            "student_ids": [1, 2, ...] # Optional list of student IDs to associate with the lesson
-        }
-    Response:
-        - 201: The created lesson serialized by LessonSchema.
-
-PUT /lessons/<int:id>
-    Updates an existing lesson.
-    URL Parameters:
-        - id (int): ID of the lesson to update.
-    Request JSON Body:
-        {
-            "lesson": { ... },         # Fields to update as defined in LessonSchema
-            "student_ids": [1, 2, ...] # Optional list of student IDs to associate with the lesson
-        }
-    Response:
-        - 200: The updated lesson serialized by LessonSchema.
-        - 404: If lesson with given ID does not exist.
-
-DELETE /lessons/<int:id>
-    Deletes a lesson.
-    URL Parameters:
-        - id (int): ID of the lesson to delete.
-    Response:
-        - 204: No content on successful deletion.
-        - 404: If lesson with given ID does not exist.
-
-Formatting Requirements:
-------------------------
-- Dates must be provided in ISO format (YYYY-MM-DD).
-- Request bodies for POST and PUT must be JSON with "lesson" and optional "student_ids" keys.
-- All responses are JSON-formatted unless otherwise specified (e.g., DELETE returns empty body).
-"""
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app.db import db
@@ -69,6 +15,22 @@ lessons_bp = Blueprint('lessons', __name__)
 @jwt_required()
 @response_wrapper
 def get_lessons():
+    """
+    GET /lessons
+
+    Query Parameters:
+    - id: int (optional) — Get a single lesson by ID.
+    - student_id: int (optional) — Filter lessons by student ID.
+    - start: str (optional, ISO date) — Filter lessons after this date.
+    - end: str (optional, ISO date) — Filter lessons before this date.
+    - group: str (optional, "true"/"false") — Filter group lessons.
+    - page: int (optional, default=1) — Pagination page number.
+    - per_page: int (optional, default=20) — Pagination page size.
+
+    Returns:
+    - 200: JSON object with lessons, pagination info.
+    - 404: If lesson not found (when using id).
+    """
     initial_date_str = request.args.get('initial_date')
     range_length = request.args.get('range_length', type=int, default=7)
 
@@ -90,6 +52,24 @@ def get_lessons():
 @jwt_required()
 @response_wrapper
 def create_lesson():
+    """
+    POST /lessons
+
+    Description:
+    Create a new lesson. Only one lesson object should be sent per request.
+
+    Request JSON Body:
+    {
+        "datetime": str,         # required, ISO date string
+        "plan": str,             # optional
+        "concepts": str,         # optional
+        "notes": str             # optional
+    }
+
+    Returns:
+    - 201: JSON object of the created lesson (marshmallow schema)
+    - 400: If validation fails or required fields are missing
+    """
     data = request.get_json()
     lesson_data = data.get("lesson", {})
     student_ids = data.get("student_ids", [])
@@ -106,6 +86,28 @@ def create_lesson():
 @jwt_required()
 @response_wrapper
 def update_lesson(id):
+    """
+    PUT /lessons/<lesson_id>
+
+    Description:
+    Update a single lesson by ID.
+
+    Path Parameters:
+    - lesson_id: int — The ID of the lesson to update.
+
+    Request JSON Body:
+    {
+        "datetime": str,         # optional, ISO date string
+        "plan": str,             # optional
+        "concepts": str,         # optional
+        "notes": str             # optional
+    }
+
+    Returns:
+    - 200: JSON object of the updated lesson (marshmallow schema)
+    - 400: If validation fails or required fields are missing
+    - 404: If lesson not found
+    """
     lesson = Lesson.query.get_or_404(id)
     data = request.get_json()
     lesson_data = data.get("lesson", {})
@@ -122,6 +124,19 @@ def update_lesson(id):
 @jwt_required()
 @response_wrapper
 def delete_lesson(id):
+    """
+    DELETE /lessons/<lesson_id>
+
+    Description:
+    Delete a single lesson by ID.
+
+    Path Parameters:
+    - lesson_id: int — The ID of the lesson to delete.
+
+    Returns:
+    - 204: No content if deletion is successful
+    - 404: If lesson not found
+    """
     lesson = Lesson.query.get_or_404(id)
     db.session.delete(lesson)
     db.session.commit()
