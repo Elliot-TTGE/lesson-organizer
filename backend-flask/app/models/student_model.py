@@ -15,6 +15,6 @@ class Student(BaseModel):
 
     # Relationships
     lessons = db.relationship('Lesson', secondary='lesson_student', back_populates='students')
-    status_history = db.relationship('StudentStatusHistory', back_populates='student', cascade="all, delete-orphan")
-    level_history = db.relationship('StudentLevelHistory', back_populates='student', cascade="all, delete-orphan")
-    quizzes = db.relationship('StudentLessonQuiz', back_populates='student', cascade="all, delete-orphan")
+    status_history = db.relationship('StudentStatusHistory', cascade="all, delete-orphan")
+    level_history = db.relationship('StudentLevelHistory', cascade="all, delete-orphan")
+    quizzes = db.relationship('StudentLessonQuiz', cascade="all, delete-orphan")

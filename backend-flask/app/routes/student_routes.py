@@ -5,7 +5,7 @@ from app.models.student_model import Student
 from app.models.student_status_history_model import StudentStatusHistory
 from app.models.student_level_history_model import StudentLevelHistory
 from app.models.lesson_model import Lesson
-from app.schemas.student_schema import StudentSchema
+from app.schemas.schemas import StudentSchema
 from sqlalchemy import func, and_
 from app.routes.utils import response_wrapper
 

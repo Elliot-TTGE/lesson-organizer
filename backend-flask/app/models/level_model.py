@@ -9,5 +9,5 @@ class Level(BaseModel):
 
     # Relationships
     curriculum = db.relationship("Curriculum", back_populates="levels")
-    student_level_history = db.relationship("StudentLevelHistory", back_populates="level", cascade="all, delete-orphan")
+    student_level_history = db.relationship("StudentLevelHistory", cascade="all, delete-orphan")
     units = db.relationship("Unit", back_populates="level", cascade="all, delete-orphan")

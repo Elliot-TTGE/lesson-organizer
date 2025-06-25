@@ -4,8 +4,8 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from .db import db
-from .routes.lessons import lessons_bp
-from .routes.students import students_bp
+from .routes.lesson_routes import lesson_bp
+from .routes.student_routes import student_bp
 from .models.user_model import User
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
@@ -34,8 +34,8 @@ jwt = JWTManager(app)
 # Configure CORS
 CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
 
-app.register_blueprint(lessons_bp, url_prefix='/api')
-app.register_blueprint(students_bp, url_prefix='/api')
+app.register_blueprint(lesson_bp, url_prefix='/api')
+app.register_blueprint(student_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api')
 
 app.after_request(refresh_expiring_jwts)

@@ -1,7 +1,7 @@
 import time
 import sys
 from app.main import app, db
-from app.data.demo.load_demo_data import load_demo_data
+#from app.data.demo.load_demo_data import load_demo_data
 from app.data.initialize_data import create_all_data
 
 if __name__ == '__main__':
@@ -15,8 +15,8 @@ if __name__ == '__main__':
         db.create_all()
         if load_init:
             create_all_data()
-        if load_demo:
-            load_demo_data()
+        #if load_demo:
+            #load_demo_data()
 
     # Start the Flask application
     app.run(host='0.0.0.0', port=4000)

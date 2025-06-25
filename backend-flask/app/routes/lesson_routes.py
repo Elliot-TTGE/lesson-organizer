@@ -8,10 +8,10 @@ from app.models.quiz_model import Quiz
 from app.routes.utils import response_wrapper
 from datetime import datetime, timezone, timedelta
 
-lessons_bp = Blueprint('lessons', __name__)
+lesson_bp = Blueprint('lessons', __name__)
 
 
-@lessons_bp.route('/lessons', methods=['GET'])
+@lesson_bp.route('/lessons', methods=['GET'])
 @jwt_required()
 @response_wrapper
 def get_lessons():
@@ -48,7 +48,7 @@ def get_lessons():
     lesson_schema = LessonSchema(many=True)
     return lesson_schema.dump(lessons)
 
-@lessons_bp.route('/lessons', methods=['POST'])
+@lesson_bp.route('/lessons', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_lesson():
@@ -82,7 +82,7 @@ def create_lesson():
     db.session.commit()
     return lesson_schema.dump(lesson), 201
 
-@lessons_bp.route('/lessons/<int:id>', methods=['PUT'])
+@lesson_bp.route('/lessons/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_lesson(id):
@@ -120,7 +120,7 @@ def update_lesson(id):
     db.session.commit()
     return lesson_schema.dump(updated_lesson), 200
 
-@lessons_bp.route('/lessons/<int:id>', methods=['DELETE'])
+@lesson_bp.route('/lessons/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_lesson(id):

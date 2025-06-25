@@ -1,4 +1,4 @@
-from app.models.user import User
+from app.models.user_model import User
 from app.models.student_status_model import StudentStatus
 from app.models.curriculum_model import Curriculum
 from app.models.level_model import Level
@@ -27,7 +27,7 @@ def create_admin_user():
             email = admin_email,
             password=generate_password_hash(admin_password),
             role="admin",
-            fs_uniquifier=str(uuid.uuid64())
+            fs_uniquifier=str(uuid.uuid4())
         )
 
 def create_all_student_status():

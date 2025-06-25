@@ -6,7 +6,7 @@ from app.models.student_status_history_model import StudentStatusHistory
 from app.models.curriculum_model import Curriculum
 from app.models.level_model import Level
 from app.models.unit_model import Unit
-from app.models.student_level_history import StudentLevelHistory
+from app.models.student_level_history_model import StudentLevelHistory
 from app.models.quiz_model import Quiz
 from app.models.student_lesson_quiz_model import StudentLessonQuiz
 from app.models.user_model import User
@@ -32,7 +32,7 @@ class StudentStatusHistorySchema(BaseSchema):
 
 class LessonSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
-        model=Lesson
+        model = Lesson
 
     def on_bind_field(self, field_name, field_obj):
         if field_name == "students":
