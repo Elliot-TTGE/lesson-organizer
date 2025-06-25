@@ -15,11 +15,13 @@ class Quiz(BaseModel):
         secondary="student_lesson_quiz",
         primaryjoin="Quiz.id==StudentLessonQuiz.quiz_id",
         secondaryjoin="Lesson.id==StudentLessonQuiz.lesson_id",
-        back_populates="quizzes"
+        back_populates="quizzes",
+        overlaps="students"
     )
     students = db.relationship(
         "Student",
         secondary="student_lesson_quiz",
         primaryjoin="Quiz.id==StudentLessonQuiz.quiz_id",
-        secondaryjoin="Student.id==StudentLessonQuiz.student_id"
+        secondaryjoin="Student.id==StudentLessonQuiz.student_id",
+        overlaps="lessons,quizzes"
     )
