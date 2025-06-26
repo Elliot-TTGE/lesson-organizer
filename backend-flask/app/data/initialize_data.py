@@ -23,7 +23,6 @@ def create_admin_user():
         user = User(
             first_name = admin_first_name,
             last_name = admin_last_name,
-            created_date=datetime.now(timezone.utc),
             email = admin_email,
             password=generate_password_hash(admin_password),
             role="admin",
