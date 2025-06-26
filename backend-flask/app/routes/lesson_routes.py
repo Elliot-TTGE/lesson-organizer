@@ -60,10 +60,13 @@ def create_lesson():
 
     Request JSON Body:
     {
-        "datetime": str,         # required, ISO date string
-        "plan": str,             # optional
-        "concepts": str,         # optional
-        "notes": str             # optional
+        "lesson": {
+            "datetime": str,         # required, ISO date string
+            "plan": str,             # optional
+            "concepts": str,         # optional
+            "notes": str             # optional
+        },
+        "student_ids": [int]         # optional, array of student IDs
     }
 
     Returns:
@@ -75,7 +78,7 @@ def create_lesson():
     student_ids = data.get("student_ids", [])
 
     lesson_schema = LessonSchema()
-    lesson = lesson_schema.load(lesson_data, instance=lesson, partial=True)
+    lesson = lesson_schema.load(lesson_data, partial=True)
     if student_ids:
         lesson.students = Student.query.filter(Student.id.in_(student_ids)).all()
     db.session.add(lesson)
@@ -97,10 +100,13 @@ def update_lesson(id):
 
     Request JSON Body:
     {
-        "datetime": str,         # optional, ISO date string
-        "plan": str,             # optional
-        "concepts": str,         # optional
-        "notes": str             # optional
+        "lesson": {
+            "datetime": str,         # required, ISO date string
+            "plan": str,             # optional
+            "concepts": str,         # optional
+            "notes": str             # optional
+        },
+        "student_ids": [int]         # optional, array of student IDs
     }
 
     Returns:
