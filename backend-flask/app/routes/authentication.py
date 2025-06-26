@@ -8,7 +8,7 @@ from flask_jwt_extended import (
     unset_jwt_cookies
 )
 from datetime import datetime, timedelta, timezone
-from app.models.user import User
+from app.models.user_model import User
 
 auth_bp = Blueprint('auth', __name__)
 
