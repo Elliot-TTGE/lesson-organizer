@@ -2,11 +2,126 @@ Project lesson_organizer {
     database_type: 'SQLite'
 }
 
-enum student_status {
-    active
-    inactive
-    hold
-    trial
+// --- Common to all tables ---
+// id integer [pk, not null, unique, increment] // repeated in tables for visual coherence
+// created_date datetime [not null]
+// updated_date datetime [not null]
+
+// --- Core student state tracking ---
+Table student {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    first_name varchar [not null]
+    last_name varchar
+    date_started datetime
+    classes_per_week integer
+    notes_general varchar
+    notes_strengths varchar
+    notes_weaknesses varchar
+    notes_future varchar
+}
+
+Table student_status {
+    id integer [pk, not null, unique, increment]
+    // Static table so it does not have created_date or updated_date
+    name varchar [not null]
+}
+
+Table student_status_history {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    student_id integer [not null, ref: > student.id]
+    status_id integer [not null, ref: > student_status.id]
+    changed_at datetime [not null]
+}
+
+Table student_level_history {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    student_id integer [not null, ref: > student.id]
+    level_id integer [not null, ref: > level.id]
+    start_date datetime [not null]
+}
+
+// --- Lesson tracking ---
+Table lesson {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    datetime datetime [not null]
+    plan varchar
+    concepts varchar
+    notes varchar
+}
+
+Table lesson_student {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    lesson_id integer [not null, ref: > lesson.id]
+    student_id integer [not null, ref: > student.id]
+}
+
+// --- Quiz tracking ---
+Table quiz {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    name varchar [not null]
+    max_points integer [not null]
+    unit_id integer [ref: > unit.id]
+}
+
+Table student_lesson_quiz {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    student_id integer [not null, ref: > student.id]
+    lesson_id integer [not null, ref: > lesson.id]
+    quiz_id integer [ref: > quiz.id]
+    points integer
+    notes varchar
+}
+
+// --- Curriculum structure ---
+Table unit {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    name varchar [not null]
+    level_id integer [not null, ref: > level.id]
+}
+
+Table level {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    name varchar [not null]
+    curriculum_id integer [not null, ref: > curriculum.id]
+}
+
+Table curriculum {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    varchar name [not null]
+}
+
+// --- User and permissions ---
+Table user {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    first_name varchar [not null]
+    last_name varchar [not null]
+    created_date datetime [not null]
+    last_login datetime
+    email varchar [not null]
+    password varchar [not null]
+    role user_role [not null]
 }
 
 enum user_role {
@@ -15,60 +130,10 @@ enum user_role {
     instructor
 }
 
-Table student {
-    id integer [pk, not null, unique, increment]
-    first_name varchar [not null]
-    last_name varchar
-    created_date datetime [not null]
-    status student_status
-}
-
-Table lesson {
-    id integer [pk, not null, unique, increment]
-    datetime datetime [not null]
-    plan varchar
-    concepts varchar
-    created_date datetime [not null]
-    notes varchar
-}
-
-Table quiz {
-    id integer [pk, not null, unique, increment]
-    name varchar [not null]
-    datetime datetime [not null]
-    score real [not null]
-    notes varchar
-    lesson_id integer [not null, ref: > lesson.id]
-    student_id integer [not null, ref: > student.id]
-}
-
-Table lesson_student {
-    id integer [pk, not null, unique, increment]
-    lesson_id integer [not null, ref: > lesson.id]
-    student_id integer [not null, ref: > student.id]
-}
-
-Table level {
-    id integer [pk, not null, unique, increment]
-    student_id integer [not null, ref: > student.id]
-    start_date datetime [not null]
-    level_category varchar [not null]
-}
-
+// --- Miscellaneous ---
 Table stock_image {
     id integer [pk, not null, unique, increment]
     istock_name varchar
     istock_id integer
     uses varchar
-}
-
-Table user {
-    id integer [pk, not null, unique, increment]
-    first_name varchar [not null]
-    last_name varchar [not null]
-    created_date datetime [not null]
-    last_login datetime
-    email varchar [not null]
-    password varchar [not null]
-    role user_role [not null]
 }
