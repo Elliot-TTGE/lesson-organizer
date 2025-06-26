@@ -29,6 +29,8 @@ def create_admin_user():
             role="admin",
             fs_uniquifier=str(uuid.uuid4())
         )
+        db.session.add(user)
+        db.session.commit()
 
 def create_all_student_status():
     statuses = ["Active", "Inactive", "Hold", "Future", "Trial"]
