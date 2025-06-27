@@ -3,7 +3,7 @@
     import StudentCard from "./StudentCard.svelte";
     import StudentCreateModal from "./StudentCreateModal.svelte";
 
-    let students: Number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8];
+    let students: Number[] = [];
 
     let showModal = $state(false);
     let selectedStudent = $state<Number | null>(null);
