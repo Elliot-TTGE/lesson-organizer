@@ -42,9 +42,6 @@ def get_curriculums():
     curriculum_schema = CurriculumSchema(many=True)
     return curriculum_schema.dump(curriculums), 200
 
-
-# The below endpoints can be uncommented out when implemeting custom curriculum functionality 
-
 #@curriculum_bp.route('/curriculums', methods=['POST'])
 @jwt_required()
 @response_wrapper
@@ -57,7 +54,9 @@ def create_curriculum():
 
     Request JSON Body:
     {
-        "name": str              # required
+        "curriculum": {
+            "name": str              # required
+        }
     }
 
     Returns:
@@ -65,13 +64,21 @@ def create_curriculum():
     - 400: If validation fails or required fields are missing
     """
     data = request.get_json()
+    if not data or 'curriculum' not in data:
+        return {"message": "Curriculum data is required in 'curriculum' key"}, 400
+    
+    curriculum_data = data['curriculum']
 
     # Validate required fields
-    if not data.get("name"):
-        return jsonify({"error": "name field is required"}), 400
+    if not curriculum_data.get("name"):
+        return {"message": "name field is required"}, 400
 
     curriculum_schema = CurriculumSchema()
-    curriculum = curriculum_schema.load(data)
+    try:
+        curriculum = curriculum_schema.load(curriculum_data)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.add(curriculum)
     db.session.commit()
     return curriculum_schema.dump(curriculum), 201
@@ -91,7 +98,9 @@ def update_curriculum(id):
 
     Request JSON Body:
     {
-        "name": str              # optional
+        "curriculum": {
+            "name": str              # optional
+        }
     }
 
     Returns:
@@ -101,11 +110,19 @@ def update_curriculum(id):
     """
     curriculum = Curriculum.query.get_or_404(id)
     data = request.get_json()
+    if not data or 'curriculum' not in data:
+        return {"message": "Curriculum data is required in 'curriculum' key"}, 400
+    
+    curriculum_data = data['curriculum']
 
-    curriculum_schema = CurriculumSchema()
-    curriculum = curriculum_schema.load(data, instance=curriculum, partial=True)
+    curriculum_schema = CurriculumSchema(partial=True)
+    try:
+        updated_curriculum = curriculum_schema.load(curriculum_data, instance=curriculum, partial=True)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.commit()
-    return curriculum_schema.dump(curriculum), 200
+    return curriculum_schema.dump(updated_curriculum), 200
 
 #@curriculum_bp.route('/curriculums/<int:id>', methods=['DELETE'])
 @jwt_required()
@@ -127,4 +144,4 @@ def delete_curriculum(id):
     curriculum = Curriculum.query.get_or_404(id)
     db.session.delete(curriculum)
     db.session.commit()
-    return '',
+    return '', 204
