@@ -86,9 +86,11 @@ def create_student_level_history():
 
     Request JSON Body:
     {
-        "student_id": int,       # required
-        "level_id": int,         # required
-        "start_date": str        # required, ISO date string
+        "student_level_history": {
+            "student_id": int,       # required
+            "level_id": int,         # required
+            "start_date": str        # required, ISO date string
+        }
     }
 
     Returns:
@@ -97,31 +99,39 @@ def create_student_level_history():
     - 404: If student or level not found
     """
     data = request.get_json()
+    if not data or 'student_level_history' not in data:
+        return {"message": "Student level history data is required in 'student_level_history' key"}, 400
+    
+    student_level_history_data = data['student_level_history']
 
     # Validate required fields
-    if not data.get("student_id"):
-        return jsonify({"error": "student_id field is required"}), 400
+    if not student_level_history_data.get("student_id"):
+        return {"message": "student_id field is required"}, 400
     
-    if not data.get("level_id"):
-        return jsonify({"error": "level_id field is required"}), 400
+    if not student_level_history_data.get("level_id"):
+        return {"message": "level_id field is required"}, 400
     
-    if not data.get("start_date"):
-        return jsonify({"error": "start_date field is required"}), 400
+    if not student_level_history_data.get("start_date"):
+        return {"message": "start_date field is required"}, 400
 
     # Verify student exists
-    student_id = data.get("student_id")
+    student_id = student_level_history_data.get("student_id")
     student = Student.query.get(student_id)
     if not student:
-        return jsonify({"error": "Invalid student_id"}), 404
+        return {"message": "Invalid student_id"}, 404
 
     # Verify level exists
-    level_id = data.get("level_id")
+    level_id = student_level_history_data.get("level_id")
     level = Level.query.get(level_id)
     if not level:
-        return jsonify({"error": "Invalid level_id"}), 404
+        return {"message": "Invalid level_id"}, 404
 
     schema = StudentLevelHistorySchema()
-    record = schema.load(data)
+    try:
+        record = schema.load(student_level_history_data)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.add(record)
     db.session.commit()
     return schema.dump(record), 201
@@ -141,9 +151,11 @@ def update_student_level_history(id):
 
     Request JSON Body:
     {
-        "student_id": int,       # optional
-        "level_id": int,         # optional
-        "start_date": str        # optional, ISO date string
+        "student_level_history": {
+            "student_id": int,       # optional
+            "level_id": int,         # optional
+            "start_date": str        # optional, ISO date string
+        }
     }
 
     Returns:
@@ -153,23 +165,31 @@ def update_student_level_history(id):
     """
     record = StudentLevelHistory.query.get_or_404(id)
     data = request.get_json()
+    if not data or 'student_level_history' not in data:
+        return {"message": "Student level history data is required in 'student_level_history' key"}, 400
+    
+    student_level_history_data = data['student_level_history']
 
     # If student_id is being updated, verify it exists
-    if 'student_id' in data:
-        student_id = data.get("student_id")
+    if 'student_id' in student_level_history_data:
+        student_id = student_level_history_data.get("student_id")
         student = Student.query.get(student_id)
         if not student:
-            return jsonify({"error": "Invalid student_id"}), 404
+            return {"message": "Invalid student_id"}, 404
 
     # If level_id is being updated, verify it exists
-    if 'level_id' in data:
-        level_id = data.get("level_id")
+    if 'level_id' in student_level_history_data:
+        level_id = student_level_history_data.get("level_id")
         level = Level.query.get(level_id)
         if not level:
-            return jsonify({"error": "Invalid level_id"}), 404
+            return {"message": "Invalid level_id"}, 404
 
-    schema = StudentLevelHistorySchema()
-    updated_record = schema.load(data, instance=record, partial=True)
+    schema = StudentLevelHistorySchema(partial=True)
+    try:
+        updated_record = schema.load(student_level_history_data, instance=record, partial=True)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.commit()
     return schema.dump(updated_record), 200
 
