@@ -64,8 +64,10 @@ def create_unit():
 
     Request JSON Body:
     {
-        "name": str,             # required
-        "level_id": int          # required
+        "unit": {
+            "name": str,             # required
+            "level_id": int          # required
+        }
     }
 
     Returns:
@@ -74,22 +76,30 @@ def create_unit():
     - 404: If level not found
     """
     data = request.get_json()
+    if not data or 'unit' not in data:
+        return {"message": "Unit data is required in 'unit' key"}, 400
+    
+    unit_data = data['unit']
 
     # Validate required fields
-    if not data.get("name"):
-        return jsonify({"error": "name field is required"}), 400
+    if not unit_data.get("name"):
+        return {"message": "name field is required"}, 400
     
-    if not data.get("level_id"):
-        return jsonify({"error": "level_id field is required"}), 400
+    if not unit_data.get("level_id"):
+        return {"message": "level_id field is required"}, 400
 
     # Verify level exists
-    level_id = data.get("level_id")
+    level_id = unit_data.get("level_id")
     level = Level.query.get(level_id)
     if not level:
-        return jsonify({"error": "Invalid level_id"}), 404
+        return {"message": "Invalid level_id"}, 404
 
     unit_schema = UnitSchema()
-    unit = unit_schema.load(data)
+    try:
+        unit = unit_schema.load(unit_data)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.add(unit)
     db.session.commit()
     return unit_schema.dump(unit), 201
@@ -109,8 +119,10 @@ def update_unit(id):
 
     Request JSON Body:
     {
-        "name": str,             # optional
-        "level_id": int          # optional
+        "unit": {
+            "name": str,             # optional
+            "level_id": int          # optional
+        }
     }
 
     Returns:
@@ -120,18 +132,26 @@ def update_unit(id):
     """
     unit = Unit.query.get_or_404(id)
     data = request.get_json()
+    if not data or 'unit' not in data:
+        return {"message": "Unit data is required in 'unit' key"}, 400
+    
+    unit_data = data['unit']
 
     # If level_id is being updated, verify it exists
-    if 'level_id' in data:
-        level_id = data.get("level_id")
+    if 'level_id' in unit_data:
+        level_id = unit_data.get("level_id")
         level = Level.query.get(level_id)
         if not level:
-            return jsonify({"error": "Invalid level_id"}), 404
+            return {"message": "Invalid level_id"}, 404
 
-    unit_schema = UnitSchema()
-    unit = unit_schema.load(data, instance=unit, partial=True)
+    unit_schema = UnitSchema(partial=True)
+    try:
+        updated_unit = unit_schema.load(unit_data, instance=unit, partial=True)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.commit()
-    return unit_schema.dump(unit), 200
+    return unit_schema.dump(updated_unit), 200
 
 @unit_bp.route('/units/<int:id>', methods=['DELETE'])
 @jwt_required()

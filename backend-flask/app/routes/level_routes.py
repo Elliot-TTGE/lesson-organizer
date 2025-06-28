@@ -64,8 +64,10 @@ def create_level():
 
     Request JSON Body:
     {
-        "name": str,             # required
-        "curriculum_id": int     # required
+        "level": {
+            "name": str,             # required
+            "curriculum_id": int     # required
+        }
     }
 
     Returns:
@@ -74,22 +76,30 @@ def create_level():
     - 404: If curriculum not found
     """
     data = request.get_json()
+    if not data or 'level' not in data:
+        return {"message": "Level data is required in 'level' key"}, 400
+    
+    level_data = data['level']
 
     # Validate required fields
-    if not data.get("name"):
-        return jsonify({"error": "name field is required"}), 400
+    if not level_data.get("name"):
+        return {"message": "name field is required"}, 400
     
-    if not data.get("curriculum_id"):
-        return jsonify({"error": "curriculum_id field is required"}), 400
+    if not level_data.get("curriculum_id"):
+        return {"message": "curriculum_id field is required"}, 400
 
     # Verify curriculum exists
-    curriculum_id = data.get("curriculum_id")
+    curriculum_id = level_data.get("curriculum_id")
     curriculum = Curriculum.query.get(curriculum_id)
     if not curriculum:
-        return jsonify({"error": "Invalid curriculum_id"}), 404
+        return {"message": "Invalid curriculum_id"}, 404
 
     level_schema = LevelSchema()
-    level = level_schema.load(data)
+    try:
+        level = level_schema.load(level_data)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.add(level)
     db.session.commit()
     return level_schema.dump(level), 201
@@ -109,8 +119,10 @@ def update_level(id):
 
     Request JSON Body:
     {
-        "name": str,             # optional
-        "curriculum_id": int     # optional
+        "level": {
+            "name": str,             # optional
+            "curriculum_id": int     # optional
+        }
     }
 
     Returns:
@@ -120,18 +132,26 @@ def update_level(id):
     """
     level = Level.query.get_or_404(id)
     data = request.get_json()
+    if not data or 'level' not in data:
+        return {"message": "Level data is required in 'level' key"}, 400
+    
+    level_data = data['level']
 
     # If curriculum_id is being updated, verify it exists
-    if 'curriculum_id' in data:
-        curriculum_id = data.get("curriculum_id")
+    if 'curriculum_id' in level_data:
+        curriculum_id = level_data.get("curriculum_id")
         curriculum = Curriculum.query.get(curriculum_id)
         if not curriculum:
-            return jsonify({"error": "Invalid curriculum_id"}), 404
+            return {"message": "Invalid curriculum_id"}, 404
 
-    level_schema = LevelSchema()
-    level = level_schema.load(data, instance=level, partial=True)
+    level_schema = LevelSchema(partial=True)
+    try:
+        updated_level = level_schema.load(level_data, instance=level, partial=True)
+    except Exception as e:
+        return {"message": str(e)}, 400
+
     db.session.commit()
-    return level_schema.dump(level), 200
+    return level_schema.dump(updated_level), 200
 
 #@level_bp.route('/levels/<int:id>', methods=['DELETE'])
 @jwt_required()
