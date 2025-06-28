@@ -10,6 +10,12 @@ from .routes.curriculum_routes import curriculum_bp
 from .routes.level_routes import level_bp
 from .routes.unit_routes import unit_bp
 from .routes.student_level_history_routes import student_level_history_bp
+from .routes.lesson_student_routes import lesson_student_bp
+from .routes.quiz_routes import quiz_bp
+from .routes.student_lesson_quiz_routes import student_lesson_quiz_bp
+from .routes.student_status_routes import student_status_bp
+from .routes.student_status_history_routes import student_status_history_bp
+from .routes.user_routes import user_bp
 from .models.user_model import User
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
@@ -45,6 +51,12 @@ app.register_blueprint(curriculum_bp, url_prefix='/api')
 app.register_blueprint(level_bp, url_prefix='/api')
 app.register_blueprint(unit_bp, url_prefix='/api')
 app.register_blueprint(student_level_history_bp, url_prefix='/api')
+app.register_blueprint(lesson_student_bp, url_prefix='/api')
+app.register_blueprint(quiz_bp, url_prefix='/api')
+app.register_blueprint(student_lesson_quiz_bp, url_prefix='/api')
+app.register_blueprint(student_status_bp, url_prefix='/api')
+app.register_blueprint(student_status_history_bp, url_prefix='/api')
+app.register_blueprint(user_bp, url_prefix='/api')
 
 app.after_request(refresh_expiring_jwts)
 
