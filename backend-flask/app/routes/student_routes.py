@@ -139,14 +139,16 @@ def create_student():
 
     Request JSON Body:
     {
-        "first_name": str,           # required
-        "last_name": str,            # optional
-        "date_started": str,         # optional, ISO date string
-        "classes_per_week": int,     # optional
-        "notes_general": str,        # optional
-        "notes_strengths": str,      # optional
-        "notes_weaknesses": str,     # optional
-        "notes_future": str          # optional
+        "student": {
+            "first_name": str,           # required
+            "last_name": str,            # optional
+            "date_started": str,         # optional, ISO date string
+            "classes_per_week": int,     # optional
+            "notes_general": str,        # optional
+            "notes_strengths": str,      # optional
+            "notes_weaknesses": str,     # optional
+            "notes_future": str          # optional
+        }
     }
 
     Returns:
@@ -154,9 +156,13 @@ def create_student():
     - 400: If validation fails or required fields are missing
     """
     data = request.get_json()
+    if not data or 'student' not in data:
+        return {"message": "Student data is required in 'student' key"}, 400
+    
+    student_data = data['student']
     schema = StudentSchema()
     try:
-        student = schema.load(data)
+        student = schema.load(student_data)
     except Exception as e:
         return {"message": str(e)}, 400
 
@@ -179,14 +185,16 @@ def update_student(student_id):
 
     Request JSON Body:
     {
-        "first_name": str,           # optional
-        "last_name": str,            # optional
-        "date_started": str,         # optional, ISO date string
-        "classes_per_week": int,     # optional
-        "notes_general": str,        # optional
-        "notes_strengths": str,      # optional
-        "notes_weaknesses": str,     # optional
-        "notes_future": str          # optional
+        "student": {
+            "first_name": str,           # optional
+            "last_name": str,            # optional
+            "date_started": str,         # optional, ISO date string
+            "classes_per_week": int,     # optional
+            "notes_general": str,        # optional
+            "notes_strengths": str,      # optional
+            "notes_weaknesses": str,     # optional
+            "notes_future": str          # optional
+        }
     }
 
     Returns:
@@ -199,14 +207,18 @@ def update_student(student_id):
         return {"message": "Student not found"}, 404
 
     data = request.get_json()
+    if not data or 'student' not in data:
+        return {"message": "Student data is required in 'student' key"}, 400
+    
+    student_data = data['student']
     schema = StudentSchema(partial=True)
     try:
-        updated_student = schema.load(data, instance=student, partial=True)
+        updated_student = schema.load(student_data, instance=student, partial=True)
     except Exception as e:
         return {"message": str(e)}, 400
 
     db.session.commit()
-    return schema.dump(updated_student),
+    return schema.dump(updated_student), 200
 
 @student_bp.route('/students/<int:student_id>', methods=['DELETE'])
 @jwt_required()
@@ -231,4 +243,4 @@ def delete_student(student_id):
 
     db.session.delete(student)
     db.session.commit()
-    return {},
+    return {}, 204
