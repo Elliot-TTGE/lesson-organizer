@@ -52,7 +52,7 @@ def get_units():
     unit_schema = UnitSchema(many=True)
     return unit_schema.dump(units), 200
 
-@unit_bp.route('/units', methods=['POST'])
+#@unit_bp.route('/units', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_unit():
@@ -104,7 +104,7 @@ def create_unit():
     db.session.commit()
     return unit_schema.dump(unit), 201
 
-@unit_bp.route('/units/<int:id>', methods=['PUT'])
+#@unit_bp.route('/units/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_unit(id):
@@ -153,7 +153,7 @@ def update_unit(id):
     db.session.commit()
     return unit_schema.dump(updated_unit), 200
 
-@unit_bp.route('/units/<int:id>', methods=['DELETE'])
+#@unit_bp.route('/units/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_unit(id):

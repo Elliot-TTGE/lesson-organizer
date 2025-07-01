@@ -45,7 +45,7 @@ def get_student_statuses():
     schema = StudentStatusSchema(many=True)
     return schema.dump(statuses), 200
 
-@student_status_bp.route('/student-statuses', methods=['POST'])
+#@student_status_bp.route('/student-statuses', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_student_status():
@@ -86,7 +86,7 @@ def create_student_status():
     db.session.commit()
     return schema.dump(status), 201
 
-@student_status_bp.route('/student-statuses/<int:id>', methods=['PUT'])
+#@student_status_bp.route('/student-statuses/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_student_status(id):
@@ -127,7 +127,7 @@ def update_student_status(id):
     db.session.commit()
     return schema.dump(updated_status), 200
 
-@student_status_bp.route('/student-statuses/<int:id>', methods=['DELETE'])
+#@student_status_bp.route('/student-statuses/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_student_status(id):
