@@ -28,9 +28,3 @@ class BaseSchema(SQLAlchemyAutoSchema):
             ):
                 data[key] = value + 'Z'
         return data
-
-    def on_bind_field(self, field_name, field_obj):
-        # If the field is a Nested (relationship), set it as dump_only
-        if isinstance(field_obj, Nested):
-            field_obj.dump_only = True
-        super().on_bind_field(field_name, field_obj)
