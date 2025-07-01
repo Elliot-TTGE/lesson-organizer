@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type UserCreateFields = Required<Pick<User, 'first_name' | 'last_name' | 'email' | 'password' | 'role'>>;
-type UserUpdateFields = Pick<User, 'first_name' | 'last_name' | 'email' | 'password' | 'role' | 'last_login'>;
+export type UserCreateFields = Required<Pick<User, 'first_name' | 'last_name' | 'email' | 'password' | 'role'>>;
+export type UserUpdateFields = Pick<User, 'first_name' | 'last_name' | 'email' | 'password' | 'role' | 'last_login'>;
 
 function extractUserFields(user: User): UserUpdateFields {
     const { first_name, last_name, email, password, role, last_login } = user;

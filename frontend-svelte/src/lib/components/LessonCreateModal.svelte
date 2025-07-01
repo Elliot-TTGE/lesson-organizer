@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createLesson } from "../../api/lesson";
+  import type { LessonCreateFields } from "../../api/lesson";
   import type { Lesson } from "../../types";
   import { lessonState, addLessonToState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
@@ -26,7 +27,7 @@
     }
 
     const datetime = new Date(`${date}T${time}`).toISOString();
-    const newLesson: Partial<Lesson> = {
+    const newLesson: LessonCreateFields = {
       datetime,
       plan,
       concepts,

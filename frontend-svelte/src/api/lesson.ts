@@ -2,8 +2,8 @@ import type { Lesson } from "../types";
 import { apiRequest } from "./apiClient";
 import type { QueryParams } from "./apiClient";
 
-type LessonCreateFields = Required<Pick<Lesson, 'datetime'>> & Partial<Pick<Lesson, 'plan' | 'concepts' | 'notes'>>;
-type LessonUpdateFields = Pick<Lesson, 'datetime' | 'plan' | 'concepts' | 'notes'>;
+export type LessonCreateFields = Required<Pick<Lesson, 'datetime'>> & Partial<Pick<Lesson, 'plan' | 'concepts' | 'notes'>>;
+export type LessonUpdateFields = Pick<Lesson, 'datetime' | 'plan' | 'concepts' | 'notes'>;
 
 function extractLessonFields(lesson: Lesson): LessonUpdateFields {
     const { datetime, plan, concepts, notes } = lesson;

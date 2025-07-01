@@ -7,13 +7,10 @@
 
     function getExportData() {
         return lessonState.current.flat().map((lesson) => ({
-            id: lesson.id,
             datetime: new Date(lesson.datetime).toISOString(),
-            created_date: lesson.created_date,
-            students: lesson.students,
-            plan: lesson.plan,
-            concepts: lesson.concepts,
-            notes: lesson.notes,
+            plan: lesson.plan || "",
+            concepts: lesson.concepts || "",
+            notes: lesson.notes || ""
         }));
     }
 
@@ -31,14 +28,14 @@
         const jsonBlob = new Blob([JSON.stringify(data, null, 2)], {
             type: "application/json",
         });
-        triggerDownload(jsonBlob, "json", "application/json");
+        triggerDownload(jsonBlob, "json");
     }
 
     function exportWeekAsCSV() {
         const data = getExportData();
         const csv = Papa.unparse(data, { quotes: true });
         const csvBlob = new Blob([csv], { type: "text/csv" });
-        triggerDownload(csvBlob, "csv", "text/csv");
+        triggerDownload(csvBlob, "csv");
     }
 </script>
 

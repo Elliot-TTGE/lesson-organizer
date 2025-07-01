@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type StudentLevelHistoryCreateFields = Required<Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>>;
-type StudentLevelHistoryUpdateFields = Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>;
+export type StudentLevelHistoryCreateFields = Required<Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>>;
+export type StudentLevelHistoryUpdateFields = Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>;
 
 function extractStudentLevelHistoryFields(record: StudentLevelHistory): StudentLevelHistoryUpdateFields {
     const { student_id, level_id, start_date } = record;

@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type UnitCreateFields = Required<Pick<Unit, 'name' | 'level_id'>>;
-type UnitUpdateFields = Pick<Unit, 'name' | 'level_id'>;
+export type UnitCreateFields = Required<Pick<Unit, 'name' | 'level_id'>>;
+export type UnitUpdateFields = Pick<Unit, 'name' | 'level_id'>;
 
 function extractUnitFields(unit: Unit): UnitUpdateFields {
     const { name, level_id } = unit;

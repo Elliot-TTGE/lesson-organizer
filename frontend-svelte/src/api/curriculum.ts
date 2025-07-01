@@ -3,8 +3,8 @@ import { apiRequest } from "./apiClient";
 import type { QueryParams } from "./apiClient";
 
 // Define the allowed fields that can be modified
-type CurriculumCreateFields = Required<Pick<Curriculum, 'name'>>;
-type CurriculumUpdateFields = Pick<Curriculum, 'name'>;
+export type CurriculumCreateFields = Required<Pick<Curriculum, 'name'>>;
+export type CurriculumUpdateFields = Pick<Curriculum, 'name'>;
 
 function extractCurriculumFields(curriculum: Curriculum): CurriculumUpdateFields {
     const { name } = curriculum;

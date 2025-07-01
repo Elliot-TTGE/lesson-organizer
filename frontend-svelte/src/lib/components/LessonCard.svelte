@@ -2,6 +2,7 @@
   import type { Lesson } from "../../types";
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
+  import type { LessonCreateFields, LessonUpdateFields } from "../../api/lesson";
   import TipexEditor from "./TipexEditor.svelte";
   import { initializeDateTimeInput } from "$lib/utils/dateUtils";
 
@@ -19,9 +20,9 @@
   let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
 
   let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
-  let plan: string = $state(lesson.plan);
-  let concepts: string = $state(lesson.concepts);
-  let notes: string = $state(lesson.notes);
+  let plan: string = $state(lesson.plan ?? "");
+  let concepts: string = $state(lesson.concepts ?? "");
+  let notes: string = $state(lesson.notes ?? "");
 
   async function handleDelete() {
     await deleteLesson(lesson.id);
@@ -32,26 +33,25 @@
 
   async function handleConfirm() {
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
-    const updatedLesson = { ...lesson, datetime, plan, concepts, notes };
-    await updateLesson(updatedLesson);
-    updateLessonInState(updatedLesson);
+    const updatedLesson : LessonUpdateFields = { ...lesson, datetime, plan, concepts, notes };
+    const updated = await updateLesson(lesson.id, updatedLesson, []);
+    updateLessonInState(updated);
     isEditing = false;
   }
 
   function handleCancel() {
     isEditing = false;
     ({ date: dateInput, time: timeInput } = initializeDateTimeInput(lesson.datetime));
-    plan = lesson.plan;
-    concepts = lesson.concepts;
-    notes = lesson.notes;
+    plan = lesson.plan ?? "";
+    concepts = lesson.concepts ?? "";
+    notes = lesson.notes ?? "";
   }
 
   async function handleCopy() {
     const combinedDateTime = new Date(`${copyToDate}T${copyToTime}`).toISOString();
 
-    const newLesson = {
+    const newLesson: LessonCreateFields = {
       ...lesson,
-      id: undefined,
       datetime: combinedDateTime,
     };
 
