@@ -10,7 +10,7 @@ from app.routes.utils import response_wrapper
 student_level_history_bp = Blueprint('student_level_history', __name__)
 
 @student_level_history_bp.route('/student-level-history', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 @response_wrapper
 def get_student_level_history():
     """
