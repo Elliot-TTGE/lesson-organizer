@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type QuizCreateFields = Required<Pick<Quiz, 'name' | 'max_points'>> & Partial<Pick<Quiz, 'unit_id'>>;
-type QuizUpdateFields = Pick<Quiz, 'name' | 'max_points' | 'unit_id'>;
+export type QuizCreateFields = Required<Pick<Quiz, 'name' | 'max_points'>> & Partial<Pick<Quiz, 'unit_id'>>;
+export type QuizUpdateFields = Pick<Quiz, 'name' | 'max_points' | 'unit_id'>;
 
 function extractQuizFields(quiz: Quiz): QuizUpdateFields {
     const { name, max_points, unit_id } = quiz;

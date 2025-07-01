@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type LevelCreateFields = Required<Pick<Level, 'name' | 'curriculum_id'>>;
-type LevelUpdateFields = Pick<Level, 'name' | 'curriculum_id'>;
+export type LevelCreateFields = Required<Pick<Level, 'name' | 'curriculum_id'>>;
+export type LevelUpdateFields = Pick<Level, 'name' | 'curriculum_id'>;
 
 function extractLevelFields(level: Level): LevelUpdateFields {
     const { name, curriculum_id } = level;

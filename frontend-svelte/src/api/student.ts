@@ -2,8 +2,8 @@ import type { Student } from "../types";
 import type { QueryParams } from "./apiClient";
 import { apiRequest } from "./apiClient";
 
-type StudentCreateFields = Required<Pick<Student, 'first_name'>> & Partial<Pick<Student, 'last_name' | 'date_started' | 'classes_per_week' | 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future'>>;
-type StudentUpdateFields = Pick<Student, 'first_name' | 'last_name' | 'date_started' | 'classes_per_week' | 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future'>;
+export type StudentCreateFields = Required<Pick<Student, 'first_name'>> & Partial<Pick<Student, 'last_name' | 'date_started' | 'classes_per_week' | 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future'>>;
+export type StudentUpdateFields = Pick<Student, 'first_name' | 'last_name' | 'date_started' | 'classes_per_week' | 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future'>;
 
 function extractStudentFields(student: Student): StudentUpdateFields {
     const { first_name, last_name, date_started, classes_per_week, notes_general, notes_strengths, notes_weaknesses, notes_future } = student;

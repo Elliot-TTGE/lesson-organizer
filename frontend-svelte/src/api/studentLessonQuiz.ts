@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type StudentLessonQuizCreateFields = Required<Pick<StudentLessonQuiz, 'student_id' | 'lesson_id'>> & Partial<Pick<StudentLessonQuiz, 'quiz_id' | 'points' | 'notes'>>;
-type StudentLessonQuizUpdateFields = Pick<StudentLessonQuiz, 'student_id' | 'lesson_id' | 'quiz_id' | 'points' | 'notes'>;
+export type StudentLessonQuizCreateFields = Required<Pick<StudentLessonQuiz, 'student_id' | 'lesson_id'>> & Partial<Pick<StudentLessonQuiz, 'quiz_id' | 'points' | 'notes'>>;
+export type StudentLessonQuizUpdateFields = Pick<StudentLessonQuiz, 'student_id' | 'lesson_id' | 'quiz_id' | 'points' | 'notes'>;
 
 function extractStudentLessonQuizFields(record: StudentLessonQuiz): StudentLessonQuizUpdateFields {
     const { student_id, lesson_id, quiz_id, points, notes } = record;

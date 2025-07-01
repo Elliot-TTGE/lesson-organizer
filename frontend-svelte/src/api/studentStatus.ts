@@ -3,8 +3,8 @@ import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
 // Define the allowed fields that can be modified
-type StudentStatusCreateFields = Required<Pick<StudentStatus, 'name'>>;
-type StudentStatusUpdateFields = Pick<StudentStatus, 'name'>;
+export type StudentStatusCreateFields = Required<Pick<StudentStatus, 'name'>>;
+export type StudentStatusUpdateFields = Pick<StudentStatus, 'name'>;
 
 function extractStudentStatusFields(status: StudentStatus): StudentStatusUpdateFields {
     const { name } = status;
