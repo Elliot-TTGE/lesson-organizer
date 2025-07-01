@@ -65,7 +65,7 @@ def get_student_level_history():
             end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
             query = query.filter(StudentLevelHistory.start_date <= end_dt)
         except ValueError:
-            return jsonify({"error": "Invalid end_date format. Use ISO format."}), 400
+            return {"message": "Invalid end_date format. Use ISO format."}, 400
 
     # Order by start_date descending (most recent first)
     query = query.order_by(StudentLevelHistory.start_date.desc())
