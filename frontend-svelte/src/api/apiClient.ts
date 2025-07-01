@@ -37,14 +37,12 @@ export async function apiRequest<T>(endpoint: string, method: string = 'GET', bo
         url += `?${queryString}`;
     }
     
-    //const token = getCookie('token');
     const csrfToken = getCookie('csrf_access_token');
     const options: RequestOptions = {
         method,
         headers: {
             'Content-Type': 'application/json',
             ...headers,
-            //...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
         },
         credentials: "include"
