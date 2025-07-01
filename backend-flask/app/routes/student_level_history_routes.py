@@ -75,7 +75,7 @@ def get_student_level_history():
     return schema.dump(records), 200
 
 @student_level_history_bp.route('/student-level-history', methods=['POST'])
-#@jwt_required()
+@jwt_required()
 @response_wrapper
 def create_student_level_history():
     """
@@ -137,7 +137,7 @@ def create_student_level_history():
     return schema.dump(record), 201
 
 @student_level_history_bp.route('/student-level-history/<int:id>', methods=['PUT'])
-#@jwt_required()
+@jwt_required()
 @response_wrapper
 def update_student_level_history(id):
     """
@@ -194,7 +194,7 @@ def update_student_level_history(id):
     return schema.dump(updated_record), 200
 
 @student_level_history_bp.route('/student-level-history/<int:id>', methods=['DELETE'])
-#@jwt_required()
+@jwt_required()
 @response_wrapper
 def delete_student_level_history(id):
     """
