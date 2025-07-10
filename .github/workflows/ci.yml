@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - LO-83
   pull_request:
     branches:
       - main
+      - LO-83
 
 jobs:
   build:
