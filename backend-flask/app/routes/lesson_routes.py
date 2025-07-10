@@ -26,6 +26,7 @@ def get_lessons():
     - end: str (optional, ISO date) — Filter lessons before this date (takes priority over range_length).
     - range_length: int (optional, default=7) — Number of days from start date to include (ignored if end is provided).
     - group: str (optional, "true"/"false") — Filter group lessons.
+    - do_paginate: bool (optional, default=false) — Whether to return pagination data.
     - page: int (optional, default=1) — Pagination page number.
     - per_page: int (optional, default=20) — Pagination page size.
 
@@ -39,8 +40,9 @@ def get_lessons():
     student_id = request.args.get('student_id', type=int)
     start = request.args.get('start')
     end = request.args.get('end')
-    range_length = request.args.get('range_length', 7, type=int)
+    range_length = request.args.get('range_length', type=int)
     group = request.args.get('group')
+    do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
@@ -58,7 +60,8 @@ def get_lessons():
         query = query.join(Lesson.students).filter(Student.id == student_id)
     
     # Handle date filtering
-    if start or end or range_length != 7:
+    range_length_provided = request.args.get('range_length') is not None
+    if start or end or range_length_provided:
         # Determine start date
         if start:
             try:
@@ -79,8 +82,9 @@ def get_lessons():
             except ValueError:
                 return {"message": "Invalid end date format. Use ISO format (YYYY-MM-DD)."}, 400
         else:
-            # Use range_length from start_date
-            end_date = start_date + timedelta(days=range_length)
+            # Use range_length from start_date, default to 7 if not provided
+            days = range_length if range_length is not None else 7
+            end_date = start_date + timedelta(days=days)
             query = query.filter(Lesson.datetime < end_date)
 
     if group is not None:
@@ -104,20 +108,26 @@ def get_lessons():
     # Order by datetime descending (most recent first)
     query = query.order_by(Lesson.datetime.desc())
 
-    # Paginate
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    lessons = paginated.items
-
     schema = LessonSchema(many=True)
-    return {
-        "lessons": schema.dump(lessons),
-        "pagination": {
-            "page": paginated.page,
-            "pages": paginated.pages,
-            "per_page": paginated.per_page,
-            "total": paginated.total
+    
+    if do_paginate:
+        # Paginate and return with pagination metadata
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        lessons = paginated.items
+        
+        return {
+            "lessons": schema.dump(lessons),
+            "pagination": {
+                "page": paginated.page,
+                "pages": paginated.pages,
+                "per_page": paginated.per_page,
+                "total": paginated.total
+            }
         }
-    }
+    else:
+        # Return all results without pagination
+        lessons = query.all()
+        return {"lessons": schema.dump(lessons)}
 
 @lesson_bp.route('/lessons', methods=['POST'])
 @jwt_required()
