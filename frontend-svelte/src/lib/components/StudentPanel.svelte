@@ -2,15 +2,19 @@
     import type { Student } from "../../types";
     import StudentCard from "./StudentCard.svelte";
     import StudentCreateModal from "./StudentCreateModal.svelte";
+    import { fetchStudents } from "../../api/student";
+    import { onMount } from "svelte";
 
-    let students: Number[] = [];
+    let students = $state<Student[]>([]);
+    let isLoading = $state(true);
+    let error = $state<string | null>(null);
 
     let showModal = $state(false);
-    let selectedStudent = $state<Number | null>(null);
+    let selectedStudent = $state<number | null>(null);
 
-    function openModal(student: Number) {
+    function openModal(student: Student) {
         showModal = true;
-        selectedStudent = student;
+        selectedStudent = student.id;
     }
 
     function closeModal() {
@@ -18,14 +22,33 @@
         selectedStudent = null;
     }
 
-    function onMount() {
-        // Fetch all students from database.
+    function handleStudentCreated(newStudent: Student) {
+        // Add the new student to the existing list
+        students = [...students, newStudent];
+        
+        // Close any existing modals
+        closeModal();
+        
+        // Open the StudentCard modal for the new student
+        showModal = true;
+        selectedStudent = newStudent.id;
     }
+
+    onMount(async () => {
+        try {
+            const response = await fetchStudents();
+            students = response.students;
+            isLoading = false;
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to fetch students';
+            isLoading = false;
+        }
+    });
 </script>
 
 <div class="sticky z-10 mt-16 top-16 bg-base-200">
     <div class="flex bg-base-200 mb-2">
-        <fieldset class="fielset mr-auto ml-8 w-100">
+        <fieldset class="fieldset mr-auto ml-8 w-100">
             <p class="fieldset-legend">Find a student</p>
             <label class="input input-accent">
                 <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -45,7 +68,7 @@
         </fieldset>
         <div class="flex items-center">
             <div class="mr-8">
-                <StudentCreateModal>New Student</StudentCreateModal>
+                <StudentCreateModal onStudentCreated={handleStudentCreated}>New Student</StudentCreateModal>
             </div>
             <!-- Options for student search -->
         </div>
@@ -60,34 +83,56 @@
                 <th>Next Lesson</th>
                 <th>Last Lesson</th>
                 <th>Last Quiz</th>
+                <th>Actions</th>
             </tr>
         </thead>
     </table>
 </div>
 <div class="overflow-y-auto">
-    <table class="table table-zebra border border-base-200">
-        <tbody>
-            {#each students as student}
-                <tr>
-                    <td>{student}</td>
-                    <td>student.name</td>
-                    <td>student.level</td>
-                    <td>student.nextLesson</td>
-                    <td>student.lastLesson</td>
-                    <td>student.lastQuiz</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
-                    </td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
+    {#if isLoading}
+        <div class="flex justify-center p-8">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+    {:else if error}
+        <div class="alert alert-error m-4">
+            <span>Error: {error}</span>
+        </div>
+    {:else}
+        <table class="table table-zebra border border-base-200">
+            <tbody>
+                {#each students as student (student.id)}
+                    <tr>
+                    <td>{student.id}</td>
+                        <td>{student.first_name} {student.last_name || ''}</td>
+                        <td>-</td> <!-- TODO: Add current level logic -->
+                        <td>-</td> <!-- TODO: Add next lesson logic -->
+                        <td>-</td> <!-- TODO: Add last lesson logic -->
+                        <td>-</td> <!-- TODO: Add last quiz logic -->
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
+                        </td>
+                    </tr>
+                {/each}
+                {#if students.length === 0}
+                    <tr>
+                        <td colspan="7" class="text-center py-8">
+                            <div class="text-base-content/60">
+                                No students found. 
+                                <StudentCreateModal onStudentCreated={handleStudentCreated}>
+                                    <span class="link link-primary">Create your first student</span>
+                                </StudentCreateModal>
+                            </div>
+                        </td>
+                    </tr>
+                {/if}
+            </tbody>
+        </table>
+    {/if}
 </div>
 
 {#if showModal}
     <dialog open class="modal modal-middle">
-        <div class="modal-box bg-neutral text-neutral-content max-w-[85vw] h-[85vw]">
-            <!-- Replace the div below with your new StudentCard component -->
+        <div class="modal-box max-w-[85vw] h-[85vh]">
             <div class="modal-action justify-end p-0 mb-2">
                 <button class="btn" onclick={closeModal}>Close</button>
             </div>

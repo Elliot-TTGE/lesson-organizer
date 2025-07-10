@@ -1,66 +1,120 @@
 <script lang="ts">
     import { createStudent } from "../../api/student";
-    import type { Student } from "../../types";
-    import TipexEditor from "./TipexEditor.svelte";
+    import { createStudentStatusHistory } from "../../api/studentStatusHistory";
+    import { createStudentLevelHistory } from "../../api/studentLevelHistory";
+    import { fetchCurriculums } from "../../api/curriculum";
+    import { fetchStudentStatuses } from "../../api/studentStatus";
+    import type { Student, Curriculum, StudentStatus } from "../../types";
+    import { onMount } from "svelte";
 
-    let { children } = $props();
+    let { children, onStudentCreated } = $props();
 
     let first_name = $state("");
     let last_name = $state("");
-    let curriculum = $state("");
-    let level = $state("");
-    let status: 'active' | 'inactive' | 'hold' | 'trial' = $state("active");
-    let notes = $state("");
-    let started_date = $state("");
+    let selectedCurriculumId = $state<number | null>(null);
+    let selectedLevelId = $state<number | null>(null);
+    let selectedStatusId = $state<number | null>(null);
 
     let studentCreateModal: HTMLDialogElement;
     let firstNameWarning = $state(false);
+    let isLoading = $state(false);
+
+    // Data for dropdowns
+    let curriculums = $state<Curriculum[]>([]);
+    let statuses = $state<StudentStatus[]>([]);
+
+    onMount(async () => {
+        try {
+            [curriculums, statuses] = await Promise.all([
+                fetchCurriculums(),
+                fetchStudentStatuses()
+            ]);
+        } catch (error) {
+            console.error("Error loading dropdown data:", error);
+        }
+    });
+
+    // Reset level selection when curriculum changes
+    $effect(() => {
+        if (selectedCurriculumId) {
+            selectedLevelId = null;
+        }
+    });
 
     async function handleCreateStudent() {
-        firstNameWarning = first_name === "";
+        firstNameWarning = first_name.trim() === "";
 
         if (firstNameWarning) {
             return;
         }
 
-        const created_date = new Date().toISOString();
-        const newStudent: Partial<Student> = {
-            first_name,
-            last_name,
-            created_date,
-            started_date,
-            status,
-            /*levels,*/
-            notes
-        }
+        isLoading = true;
 
         try {
-            const createdStudent = await createStudent(newStudent);
+            // Create the student
+            const newStudent = await createStudent({
+                first_name: first_name.trim(),
+                last_name: last_name.trim() || undefined,
+                date_started: new Date().toISOString()
+            });
+
+            // Create status history if status is selected
+            if (selectedStatusId) {
+                await createStudentStatusHistory({
+                    student_id: newStudent.id,
+                    status_id: selectedStatusId,
+                    changed_at: new Date().toISOString()
+                });
+            }
+
+            // Create level history if level is selected
+            if (selectedLevelId) {
+                await createStudentLevelHistory({
+                    student_id: newStudent.id,
+                    level_id: selectedLevelId,
+                    start_date: new Date().toISOString()
+                });
+            }
+
             studentCreateModal.close();
+            
+            // Notify parent component about the new student
+            if (onStudentCreated) {
+                onStudentCreated(newStudent);
+            }
+
         } catch (error) {
-            console.error("Error craeting student: ", error);
+            console.error("Error creating student:", error);
+        } finally {
+            isLoading = false;
         }
+    }
+
+    function resetForm() {
+        first_name = "";
+        last_name = "";
+        selectedCurriculumId = null;
+        selectedLevelId = null;
+        selectedStatusId = null;
+        firstNameWarning = false;
     }
 </script>
 
 <button
     class="btn btn-primary"
     onclick={() => {
-        first_name = "";
-        last_name = "";
-        started_date = "";
-        status = "active";
-        /*levels = "";*/
-        notes = "";
+        resetForm();
         studentCreateModal.showModal();
     }}
 >
     {@render children?.()}
 </button>
+
 <dialog bind:this={studentCreateModal} class="modal">
-    <div class="modal-box bg-base-100 w-full max-w-4xl">
+    <div class="modal-box bg-base-100 w-full max-w-2xl">
         <h3 class="text-lg font-bold text-base-content mb-4">Create a New Student</h3>
-        <form class="flex flex-col gap-4">
+        
+        <form class="flex flex-col gap-4" onsubmit={(e) => { e.preventDefault(); handleCreateStudent(); }}>
             <!-- First Name (required) -->
             <div>
                 <label class="label" for="first_name">
@@ -77,6 +131,7 @@
                     <p class="text-error mt-1">First name is required.</p>
                 {/if}
             </div>
+
             <!-- Last Name -->
             <div>
                 <label class="label" for="last_name">
@@ -89,6 +144,7 @@
                     bind:value={last_name}
                 />
             </div>
+
             <!-- Curriculum Dropdown -->
             <div>
                 <label class="label" for="curriculum">
@@ -97,14 +153,15 @@
                 <select
                     id="curriculum"
                     class="select select-bordered w-full"
-                    bind:value={curriculum}
+                    bind:value={selectedCurriculumId}
                 >
-                    <option value="" disabled selected>Select curriculum</option>
-                    <option value="math">Math</option>
-                    <option value="reading">Reading</option>
-                    <option value="science">Science</option>
+                    <option value={null}>Select curriculum</option>
+                    {#each curriculums as curriculum}
+                        <option value={curriculum.id}>{curriculum.name}</option>
+                    {/each}
                 </select>
             </div>
+
             <!-- Level Dropdown -->
             <div>
                 <label class="label" for="level">
@@ -113,14 +170,18 @@
                 <select
                     id="level"
                     class="select select-bordered w-full"
-                    bind:value={level}
+                    bind:value={selectedLevelId}
+                    disabled={!selectedCurriculumId}
                 >
-                    <option value="" disabled selected>Select level</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
+                    <option value={null}>
+                        {selectedCurriculumId ? "Select level" : "Select curriculum first"}
+                    </option>
+                    {#each curriculums.find(c => c.id === selectedCurriculumId)?.levels || [] as level}
+                        <option value={level.id}>{level.name}</option>
+                    {/each}
                 </select>
             </div>
+
             <!-- Status Dropdown -->
             <div>
                 <label class="label" for="status">
@@ -129,22 +190,34 @@
                 <select
                     id="status"
                     class="select select-bordered w-full"
-                    bind:value={status}
+                    bind:value={selectedStatusId}
                 >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="hold">Hold</option>
-                    <option value="trial">Trial</option>
+                    <option value={null}>Select status</option>
+                    {#each statuses as status}
+                        <option value={status.id}>{status.name}</option>
+                    {/each}
                 </select>
             </div>
-            <!-- Notes (TipexEditor) -->
-            <div>
-                <TipexEditor bind:body={notes} heading="Notes" height="h-[20vh]" />
-            </div>
         </form>
+
         <div class="modal-action mt-6">
-            <button class="btn" onclick={() => studentCreateModal.close()}>Cancel</button>
-            <button class="btn btn-primary" onclick={handleCreateStudent}>Create</button>
+            <button 
+                class="btn" 
+                onclick={() => studentCreateModal.close()}
+                disabled={isLoading}
+            >
+                Cancel
+            </button>
+            <button 
+                class="btn btn-primary" 
+                onclick={handleCreateStudent}
+                disabled={isLoading}
+            >
+                {#if isLoading}
+                    <span class="loading loading-spinner loading-sm"></span>
+                {/if}
+                Create
+            </button>
         </div>        
     </div>
     <form method="dialog" class="modal-backdrop">
