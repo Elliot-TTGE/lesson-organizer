@@ -121,10 +121,12 @@ def get_students():
     schema = StudentSchema(many=True)
     return {
         "students": schema.dump(students),
-        "total": paginated.total,
-        "page": paginated.page,
-        "per_page": paginated.per_page,
-        "pages": paginated.pages
+        "pagination": {
+            "page": paginated.page,
+            "pages": paginated.pages,
+            "per_page": paginated.per_page,
+            "total": paginated.total
+        }
     }
 
 @student_bp.route('/students', methods=['POST'])

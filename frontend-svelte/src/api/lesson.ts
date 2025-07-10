@@ -1,17 +1,22 @@
-import type { Lesson } from "../types";
+import type { Lesson, Pagination } from "../types";
 import { apiRequest } from "./apiClient";
 import type { QueryParams } from "./apiClient";
 
 export type LessonCreateFields = Required<Pick<Lesson, 'datetime'>> & Partial<Pick<Lesson, 'plan' | 'concepts' | 'notes'>>;
 export type LessonUpdateFields = Pick<Lesson, 'datetime' | 'plan' | 'concepts' | 'notes'>;
 
+export interface LessonsResponse {
+    lessons: Lesson[];
+    pagination: Pagination;
+}
+
 function extractLessonFields(lesson: Lesson): LessonUpdateFields {
     const { datetime, plan, concepts, notes } = lesson;
     return { datetime, plan, concepts, notes };
 }
 
-export async function fetchLessons(params: QueryParams = {}): Promise<Lesson[]> {
-    return await apiRequest<Lesson[]>('/lessons', 'GET', null, {}, params);
+export async function fetchLessons(params: QueryParams = {}): Promise<LessonsResponse> {
+    return await apiRequest<LessonsResponse>('/lessons', 'GET', null, {}, params);
 }
 
 export async function createLesson(lesson: LessonCreateFields | Lesson, student_ids: number[] = []): Promise<Lesson> {

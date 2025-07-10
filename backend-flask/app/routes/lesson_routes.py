@@ -7,6 +7,7 @@ from app.models.student_model import Student
 from app.models.quiz_model import Quiz
 from app.routes.utils import response_wrapper
 from datetime import datetime, timezone, timedelta
+from sqlalchemy import func
 
 lesson_bp = Blueprint('lessons', __name__)
 
@@ -21,8 +22,9 @@ def get_lessons():
     Query Parameters:
     - id: int (optional) — Get a single lesson by ID.
     - student_id: int (optional) — Filter lessons by student ID.
-    - start: str (optional, ISO date) — Filter lessons after this date.
-    - end: str (optional, ISO date) — Filter lessons before this date.
+    - start: str (optional, ISO date) — Filter lessons after this date (defaults to today if range_length is used).
+    - end: str (optional, ISO date) — Filter lessons before this date (takes priority over range_length).
+    - range_length: int (optional, default=7) — Number of days from start date to include (ignored if end is provided).
     - group: str (optional, "true"/"false") — Filter group lessons.
     - page: int (optional, default=1) — Pagination page number.
     - per_page: int (optional, default=20) — Pagination page size.
@@ -30,23 +32,92 @@ def get_lessons():
     Returns:
     - 200: JSON object with lessons, pagination info.
     - 404: If lesson not found (when using id).
+    
+    Note: If no start date is provided but range_length is used, start defaults to today.
     """
-    initial_date_str = request.args.get('initial_date')
-    range_length = request.args.get('range_length', type=int, default=7)
+    lesson_id = request.args.get('id', type=int)
+    student_id = request.args.get('student_id', type=int)
+    start = request.args.get('start')
+    end = request.args.get('end')
+    range_length = request.args.get('range_length', 7, type=int)
+    group = request.args.get('group')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
 
-    if initial_date_str:
-        try:
-            initial_date = datetime.fromisoformat(initial_date_str)
-        except ValueError:
-            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)."}), 400
-    else:
-        initial_date = datetime.now(timezone.utc)
+    # Get single lesson by ID
+    if lesson_id:
+        lesson = Lesson.query.get_or_404(lesson_id)
+        schema = LessonSchema()
+        return schema.dump(lesson), 200
 
-    end_date = initial_date + timedelta(days=range_length)
+    # Build query
+    query = Lesson.query
 
-    lessons = Lesson.query.filter(Lesson.datetime >= initial_date, Lesson.datetime < end_date).all()
-    lesson_schema = LessonSchema(many=True)
-    return lesson_schema.dump(lessons)
+    # Apply filters
+    if student_id:
+        query = query.join(Lesson.students).filter(Student.id == student_id)
+    
+    # Handle date filtering
+    if start or end or range_length != 7:
+        # Determine start date
+        if start:
+            try:
+                start_date = datetime.fromisoformat(start)
+            except ValueError:
+                return {"message": "Invalid start date format. Use ISO format (YYYY-MM-DD)."}, 400
+        else:
+            # Default to today if using range_length without explicit start
+            start_date = datetime.now(timezone.utc)
+        
+        query = query.filter(Lesson.datetime >= start_date)
+        
+        # Determine end date - end parameter takes priority over range_length
+        if end:
+            try:
+                end_date = datetime.fromisoformat(end)
+                query = query.filter(Lesson.datetime <= end_date)
+            except ValueError:
+                return {"message": "Invalid end date format. Use ISO format (YYYY-MM-DD)."}, 400
+        else:
+            # Use range_length from start_date
+            end_date = start_date + timedelta(days=range_length)
+            query = query.filter(Lesson.datetime < end_date)
+
+    if group is not None:
+        if group.lower() == "true":
+            # Group lessons (lessons with >1 student)
+            group_subq = db.session.query(
+                Lesson.id
+            ).join(Lesson.students).group_by(Lesson.id).having(
+                func.count(Student.id) > 1
+            ).subquery()
+            query = query.filter(Lesson.id.in_(group_subq))
+        elif group.lower() == "false":
+            # Individual lessons (lessons with 1 student)
+            individual_subq = db.session.query(
+                Lesson.id
+            ).join(Lesson.students).group_by(Lesson.id).having(
+                func.count(Student.id) == 1
+            ).subquery()
+            query = query.filter(Lesson.id.in_(individual_subq))
+
+    # Order by datetime descending (most recent first)
+    query = query.order_by(Lesson.datetime.desc())
+
+    # Paginate
+    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+    lessons = paginated.items
+
+    schema = LessonSchema(many=True)
+    return {
+        "lessons": schema.dump(lessons),
+        "pagination": {
+            "page": paginated.page,
+            "pages": paginated.pages,
+            "per_page": paginated.per_page,
+            "total": paginated.total
+        }
+    }
 
 @lesson_bp.route('/lessons', methods=['POST'])
 @jwt_required()

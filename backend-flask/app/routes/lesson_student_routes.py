@@ -22,16 +22,12 @@ def get_lesson_students():
     Query Parameters:
     - lesson_id: int (optional) — Filter by lesson ID.
     - student_id: int (optional) — Filter by student ID.
-    - page: int (optional, default=1) — Pagination page number.
-    - per_page: int (optional, default=20) — Pagination page size.
 
     Returns:
-    - 200: JSON object with lesson-students array and pagination info.
+    - 200: JSON object with lesson-students array.
     """
     lesson_id = request.args.get("lesson_id", type=int)
     student_id = request.args.get("student_id", type=int)
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
     
     query = LessonStudent.query
     
@@ -40,16 +36,11 @@ def get_lesson_students():
     if student_id:
         query = query.filter_by(student_id=student_id)
     
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    lesson_students = paginated.items
+    lesson_students = query.all()
     
     schema = LessonStudentSchema(many=True)
     return {
-        "lesson_students": schema.dump(lesson_students),
-        "total": paginated.total,
-        "page": paginated.page,
-        "per_page": paginated.per_page,
-        "pages": paginated.pages
+        "lesson_students": schema.dump(lesson_students)
     }
 
 @lesson_student_bp.route('/lesson-students', methods=['POST'])
