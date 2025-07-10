@@ -28,7 +28,7 @@ export interface StudentStatusHistory {
   updated_date: string;
   student_id: number;
   status_id: number;
-  changed_at: number;
+  changed_at: string;
 }
 
 export interface StudentLevelHistory {

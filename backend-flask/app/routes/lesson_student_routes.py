@@ -22,14 +22,16 @@ def get_lesson_students():
     Query Parameters:
     - lesson_id: int (optional) — Filter by lesson ID.
     - student_id: int (optional) — Filter by student ID.
+    - do_paginate: bool (optional, default=false) — Whether to return pagination data.
     - page: int (optional, default=1) — Pagination page number.
     - per_page: int (optional, default=20) — Pagination page size.
 
     Returns:
-    - 200: JSON object with lesson-students array and pagination info.
+    - 200: JSON object with lesson-students array.
     """
     lesson_id = request.args.get("lesson_id", type=int)
     student_id = request.args.get("student_id", type=int)
+    do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
@@ -40,17 +42,26 @@ def get_lesson_students():
     if student_id:
         query = query.filter_by(student_id=student_id)
     
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    lesson_students = paginated.items
-    
     schema = LessonStudentSchema(many=True)
-    return {
-        "lesson_students": schema.dump(lesson_students),
-        "total": paginated.total,
-        "page": paginated.page,
-        "per_page": paginated.per_page,
-        "pages": paginated.pages
-    }
+    
+    if do_paginate:
+        # Paginate and return with pagination metadata
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        lesson_students = paginated.items
+        
+        return {
+            "lesson_students": schema.dump(lesson_students),
+            "pagination": {
+                "page": paginated.page,
+                "pages": paginated.pages,
+                "per_page": paginated.per_page,
+                "total": paginated.total
+            }
+        }
+    else:
+        # Return all results without pagination
+        lesson_students = query.all()
+        return {"lesson_students": schema.dump(lesson_students)}
 
 @lesson_student_bp.route('/lesson-students', methods=['POST'])
 @jwt_required()

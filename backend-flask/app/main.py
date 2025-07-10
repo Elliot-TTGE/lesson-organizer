@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_migrate import Migrate
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
@@ -31,6 +32,9 @@ app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
 app.config["JWT_COOKIE_SECURE"] = False # Set True in production
+
+# Initialize Flask-Migrate
+migrate = Migrate(app, db)
 
 db.init_app(app)
 

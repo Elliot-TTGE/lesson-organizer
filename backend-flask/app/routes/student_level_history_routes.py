@@ -22,6 +22,9 @@ def get_student_level_history():
     - level_id: int (optional) — Filter by level ID.
     - start_date: str (optional, ISO date) — Filter records after this date.
     - end_date: str (optional, ISO date) — Filter records before this date.
+    - do_paginate: bool (optional, default=false) — Whether to return pagination data.
+    - page: int (optional, default=1) — Pagination page number.
+    - per_page: int (optional, default=20) — Pagination page size.
 
     Returns:
     - 200: JSON array of history records or single record.
@@ -32,6 +35,9 @@ def get_student_level_history():
     level_id = request.args.get('level_id', type=int)
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
+    do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
 
     # Get single record by ID
     if record_id:
@@ -70,9 +76,26 @@ def get_student_level_history():
     # Order by start_date descending (most recent first)
     query = query.order_by(StudentLevelHistory.start_date.desc())
 
-    records = query.all()
     schema = StudentLevelHistorySchema(many=True)
-    return schema.dump(records), 200
+    
+    if do_paginate:
+        # Paginate and return with pagination metadata
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        records = paginated.items
+        
+        return {
+            "student_level_history": schema.dump(records),
+            "pagination": {
+                "page": paginated.page,
+                "pages": paginated.pages,
+                "per_page": paginated.per_page,
+                "total": paginated.total
+            }
+        }
+    else:
+        # Return all results without pagination
+        records = query.all()
+        return {"student_level_history": schema.dump(records)}
 
 @student_level_history_bp.route('/student-level-history', methods=['POST'])
 @jwt_required()

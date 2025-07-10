@@ -27,6 +27,7 @@ def get_students():
     - is_in_group: str (optional, "true"/"false") — Filter students who had group lessons (multiple students in one lesson).
     - started_after: str (optional, ISO date) — Filter students who started after this date.
     - classes_per_week: int (optional) — Filter by number of classes per week.
+    - do_paginate: bool (optional, default=false) — Whether to return pagination data.
     - page: int (optional, default=1) — Pagination page number.
     - per_page: int (optional, default=20) — Pagination page size.
 
@@ -42,6 +43,7 @@ def get_students():
     is_in_group = request.args.get("is_in_group")                # "true" or "false"
     started_after = request.args.get("started_after")            # ISO date string
     classes_per_week = request.args.get("classes_per_week")
+    do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
     page = int(request.args.get("page", 1))
     per_page = int(request.args.get("per_page", 20))
 
@@ -114,18 +116,26 @@ def get_students():
     if classes_per_week:
         query = query.filter(Student.classes_per_week == int(classes_per_week))
 
-    # Pagination
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    students = paginated.items
-
     schema = StudentSchema(many=True)
-    return {
-        "students": schema.dump(students),
-        "total": paginated.total,
-        "page": paginated.page,
-        "per_page": paginated.per_page,
-        "pages": paginated.pages
-    }
+    
+    if do_paginate:
+        # Paginate and return with pagination metadata
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        students = paginated.items
+        
+        return {
+            "students": schema.dump(students),
+            "pagination": {
+                "page": paginated.page,
+                "pages": paginated.pages,
+                "per_page": paginated.per_page,
+                "total": paginated.total
+            }
+        }
+    else:
+        # Return all results without pagination
+        students = query.all()
+        return {"students": schema.dump(students)}
 
 @student_bp.route('/students', methods=['POST'])
 @jwt_required()
