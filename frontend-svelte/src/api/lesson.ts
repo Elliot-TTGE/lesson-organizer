@@ -7,7 +7,7 @@ export type LessonUpdateFields = Pick<Lesson, 'datetime' | 'plan' | 'concepts' |
 
 export interface LessonsResponse {
     lessons: Lesson[];
-    pagination: Pagination;
+    pagination?: Pagination;
 }
 
 function extractLessonFields(lesson: Lesson): LessonUpdateFields {

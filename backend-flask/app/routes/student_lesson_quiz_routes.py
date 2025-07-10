@@ -22,6 +22,9 @@ def get_student_lesson_quizzes():
     - student_id: int (optional) — Filter by student ID.
     - lesson_id: int (optional) — Filter by lesson ID.
     - quiz_id: int (optional) — Filter by quiz ID.
+    - do_paginate: bool (optional, default=false) — Whether to return pagination data.
+    - page: int (optional, default=1) — Pagination page number.
+    - per_page: int (optional, default=20) — Pagination page size.
 
     Returns:
     - 200: JSON object with records array.
@@ -31,6 +34,9 @@ def get_student_lesson_quizzes():
     student_id = request.args.get('student_id', type=int)
     lesson_id = request.args.get('lesson_id', type=int)
     quiz_id = request.args.get('quiz_id', type=int)
+    do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
 
     # Get single record by ID
     if record_id:
@@ -52,13 +58,26 @@ def get_student_lesson_quizzes():
     # Order by created_date descending (most recent first)
     query = query.order_by(StudentLessonQuiz.created_date.desc())
 
-    # Get all records
-    records = query.all()
-
     schema = StudentLessonQuizSchema(many=True)
-    return {
-        "student_lesson_quizzes": schema.dump(records)
-    }
+    
+    if do_paginate:
+        # Paginate and return with pagination metadata
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+        records = paginated.items
+        
+        return {
+            "student_lesson_quizzes": schema.dump(records),
+            "pagination": {
+                "page": paginated.page,
+                "pages": paginated.pages,
+                "per_page": paginated.per_page,
+                "total": paginated.total
+            }
+        }
+    else:
+        # Return all results without pagination
+        records = query.all()
+        return {"student_lesson_quizzes": schema.dump(records)}
 
 @student_lesson_quiz_bp.route('/student-lesson-quizzes', methods=['POST'])
 @jwt_required()

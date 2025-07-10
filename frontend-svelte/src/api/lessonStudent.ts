@@ -1,4 +1,4 @@
-import type { LessonStudent } from "../types";
+import type { LessonStudent, Pagination } from "../types";
 import type { QueryParams } from "./apiClient";
 import { apiRequest } from "./apiClient";
 
@@ -6,13 +6,18 @@ import { apiRequest } from "./apiClient";
 export type LessonStudentCreateFields = Required<Pick<LessonStudent, 'lesson_id' | 'student_id'>>;
 export type LessonStudentUpdateFields = Pick<LessonStudent, 'lesson_id' | 'student_id'>;
 
+export interface LessonStudentsResponse {
+    lesson_students: LessonStudent[];
+    pagination?: Pagination;
+}
+
 function extractLessonStudentFields(lessonStudent: LessonStudent): LessonStudentUpdateFields {
     const { lesson_id, student_id } = lessonStudent;
     return { lesson_id, student_id };
 }
 
-export async function fetchLessonStudents(params: QueryParams = {}): Promise<LessonStudent[]> {
-    return await apiRequest<LessonStudent[]>('/lesson-students', 'GET', null, {}, params);
+export async function fetchLessonStudents(params: QueryParams = {}): Promise<LessonStudentsResponse> {
+    return await apiRequest<LessonStudentsResponse>('/lesson-students', 'GET', null, {}, params);
 }
 
 export async function createLessonStudent(lessonStudent: LessonStudentCreateFields): Promise<LessonStudent> {

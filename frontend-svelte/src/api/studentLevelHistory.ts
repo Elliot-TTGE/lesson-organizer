@@ -1,4 +1,4 @@
-import type { StudentLevelHistory } from '../types/index';
+import type { StudentLevelHistory, Pagination } from '../types/index';
 import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
@@ -6,13 +6,18 @@ import type { QueryParams } from './apiClient';
 export type StudentLevelHistoryCreateFields = Required<Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>>;
 export type StudentLevelHistoryUpdateFields = Pick<StudentLevelHistory, 'student_id' | 'level_id' | 'start_date'>;
 
+export interface StudentLevelHistoryResponse {
+    student_level_history: StudentLevelHistory[];
+    pagination?: Pagination;
+}
+
 function extractStudentLevelHistoryFields(record: StudentLevelHistory): StudentLevelHistoryUpdateFields {
     const { student_id, level_id, start_date } = record;
     return { student_id, level_id, start_date };
 }
 
-export async function fetchStudentLevelHistory(params: QueryParams = {}): Promise<StudentLevelHistory[]> {
-    return await apiRequest<StudentLevelHistory[]>('/student-level-history', 'GET', null, {}, params);
+export async function fetchStudentLevelHistory(params: QueryParams = {}): Promise<StudentLevelHistoryResponse> {
+    return await apiRequest<StudentLevelHistoryResponse>('/student-level-history', 'GET', null, {}, params);
 }
 
 export async function createStudentLevelHistory(record: StudentLevelHistoryCreateFields): Promise<StudentLevelHistory> {

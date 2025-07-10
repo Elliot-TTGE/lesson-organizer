@@ -1,4 +1,4 @@
-import type { StudentStatusHistory } from '../types/index';
+import type { StudentStatusHistory, Pagination } from '../types/index';
 import { apiRequest } from './apiClient';
 import type { QueryParams } from './apiClient';
 
@@ -6,13 +6,18 @@ import type { QueryParams } from './apiClient';
 export type StudentStatusHistoryCreateFields = Required<Pick<StudentStatusHistory, 'student_id' | 'status_id' | 'changed_at'>>;
 export type StudentStatusHistoryUpdateFields = Pick<StudentStatusHistory, 'student_id' | 'status_id' | 'changed_at'>;
 
+export interface StudentStatusHistoryResponse {
+    student_status_history: StudentStatusHistory[];
+    pagination?: Pagination;
+}
+
 function extractStudentStatusHistoryFields(record: StudentStatusHistory): StudentStatusHistoryUpdateFields {
     const { student_id, status_id, changed_at } = record;
     return { student_id, status_id, changed_at };
 }
 
-export async function fetchStudentStatusHistory(params: QueryParams = {}): Promise<StudentStatusHistory[]> {
-    return await apiRequest<StudentStatusHistory[]>('/student-status-history', 'GET', null, {}, params);
+export async function fetchStudentStatusHistory(params: QueryParams = {}): Promise<StudentStatusHistoryResponse> {
+    return await apiRequest<StudentStatusHistoryResponse>('/student-status-history', 'GET', null, {}, params);
 }
 
 export async function createStudentStatusHistory(record: StudentStatusHistoryCreateFields): Promise<StudentStatusHistory> {

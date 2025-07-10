@@ -7,7 +7,7 @@ export type StudentUpdateFields = Pick<Student, 'first_name' | 'last_name' | 'da
 
 export interface StudentsResponse {
     students: Student[];
-    pagination: Pagination;
+    pagination?: Pagination;
 }
 
 function extractStudentFields(student: Student): StudentUpdateFields {
