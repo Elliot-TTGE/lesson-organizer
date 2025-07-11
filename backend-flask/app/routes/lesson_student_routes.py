@@ -202,3 +202,24 @@ def delete_lesson_student(lesson_student_id):
     db.session.delete(lesson_student)
     db.session.commit()
     return '', 204
+
+@lesson_student_bp.route('/lesson-students/<int:lesson_student_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_lesson_student(lesson_student_id):
+    """
+    GET /lesson-students/<lesson_student_id>
+
+    Description:
+    Get a single lesson-student association by ID.
+
+    Path Parameters:
+    - lesson_student_id: int — The ID of the lesson-student association to retrieve.
+
+    Returns:
+    - 200: JSON object of the lesson-student association (marshmallow schema)
+    - 404: If lesson-student association not found
+    """
+    lesson_student = LessonStudent.query.get_or_404(lesson_student_id)
+    schema = LessonStudentSchema()
+    return schema.dump(lesson_student)

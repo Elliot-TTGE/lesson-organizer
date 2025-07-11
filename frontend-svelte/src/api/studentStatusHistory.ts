@@ -20,6 +20,10 @@ export async function fetchStudentStatusHistory(params: QueryParams = {}): Promi
     return await apiRequest<StudentStatusHistoryResponse>('/student-status-history', 'GET', null, {}, params);
 }
 
+export async function fetchStudentStatusHistoryRecord(id: number): Promise<StudentStatusHistory> {
+    return await apiRequest<StudentStatusHistory>(`/student-status-history/${id}`, 'GET');
+}
+
 export async function createStudentStatusHistory(record: StudentStatusHistoryCreateFields): Promise<StudentStatusHistory> {
     const payload = {
         student_status_history: record

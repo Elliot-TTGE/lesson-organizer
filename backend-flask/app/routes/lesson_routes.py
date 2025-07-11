@@ -20,7 +20,6 @@ def get_lessons():
     GET /lessons
 
     Query Parameters:
-    - id: int (optional) — Get a single lesson by ID.
     - student_id: int (optional) — Filter lessons by student ID.
     - start: str (optional, ISO date) — Filter lessons after this date (defaults to today if range_length is used).
     - end: str (optional, ISO date) — Filter lessons before this date (takes priority over range_length).
@@ -32,11 +31,9 @@ def get_lessons():
 
     Returns:
     - 200: JSON object with lessons, pagination info.
-    - 404: If lesson not found (when using id).
     
     Note: If no start date is provided but range_length is used, start defaults to today.
     """
-    lesson_id = request.args.get('id', type=int)
     student_id = request.args.get('student_id', type=int)
     start = request.args.get('start')
     end = request.args.get('end')
@@ -45,12 +42,6 @@ def get_lessons():
     do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-
-    # Get single lesson by ID
-    if lesson_id:
-        lesson = Lesson.query.get_or_404(lesson_id)
-        schema = LessonSchema()
-        return schema.dump(lesson), 200
 
     # Build query
     query = Lesson.query
@@ -228,3 +219,24 @@ def delete_lesson(id):
     db.session.delete(lesson)
     db.session.commit()
     return '', 204
+
+@lesson_bp.route('/lessons/<int:lesson_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_lesson(lesson_id):
+    """
+    GET /lessons/<lesson_id>
+
+    Description:
+    Get a single lesson by ID.
+
+    Path Parameters:
+    - lesson_id: int — The ID of the lesson to retrieve.
+
+    Returns:
+    - 200: JSON object of the lesson (marshmallow schema)
+    - 404: If lesson not found
+    """
+    lesson = Lesson.query.get_or_404(lesson_id)
+    schema = LessonSchema()
+    return schema.dump(lesson)

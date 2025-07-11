@@ -16,23 +16,14 @@ def get_levels():
     GET /levels
 
     Query Parameters:
-    - id: int (optional) — Get a single level by ID.
     - name: str (optional) — Filter levels by name (partial match).
     - curriculum_id: int (optional) — Filter levels by curriculum ID.
 
     Returns:
-    - 200: JSON array of levels or single level object.
-    - 404: If level not found (when using id).
+    - 200: JSON array of levels.
     """
-    level_id = request.args.get('id', type=int)
     name = request.args.get('name')
     curriculum_id = request.args.get('curriculum_id', type=int)
-
-    # Get single level by ID
-    if level_id:
-        level = Level.query.get_or_404(level_id)
-        level_schema = LevelSchema()
-        return level_schema.dump(level), 200
 
     # Build query
     query = Level.query
@@ -174,3 +165,24 @@ def delete_level(id):
     db.session.delete(level)
     db.session.commit()
     return '', 204
+
+@level_bp.route('/levels/<int:level_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_level(level_id):
+    """
+    GET /levels/<level_id>
+
+    Description:
+    Get a single level by ID.
+
+    Path Parameters:
+    - level_id: int — The ID of the level to retrieve.
+
+    Returns:
+    - 200: JSON object of the level (marshmallow schema)
+    - 404: If level not found
+    """
+    level = Level.query.get_or_404(level_id)
+    level_schema = LevelSchema()
+    return level_schema.dump(level)

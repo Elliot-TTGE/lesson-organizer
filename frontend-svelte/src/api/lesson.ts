@@ -19,6 +19,10 @@ export async function fetchLessons(params: QueryParams = {}): Promise<LessonsRes
     return await apiRequest<LessonsResponse>('/lessons', 'GET', null, {}, params);
 }
 
+export async function fetchLesson(id: number): Promise<Lesson> {
+    return await apiRequest<Lesson>(`/lessons/${id}`, 'GET');
+}
+
 export async function createLesson(lesson: LessonCreateFields | Lesson, student_ids: number[] = []): Promise<Lesson> {
     const lessonData = 'id' in lesson ? extractLessonFields(lesson) : lesson;
     

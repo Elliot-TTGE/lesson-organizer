@@ -15,6 +15,10 @@ export async function fetchQuizzes(params: QueryParams = {}): Promise<Quiz[]> {
     return await apiRequest<Quiz[]>('/quizzes', 'GET', null, {}, params);
 }
 
+export async function fetchQuiz(id: number): Promise<Quiz> {
+    return await apiRequest<Quiz>(`/quizzes/${id}`, 'GET');
+}
+
 export async function createQuiz(quiz: QuizCreateFields): Promise<Quiz> {
     const payload = {
         quiz
