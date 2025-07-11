@@ -15,23 +15,14 @@ def get_users():
     GET /users
 
     Query Parameters:
-    - id: int (optional) — Get a single user by ID.
     - email: str (optional) — Filter users by email (partial match).
     - role: str (optional) — Filter users by role.
 
     Returns:
-    - 200: JSON array of users or single user object.
-    - 404: If user not found (when using id).
+    - 200: JSON array of users.
     """
-    user_id = request.args.get('id', type=int)
     email = request.args.get('email')
     role = request.args.get('role')
-
-    # Get single user by ID
-    if user_id:
-        user = User.query.get_or_404(user_id)
-        schema = UserSchema()
-        return schema.dump(user), 200
 
     # Build query
     query = User.query
@@ -176,3 +167,24 @@ def delete_user(id):
     db.session.delete(user)
     db.session.commit()
     return '', 204
+
+@user_bp.route('/users/<int:user_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_user(user_id):
+    """
+    GET /users/<user_id>
+
+    Description:
+    Get a single user by ID.
+
+    Path Parameters:
+    - user_id: int — The ID of the user to retrieve.
+
+    Returns:
+    - 200: JSON object of the user (marshmallow schema)
+    - 404: If user not found
+    """
+    user = User.query.get_or_404(user_id)
+    schema = UserSchema()
+    return schema.dump(user)

@@ -15,6 +15,10 @@ export async function fetchStudentStatuses(params: QueryParams = {}): Promise<St
     return await apiRequest<StudentStatus[]>('/student-statuses', 'GET', null, {}, params);
 }
 
+export async function fetchStudentStatus(id: number): Promise<StudentStatus> {
+    return await apiRequest<StudentStatus>(`/student-statuses/${id}`, 'GET');
+}
+
 export async function createStudentStatus(status: StudentStatusCreateFields): Promise<StudentStatus> {
     const payload = {
         student_status: status

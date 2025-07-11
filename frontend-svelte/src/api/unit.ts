@@ -15,6 +15,10 @@ export async function fetchUnits(params: QueryParams = {}): Promise<Unit[]> {
     return await apiRequest<Unit[]>('/units', 'GET', null, {}, params);
 }
 
+export async function fetchUnit(id: number): Promise<Unit> {
+    return await apiRequest<Unit>(`/units/${id}`, 'GET');
+}
+
 export async function createUnit(unit: UnitCreateFields): Promise<Unit> {
     const payload = {
         unit

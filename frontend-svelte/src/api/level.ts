@@ -15,6 +15,10 @@ export async function fetchLevels(params: QueryParams = {}): Promise<Level[]> {
     return await apiRequest<Level[]>('/levels', 'GET', null, {}, params);
 }
 
+export async function fetchLevel(id: number): Promise<Level> {
+    return await apiRequest<Level>(`/levels/${id}`, 'GET');
+}
+
 export async function createLevel(level: LevelCreateFields): Promise<Level> {
     const payload = {
         level
