@@ -20,6 +20,10 @@ export async function fetchStudentLessonQuizzes(params: QueryParams = {}): Promi
     return await apiRequest<StudentLessonQuizzesResponse>('/student-lesson-quizzes', 'GET', null, {}, params);
 }
 
+export async function fetchStudentLessonQuizRecord(id: number): Promise<StudentLessonQuiz> {
+    return await apiRequest<StudentLessonQuiz>(`/student-lesson-quizzes/${id}`, 'GET');
+}
+
 export async function createStudentLessonQuiz(record: StudentLessonQuizCreateFields): Promise<StudentLessonQuiz> {
     const payload = {
         student_lesson_quiz: record

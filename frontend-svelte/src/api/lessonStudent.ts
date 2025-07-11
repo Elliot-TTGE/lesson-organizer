@@ -20,6 +20,10 @@ export async function fetchLessonStudents(params: QueryParams = {}): Promise<Les
     return await apiRequest<LessonStudentsResponse>('/lesson-students', 'GET', null, {}, params);
 }
 
+export async function fetchLessonStudent(id: number): Promise<LessonStudent> {
+    return await apiRequest<LessonStudent>(`/lesson-students/${id}`, 'GET');
+}
+
 export async function createLessonStudent(lessonStudent: LessonStudentCreateFields): Promise<LessonStudent> {
     const payload = {
         lesson_student: lessonStudent

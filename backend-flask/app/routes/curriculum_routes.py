@@ -15,21 +15,12 @@ def get_curriculums():
     GET /curriculums
 
     Query Parameters:
-    - id: int (optional) — Get a single curriculum by ID.
     - name: str (optional) — Filter curriculums by name (partial match).
 
     Returns:
-    - 200: JSON array of curriculums or single curriculum object.
-    - 404: If curriculum not found (when using id).
+    - 200: JSON array of curriculums.
     """
-    curriculum_id = request.args.get('id', type=int)
     name = request.args.get('name')
-
-    # Get single curriculum by ID
-    if curriculum_id:
-        curriculum = Curriculum.query.get_or_404(curriculum_id)
-        curriculum_schema = CurriculumSchema()
-        return curriculum_schema.dump(curriculum), 200
 
     # Build query
     query = Curriculum.query
@@ -145,3 +136,24 @@ def delete_curriculum(id):
     db.session.delete(curriculum)
     db.session.commit()
     return '', 204
+
+@curriculum_bp.route('/curriculums/<int:curriculum_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_curriculum(curriculum_id):
+    """
+    GET /curriculums/<curriculum_id>
+
+    Description:
+    Get a single curriculum by ID.
+
+    Path Parameters:
+    - curriculum_id: int — The ID of the curriculum to retrieve.
+
+    Returns:
+    - 200: JSON object of the curriculum (marshmallow schema)
+    - 404: If curriculum not found
+    """
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    curriculum_schema = CurriculumSchema()
+    return curriculum_schema.dump(curriculum)

@@ -16,23 +16,14 @@ def get_quizzes():
     GET /quizzes
 
     Query Parameters:
-    - id: int (optional) — Get a single quiz by ID.
     - name: str (optional) — Filter quizzes by name (partial match).
     - unit_id: int (optional) — Filter quizzes by unit ID.
 
     Returns:
-    - 200: JSON array of quizzes or single quiz object.
-    - 404: If quiz not found (when using id).
+    - 200: JSON array of quizzes.
     """
-    quiz_id = request.args.get('id', type=int)
     name = request.args.get('name')
     unit_id = request.args.get('unit_id', type=int)
-
-    # Get single quiz by ID
-    if quiz_id:
-        quiz = Quiz.query.get_or_404(quiz_id)
-        schema = QuizSchema()
-        return schema.dump(quiz), 200
 
     # Build query
     query = Quiz.query
@@ -177,3 +168,24 @@ def delete_quiz(id):
     db.session.delete(quiz)
     db.session.commit()
     return '', 204
+
+@quiz_bp.route('/quizzes/<int:quiz_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_quiz(quiz_id):
+    """
+    GET /quizzes/<quiz_id>
+
+    Description:
+    Get a single quiz by ID.
+
+    Path Parameters:
+    - quiz_id: int — The ID of the quiz to retrieve.
+
+    Returns:
+    - 200: JSON object of the quiz (marshmallow schema)
+    - 404: If quiz not found
+    """
+    quiz = Quiz.query.get_or_404(quiz_id)
+    schema = QuizSchema()
+    return schema.dump(quiz)

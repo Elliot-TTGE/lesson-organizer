@@ -20,6 +20,10 @@ export async function fetchStudentLevelHistory(params: QueryParams = {}): Promis
     return await apiRequest<StudentLevelHistoryResponse>('/student-level-history', 'GET', null, {}, params);
 }
 
+export async function fetchStudentLevelHistoryRecord(id: number): Promise<StudentLevelHistory> {
+    return await apiRequest<StudentLevelHistory>(`/student-level-history/${id}`, 'GET');
+}
+
 export async function createStudentLevelHistory(record: StudentLevelHistoryCreateFields): Promise<StudentLevelHistory> {
     const payload = {
         student_level_history: record

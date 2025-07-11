@@ -19,7 +19,6 @@ def get_students():
     GET /students
 
     Query Parameters:
-    - id: int (optional) — Get a single student by ID.
     - status: str (optional) — Filter by current status (from StudentStatusHistory).
     - level: str (optional) — Filter by current level (from StudentLevelHistory).
     - lesson_start: str (optional, ISO date) — Filter students who had lessons after this date.
@@ -33,9 +32,7 @@ def get_students():
 
     Returns:
     - 200: JSON object with students, pagination info.
-    - 404: If student not found (when using id).
     """
-    student_id = request.args.get("id")
     status = request.args.get("status")
     level = request.args.get("level")
     lesson_start = request.args.get("lesson_start")              # ISO date string
@@ -48,13 +45,6 @@ def get_students():
     per_page = int(request.args.get("per_page", 20))
 
     query = Student.query
-
-    # Get by id (single student)
-    if student_id:
-        student = query.filter_by(id=student_id).first()
-        if not student:
-            return {"message": "Student not found"}, 404
-        return StudentSchema().dump(student)
 
     # Filter by current status (latest StudentStatusHistory)
     if status:
@@ -254,3 +244,27 @@ def delete_student(student_id):
     db.session.delete(student)
     db.session.commit()
     return {}, 204
+
+@student_bp.route('/students/<int:student_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_student(student_id):
+    """
+    GET /students/<student_id>
+
+    Description:
+    Get a single student by ID.
+
+    Path Parameters:
+    - student_id: int — The ID of the student to retrieve.
+
+    Returns:
+    - 200: JSON object of the student (marshmallow schema)
+    - 404: If student not found
+    """
+    student = Student.query.get(student_id)
+    if not student:
+        return {"message": "Student not found"}, 404
+    
+    schema = StudentSchema()
+    return schema.dump(student)

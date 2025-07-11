@@ -17,7 +17,6 @@ def get_student_level_history():
     GET /student-level-history
 
     Query Parameters:
-    - id: int (optional) — Get a single history record by ID.
     - student_id: int (optional) — Filter by student ID.
     - level_id: int (optional) — Filter by level ID.
     - start_date: str (optional, ISO date) — Filter records after this date.
@@ -27,10 +26,8 @@ def get_student_level_history():
     - per_page: int (optional, default=20) — Pagination page size.
 
     Returns:
-    - 200: JSON array of history records or single record.
-    - 404: If record not found (when using id).
+    - 200: JSON array of history records.
     """
-    record_id = request.args.get('id', type=int)
     student_id = request.args.get('student_id', type=int)
     level_id = request.args.get('level_id', type=int)
     start_date = request.args.get('start_date')
@@ -38,12 +35,6 @@ def get_student_level_history():
     do_paginate = request.args.get('do_paginate', 'false').lower() == 'true'
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
-
-    # Get single record by ID
-    if record_id:
-        record = StudentLevelHistory.query.get_or_404(record_id)
-        schema = StudentLevelHistorySchema()
-        return schema.dump(record), 200
 
     # Build query
     query = StudentLevelHistory.query
@@ -237,3 +228,24 @@ def delete_student_level_history(id):
     db.session.delete(record)
     db.session.commit()
     return '', 204
+
+@student_level_history_bp.route('/student-level-history/<int:record_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_student_level_history_record(record_id):
+    """
+    GET /student-level-history/<record_id>
+
+    Description:
+    Get a single student level history record by ID.
+
+    Path Parameters:
+    - record_id: int — The ID of the student level history record to retrieve.
+
+    Returns:
+    - 200: JSON object of the student level history record (marshmallow schema)
+    - 404: If student level history record not found
+    """
+    record = StudentLevelHistory.query.get_or_404(record_id)
+    schema = StudentLevelHistorySchema()
+    return schema.dump(record)

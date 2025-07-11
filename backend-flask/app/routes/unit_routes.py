@@ -16,23 +16,14 @@ def get_units():
     GET /units
 
     Query Parameters:
-    - id: int (optional) — Get a single unit by ID.
     - name: str (optional) — Filter units by name (partial match).
     - level_id: int (optional) — Filter units by level ID.
 
     Returns:
-    - 200: JSON array of units or single unit object.
-    - 404: If unit not found (when using id).
+    - 200: JSON array of units.
     """
-    unit_id = request.args.get('id', type=int)
     name = request.args.get('name')
     level_id = request.args.get('level_id', type=int)
-
-    # Get single unit by ID
-    if unit_id:
-        unit = Unit.query.get_or_404(unit_id)
-        unit_schema = UnitSchema()
-        return unit_schema.dump(unit), 200
 
     # Build query
     query = Unit.query
@@ -174,3 +165,24 @@ def delete_unit(id):
     db.session.delete(unit)
     db.session.commit()
     return '', 204
+
+@unit_bp.route('/units/<int:unit_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_unit(unit_id):
+    """
+    GET /units/<unit_id>
+
+    Description:
+    Get a single unit by ID.
+
+    Path Parameters:
+    - unit_id: int — The ID of the unit to retrieve.
+
+    Returns:
+    - 200: JSON object of the unit (marshmallow schema)
+    - 404: If unit not found
+    """
+    unit = Unit.query.get_or_404(unit_id)
+    unit_schema = UnitSchema()
+    return unit_schema.dump(unit)

@@ -15,6 +15,10 @@ export async function fetchCurriculums(params: QueryParams = {}): Promise<Curric
     return await apiRequest<Curriculum[]>('/curriculums', 'GET', null, {}, params);
 }
 
+export async function fetchCurriculum(id: number): Promise<Curriculum> {
+    return await apiRequest<Curriculum>(`/curriculums/${id}`, 'GET');
+}
+
 export async function createCurriculum(curriculum: CurriculumCreateFields): Promise<Curriculum> {
     const payload = {
         curriculum

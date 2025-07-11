@@ -15,21 +15,12 @@ def get_student_statuses():
     GET /student-statuses
 
     Query Parameters:
-    - id: int (optional) — Get a single status by ID.
     - name: str (optional) — Filter statuses by name (partial match).
 
     Returns:
-    - 200: JSON array of statuses or single status object.
-    - 404: If status not found (when using id).
+    - 200: JSON array of statuses.
     """
-    status_id = request.args.get('id', type=int)
     name = request.args.get('name')
-
-    # Get single status by ID
-    if status_id:
-        status = StudentStatus.query.get_or_404(status_id)
-        schema = StudentStatusSchema()
-        return schema.dump(status), 200
 
     # Build query
     query = StudentStatus.query
@@ -148,3 +139,24 @@ def delete_student_status(id):
     db.session.delete(status)
     db.session.commit()
     return '', 204
+
+@student_status_bp.route('/student-statuses/<int:status_id>', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_student_status(status_id):
+    """
+    GET /student-statuses/<status_id>
+
+    Description:
+    Get a single student status by ID.
+
+    Path Parameters:
+    - status_id: int — The ID of the student status to retrieve.
+
+    Returns:
+    - 200: JSON object of the student status (marshmallow schema)
+    - 404: If student status not found
+    """
+    status = StudentStatus.query.get_or_404(status_id)
+    schema = StudentStatusSchema()
+    return schema.dump(status)

@@ -15,6 +15,10 @@ export async function fetchUsers(params: QueryParams = {}): Promise<User[]> {
     return await apiRequest<User[]>('/users', 'GET', null, {}, params);
 }
 
+export async function fetchUser(id: number): Promise<User> {
+    return await apiRequest<User>(`/users/${id}`, 'GET');
+}
+
 export async function createUser(user: UserCreateFields): Promise<User> {
     const payload = {
         user
