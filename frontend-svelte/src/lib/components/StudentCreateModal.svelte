@@ -58,29 +58,35 @@
                 date_started: new Date().toISOString()
             });
 
+            // Arrays to store created history records
+            let statusHistory = [];
+            let levelHistory = [];
+
             // Create status history if status is selected
             if (selectedStatusId) {
-                await createStudentStatusHistory({
+                const statusHistoryRecord = await createStudentStatusHistory({
                     student_id: newStudent.id,
                     status_id: selectedStatusId,
                     changed_at: new Date().toISOString()
                 });
+                statusHistory.push(statusHistoryRecord);
             }
 
             // Create level history if level is selected
             if (selectedLevelId) {
-                await createStudentLevelHistory({
+                const levelHistoryRecord = await createStudentLevelHistory({
                     student_id: newStudent.id,
                     level_id: selectedLevelId,
                     start_date: new Date().toISOString()
                 });
+                levelHistory.push(levelHistoryRecord);
             }
 
             studentCreateModal.close();
             
-            // Notify parent component about the new student
+            // Notify parent component about the new student with history data
             if (onStudentCreated) {
-                onStudentCreated(newStudent);
+                onStudentCreated(newStudent, statusHistory, levelHistory);
             }
 
         } catch (error) {

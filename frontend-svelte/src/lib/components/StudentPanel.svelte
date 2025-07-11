@@ -1,11 +1,15 @@
 <script lang="ts">
-    import type { Student } from "../../types";
+    import { type Level, type Student, type StudentLevelHistory, type StudentStatus, type StudentStatusHistory } from "../../types";
     import StudentCard from "./StudentCard.svelte";
     import StudentCreateModal from "./StudentCreateModal.svelte";
     import { fetchStudents } from "../../api/student";
     import { onMount } from "svelte";
+    import { fetchLevels } from "../../api/level";
+    import { fetchStudentStatuses } from "../../api/studentStatus";
 
     let students = $state<Student[]>([]);
+    let levels = $state<Level[]>([])
+    let studentStatuses = $state<StudentStatus[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
@@ -22,9 +26,19 @@
         selectedStudent = null;
     }
 
-    function handleStudentCreated(newStudent: Student) {
-        // Add the new student to the existing list
-        students = [...students, newStudent];
+    function handleStudentCreated(newStudent: Student, status_history: StudentStatusHistory[], level_history: StudentLevelHistory[]) {
+        // Initialize the student with empty arrays for relationships we don't need to fetch
+        const enrichedStudent: Student = {
+            ...newStudent,
+            lessons: [], // New students won't have lessons yet
+            quizzes: [], // New students won't have quizzes yet
+            // Use the history arrays passed from the modal
+            status_history: status_history || [],
+            level_history: level_history || []
+        };
+
+        // Add the enriched student to the existing list
+        students = [...students, enrichedStudent];
         
         // Close any existing modals
         closeModal();
@@ -34,10 +48,113 @@
         selectedStudent = newStudent.id;
     }
 
+    function getCurrentLevel(student: Student): string {
+        if (!student.level_history || student.level_history.length === 0) {
+            return '-';
+        }
+
+        // Sort level history by start_date descending to get the most recent
+        const sortedHistory = student.level_history.sort((a, b) => 
+            new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+        );
+        
+        const mostRecentHistory = sortedHistory[0];
+        const level = levels.find(l => l.id === mostRecentHistory.level_id);
+        
+        if (!level || !level.curriculum) {
+            return '-';
+        }
+        
+        return `${level.curriculum.name}: ${level.name}`;
+    }
+
+    function getLastLesson(student: Student): string {
+        if (!student.lessons || student.lessons.length === 0) {
+            return '-';
+        }
+
+        const now = new Date();
+        
+        // Filter lessons to only include those in the past, then sort by datetime descending
+        const pastLessons = student.lessons
+            .filter(lesson => new Date(lesson.datetime) < now)
+            .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+        
+        if (pastLessons.length === 0) {
+            return '-';
+        }
+        
+        const mostRecentLesson = pastLessons[0];
+        const lessonDate = new Date(mostRecentLesson.datetime);
+        
+        // Format the date and time
+        return lessonDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        }) + ' ' + lessonDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function getNextLesson(student: Student): string {
+        if (!student.lessons || student.lessons.length === 0) {
+            return '-';
+        }
+
+        const now = new Date();
+        
+        // Filter lessons to only include those in the future, then sort by datetime ascending
+        const futureLessons = student.lessons
+            .filter(lesson => new Date(lesson.datetime) > now)
+            .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+        
+        if (futureLessons.length === 0) {
+            return '-';
+        }
+        
+        const nextLesson = futureLessons[0];
+        const lessonDate = new Date(nextLesson.datetime);
+        
+        // Format the date and time
+        return lessonDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        }) + ' ' + lessonDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+
+    function getCurrentStatus(student: Student): string {
+        if (!student.status_history || student.status_history.length === 0) {
+            return '-';
+        }
+
+        // Sort status history by changed_at descending to get the most recent
+        const sortedHistory = student.status_history.sort((a, b) => 
+            new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
+        );
+        
+        const mostRecentHistory = sortedHistory[0];
+        const status = studentStatuses.find(s => s.id === mostRecentHistory.status_id);
+        
+        if (!status) {
+            return '-';
+        }
+        
+        return status.name;
+    }
+
     onMount(async () => {
         try {
-            const response = await fetchStudents();
-            students = response.students;
+            students = (await fetchStudents()).students;
+            levels = await fetchLevels();
+            studentStatuses = await fetchStudentStatuses();
             isLoading = false;
         } catch (err) {
             error = err instanceof Error ? err.message : 'Failed to fetch students';
@@ -80,54 +197,46 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Level</th>
+                <th>Status</th>
                 <th>Next Lesson</th>
                 <th>Last Lesson</th>
                 <th>Last Quiz</th>
                 <th>Actions</th>
             </tr>
         </thead>
-    </table>
-</div>
-<div class="overflow-y-auto">
-    {#if isLoading}
-        <div class="flex justify-center p-8">
-            <span class="loading loading-spinner loading-lg"></span>
-        </div>
-    {:else if error}
-        <div class="alert alert-error m-4">
-            <span>Error: {error}</span>
-        </div>
-    {:else}
-        <table class="table table-zebra border border-base-200">
-            <tbody>
+        <tbody class="table-zebra">
+            {#if isLoading}
+                <tr>
+                    <td colspan="8" class="text-center p-8">
+                        <span class="loading loading-spinner loading-lg"></span>
+                    </td>
+                </tr>
+            {:else if error}
+                <tr>
+                    <td colspan="8" class="p-4">
+                        <div class="alert alert-error">
+                            <span>Error: {error}</span>
+                        </div>
+                    </td>
+                </tr>
+            {:else}
                 {#each students as student (student.id)}
-                    <tr>
-                    <td>{student.id}</td>
+                    <tr class="hover">
+                        <td>{student.id}</td>
                         <td>{student.first_name} {student.last_name || ''}</td>
-                        <td>-</td> <!-- TODO: Add current level logic -->
-                        <td>-</td> <!-- TODO: Add next lesson logic -->
-                        <td>-</td> <!-- TODO: Add last lesson logic -->
+                        <td>{getCurrentLevel(student)}</td>
+                        <td>{getCurrentStatus(student)}</td>
+                        <td>{getNextLesson(student)}</td>
+                        <td>{getLastLesson(student)}</td>
                         <td>-</td> <!-- TODO: Add last quiz logic -->
                         <td>
                             <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
                         </td>
                     </tr>
                 {/each}
-                {#if students.length === 0}
-                    <tr>
-                        <td colspan="7" class="text-center py-8">
-                            <div class="text-base-content/60">
-                                No students found. 
-                                <StudentCreateModal onStudentCreated={handleStudentCreated}>
-                                    <span class="link link-primary">Create your first student</span>
-                                </StudentCreateModal>
-                            </div>
-                        </td>
-                    </tr>
-                {/if}
-            </tbody>
-        </table>
-    {/if}
+            {/if}
+        </tbody>
+    </table>
 </div>
 
 {#if showModal}
