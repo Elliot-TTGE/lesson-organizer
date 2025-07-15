@@ -189,13 +189,19 @@
 
 {#if showModal}
     <dialog open class="modal modal-middle">
-        <div class="modal-box max-w-[85vw] h-[85vh]">
-            <div class="modal-action justify-end p-0 mb-2">
-                <button class="btn" onclick={closeModal}>Close</button>
+        <div class="modal-box max-w-[95vw] h-[95vh] p-0 bg-transparent shadow-none overflow-y-auto">
+            <div class="absolute top-4 right-4 z-10">
+                <button class="btn btn-circle btn-ghost bg-base-100/80 backdrop-blur-sm" onclick={closeModal} aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            {#if selectedStudent}
-                <StudentCard studentId={selectedStudent} onStudentUpdated={handleStudentUpdated} />
-            {/if}
+            <div>
+                {#if selectedStudent}
+                    <StudentCard studentId={selectedStudent} onStudentUpdated={handleStudentUpdated} />
+                {/if}
+            </div>
         </div>
         <form method="dialog" class="modal-backdrop">
             <button onclick={closeModal}>close</button>
