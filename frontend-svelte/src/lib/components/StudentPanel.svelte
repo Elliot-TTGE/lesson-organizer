@@ -1,15 +1,26 @@
 <script lang="ts">
-    import { type Level, type Student, type StudentLevelHistory, type StudentStatus, type StudentStatusHistory } from "../../types";
+    import { type Student, type StudentLevelHistory, type StudentStatusHistory } from "../../types";
     import StudentCard from "./StudentCard.svelte";
     import StudentCreateModal from "./StudentCreateModal.svelte";
     import { fetchStudents } from "../../api/student";
     import { onMount } from "svelte";
-    import { fetchLevels } from "../../api/level";
-    import { fetchStudentStatuses } from "../../api/studentStatus";
+    import { 
+        getLatestLevelId, 
+        getLatestStatusId, 
+        getLastLessonFromStudent, 
+        getNextLessonFromStudent, 
+        formatLessonDateTime 
+    } from "../utils/studentUtils";
+    import {
+        statusState,
+        refreshStatuses,
+        getStatusNameById,
+        levelState,
+        refreshLevels,
+        getLevelDisplayById
+    } from "../states";
 
     let students = $state<Student[]>([]);
-    let levels = $state<Level[]>([])
-    let studentStatuses = $state<StudentStatus[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
@@ -24,6 +35,14 @@
     function closeModal() {
         showModal = false;
         selectedStudent = null;
+    }
+
+    async function handleStudentUpdated(updatedStudent: Student) {
+        // Update the student in the students array with fresh data
+        students = students.map(student => 
+            student.id === updatedStudent.id ? updatedStudent : student
+        );
+        closeModal();
     }
 
     function handleStudentCreated(newStudent: Student, status_history: StudentStatusHistory[], level_history: StudentLevelHistory[]) {
@@ -45,119 +64,48 @@
         
         // Open the StudentCard modal for the new student
         showModal = true;
-        selectedStudent = newStudent.id;
+        selectedStudent = enrichedStudent.id;
     }
 
     function getCurrentLevel(student: Student): string {
-        if (!student.level_history || student.level_history.length === 0) {
+        const latestLevelId = getLatestLevelId(student);
+        if (!latestLevelId) {
             return '-';
         }
 
-        // Sort level history by start_date descending to get the most recent
-        const sortedHistory = student.level_history.sort((a, b) => 
-            new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-        );
-        
-        const mostRecentHistory = sortedHistory[0];
-        const level = levels.find(l => l.id === mostRecentHistory.level_id);
-        
-        if (!level || !level.curriculum) {
-            return '-';
-        }
-        
-        return `${level.curriculum.name}: ${level.name}`;
+        return getLevelDisplayById(latestLevelId) ?? '-';
     }
 
     function getLastLesson(student: Student): string {
-        if (!student.lessons || student.lessons.length === 0) {
-            return '-';
-        }
-
-        const now = new Date();
-        
-        // Filter lessons to only include those in the past, then sort by datetime descending
-        const pastLessons = student.lessons
-            .filter(lesson => new Date(lesson.datetime) < now)
-            .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
-        
-        if (pastLessons.length === 0) {
-            return '-';
-        }
-        
-        const mostRecentLesson = pastLessons[0];
-        const lessonDate = new Date(mostRecentLesson.datetime);
-        
-        // Format the date and time
-        return lessonDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric',
-            year: 'numeric'
-        }) + ' ' + lessonDate.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
+        const lastLesson = getLastLessonFromStudent(student);
+        return lastLesson ? formatLessonDateTime(lastLesson) : '-';
     }
 
     function getNextLesson(student: Student): string {
-        if (!student.lessons || student.lessons.length === 0) {
-            return '-';
-        }
-
-        const now = new Date();
-        
-        // Filter lessons to only include those in the future, then sort by datetime ascending
-        const futureLessons = student.lessons
-            .filter(lesson => new Date(lesson.datetime) > now)
-            .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
-        
-        if (futureLessons.length === 0) {
-            return '-';
-        }
-        
-        const nextLesson = futureLessons[0];
-        const lessonDate = new Date(nextLesson.datetime);
-        
-        // Format the date and time
-        return lessonDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric',
-            year: 'numeric'
-        }) + ' ' + lessonDate.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
+        const nextLesson = getNextLessonFromStudent(student);
+        return nextLesson ? formatLessonDateTime(nextLesson) : '-';
     }
 
     function getCurrentStatus(student: Student): string {
-        if (!student.status_history || student.status_history.length === 0) {
+        const latestStatusId = getLatestStatusId(student);
+        if (!latestStatusId) {
             return '-';
         }
 
-        // Sort status history by changed_at descending to get the most recent
-        const sortedHistory = student.status_history.sort((a, b) => 
-            new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
-        );
-        
-        const mostRecentHistory = sortedHistory[0];
-        const status = studentStatuses.find(s => s.id === mostRecentHistory.status_id);
-        
-        if (!status) {
-            return '-';
-        }
-        
-        return status.name;
+        return getStatusNameById(latestStatusId) ?? '-';
     }
 
     onMount(async () => {
         try {
-            students = (await fetchStudents()).students;
-            levels = await fetchLevels();
-            studentStatuses = await fetchStudentStatuses();
+            // Fetch all data in parallel
+            await Promise.all([
+                fetchStudents().then(response => { students = response.students; }),
+                refreshLevels(),
+                refreshStatuses()
+            ]);
             isLoading = false;
         } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to fetch students';
+            error = err instanceof Error ? err.message : 'Failed to fetch data';
             isLoading = false;
         }
     });
@@ -205,17 +153,17 @@
             </tr>
         </thead>
         <tbody class="table-zebra">
-            {#if isLoading}
+            {#if isLoading || statusState.isLoading || levelState.isLoading}
                 <tr>
                     <td colspan="8" class="text-center p-8">
                         <span class="loading loading-spinner loading-lg"></span>
                     </td>
                 </tr>
-            {:else if error}
+            {:else if error || statusState.error || levelState.error}
                 <tr>
                     <td colspan="8" class="p-4">
                         <div class="alert alert-error">
-                            <span>Error: {error}</span>
+                            <span>Error: {error || statusState.error || levelState.error}</span>
                         </div>
                     </td>
                 </tr>
@@ -245,7 +193,9 @@
             <div class="modal-action justify-end p-0 mb-2">
                 <button class="btn" onclick={closeModal}>Close</button>
             </div>
-            <StudentCard student={selectedStudent} />
+            {#if selectedStudent}
+                <StudentCard studentId={selectedStudent} onStudentUpdated={handleStudentUpdated} />
+            {/if}
         </div>
         <form method="dialog" class="modal-backdrop">
             <button onclick={closeModal}>close</button>
