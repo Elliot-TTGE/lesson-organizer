@@ -1,6 +1,6 @@
 <script lang="ts">
     import { type Student } from "../../types";
-    import { fetchStudent } from "../../api/student";
+    import { fetchStudent, updateStudent } from "../../api/student";
     import { createStudentStatusHistory, deleteStudentStatusHistory } from "../../api/studentStatusHistory";
     import { createStudentLevelHistory, deleteStudentLevelHistory } from "../../api/studentLevelHistory";
     import { onMount } from "svelte";
@@ -33,6 +33,7 @@
     let error = $state<string | null>(null);
     let isUpdatingStatus = $state(false);
     let isUpdatingLevel = $state(false);
+    let isUpdatingClassesPerWeek = $state(false);
     let deletingStatusId = $state<number | null>(null);
     let deletingLevelId = $state<number | null>(null);
 
@@ -151,6 +152,30 @@
         }
     }
 
+    async function handleClassesPerWeekChange(newClassesPerWeek: number) {
+        if (!student || isUpdatingClassesPerWeek || newClassesPerWeek < 0) return;
+        
+        isUpdatingClassesPerWeek = true;
+        try {
+            // Update student in database
+            const updatedStudent = await updateStudent(student.id, {
+                classes_per_week: newClassesPerWeek
+            });
+
+            // Update local student data
+            student.classes_per_week = updatedStudent.classes_per_week;
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to update classes per week';
+        } finally {
+            isUpdatingClassesPerWeek = false;
+        }
+    }
+
     function handleUpdate() {
         // This would be called when student data is updated in the modal
         // For now, we'll just refresh the data
@@ -238,24 +263,62 @@
                         </div>
                     </div>
 
-                    <!-- Current Status -->
-                    <div class="card bg-base-100 text-base-content shadow-lg">
-                        <div class="card-body">
-                            <h3 class="card-title text-accent">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Current Status
-                            </h3>
-                            <p class="text-lg font-semibold">{currentStatusDisplay()}</p>
+                    <!-- Current Status and Classes per Week Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body text-center">
+                                <h3 class="card-title text-accent justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Current Status
+                                </h3>
+                                <p class="text-lg font-semibold">{currentStatusDisplay()}</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body">
+                                <h3 class="card-title text-success justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    Classes per Week
+                                </h3>
+                                <div class="flex items-center gap-3">
+                                    <button 
+                                        class="btn btn-circle btn-sm btn-ghost text-error hover:bg-error hover:text-error-content disabled:text-base-content/40 disabled:bg-transparent"
+                                        disabled={isUpdatingClassesPerWeek || (student.classes_per_week ?? 0) <= 0}
+                                        onclick={() => student && handleClassesPerWeekChange((student.classes_per_week ?? 0) - 1)}
+                                        aria-label="Decrease classes per week"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                        </svg>
+                                    </button>
+                                    <div class="flex-1 text-center">
+                                        <p class="text-lg font-semibold">{student.classes_per_week ?? 0}</p>
+                                    </div>
+                                    <button 
+                                        class="btn btn-circle btn-sm btn-ghost text-success hover:bg-success hover:text-success-content disabled:text-base-content/40 disabled:bg-transparent"
+                                        disabled={isUpdatingClassesPerWeek}
+                                        onclick={() => student && handleClassesPerWeekChange((student.classes_per_week ?? 0) + 1)}
+                                        aria-label="Increase classes per week"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Curriculum and Level Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="card bg-base-100 text-base-content shadow-lg">
-                            <div class="card-body">
-                                <h3 class="card-title text-accent">
+                            <div class="card-body text-center">
+                                <h3 class="card-title text-accent justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                                     </svg>
@@ -266,8 +329,8 @@
                         </div>
 
                         <div class="card bg-base-100 text-base-content shadow-lg">
-                            <div class="card-body">
-                                <h3 class="card-title text-accent">
+                            <div class="card-body text-center">
+                                <h3 class="card-title text-accent justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                     </svg>
@@ -275,19 +338,6 @@
                                 </h3>
                                 <p class="text-lg font-semibold">{currentLevelDisplay().split(':')[1]?.trim() ?? 'Not set'}</p>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Classes per Week -->
-                    <div class="card bg-base-100 text-base-content shadow-lg">
-                        <div class="card-body">
-                            <h3 class="card-title text-success">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                Classes per Week
-                            </h3>
-                            <p class="text-lg font-semibold">{student.classes_per_week ?? "Not Set"}</p>
                         </div>
                     </div>
                 </div>
@@ -303,7 +353,7 @@
                         </h3>
                         
                         <!-- Lesson Navigation -->
-                        <div class="flex justify-between items-center mb-4">
+                        <div class="flex justify-between items-center">
                             <button class="btn btn-ghost btn-sm" disabled>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
