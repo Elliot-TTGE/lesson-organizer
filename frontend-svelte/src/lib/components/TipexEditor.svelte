@@ -24,6 +24,7 @@
   floating={false}
   class={height}
   onupdate={handleUpdate}
+  autofocus={false}
 >
   {#snippet head()}
     <div class="text-lg font-bold text-secondary mb-2 px-2">
