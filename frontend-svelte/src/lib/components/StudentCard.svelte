@@ -21,6 +21,7 @@
         getLevelDisplayById
     } from "../states";
     import TipexEditor from "./TipexEditor.svelte";
+    import LessonCard from "./LessonCard.svelte";
 
     let { studentId, onStudentUpdated } = $props<{ 
         studentId: number; 
@@ -220,69 +221,127 @@
                 </a>
             </div>
 
-            <!-- Stats Section -->
-            <div class="stats stats-vertical sm:stats-horizontal shadow-lg bg-base-100 text-base-content mb-6">
-                <div class="stat">
-                    <div class="stat-figure text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
+            <!-- Main Info Section - Two Columns -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <!-- Student Since -->
+                    <div class="stats shadow-lg bg-base-100 text-base-content w-full">
+                        <div class="stat">
+                            <div class="stat-figure text-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="stat-title">Student Since</div>
+                            <div class="stat-value text-lg">{formatStudentDate(student.date_started)}</div>
+                        </div>
                     </div>
-                    <div class="stat-title">Student Since</div>
-                    <div class="stat-value text-lg">{formatStudentDate(student.date_started)}</div>
-                </div>
-            </div>
 
-            <!-- Current Status and Level Display -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="card bg-base-100 text-base-content shadow-lg">
-                    <div class="card-body">
-                        <h3 class="card-title text-accent">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Current Status
-                        </h3>
-                        <p class="text-lg font-semibold">{currentStatusDisplay()}</p>
+                    <!-- Current Status -->
+                    <div class="card bg-base-100 text-base-content shadow-lg">
+                        <div class="card-body">
+                            <h3 class="card-title text-accent">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Current Status
+                            </h3>
+                            <p class="text-lg font-semibold">{currentStatusDisplay()}</p>
+                        </div>
+                    </div>
+
+                    <!-- Curriculum and Level Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body">
+                                <h3 class="card-title text-accent">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                    Curriculum
+                                </h3>
+                                <p class="text-lg font-semibold">{currentLevelDisplay().split(':')[0] ?? 'Not set'}</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body">
+                                <h3 class="card-title text-accent">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    Current Level
+                                </h3>
+                                <p class="text-lg font-semibold">{currentLevelDisplay().split(':')[1]?.trim() ?? 'Not set'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Classes per Week -->
+                    <div class="card bg-base-100 text-base-content shadow-lg">
+                        <div class="card-body">
+                            <h3 class="card-title text-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                Classes per Week
+                            </h3>
+                            <p class="text-lg font-semibold">{student.classes_per_week ?? "Not Set"}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card bg-base-100 text-base-content shadow-lg">
-                    <div class="card-body">
-                        <h3 class="card-title text-accent">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            Current Level & Curriculum
-                        </h3>
-                        <p class="text-lg font-semibold">{currentLevelDisplay()}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Info Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Right Column - Lessons -->
                 <div class="card bg-base-100 text-base-content shadow-lg">
                     <div class="card-body">
                         <h3 class="card-title text-info">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Last Lesson
+                            Lessons
                         </h3>
-                        <p class="text-lg font-semibold">{lastLessonDisplay()}</p>
-                    </div>
-                </div>
-                
-                <div class="card bg-base-100 text-base-content shadow-lg">
-                    <div class="card-body">
-                        <h3 class="card-title text-success">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                            </svg>
-                            Classes per Week
-                        </h3>
-                        <p class="text-lg font-semibold">{student.classes_per_week ?? "Not Set"}</p>
+                        
+                        <!-- Lesson Navigation -->
+                        <div class="flex justify-between items-center mb-4">
+                            <button class="btn btn-ghost btn-sm" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Previous
+                            </button>
+                            <span class="text-sm font-medium">Most Recent</span>
+                            <button class="btn btn-ghost btn-sm" disabled>
+                                Next
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Lesson Content -->
+                        <div class="bg-base-200 p-4 rounded-lg overflow-y-auto max-h-[38vh]">
+                            {#if student.lessons && student.lessons.length > 0}
+                                {@const lastLesson = getLastLessonFromStudent(student)}
+                                {#if lastLesson}
+                                    <!-- Use LessonCard component -->
+                                    <LessonCard lesson={lastLesson} />
+                                {:else}
+                                    <div class="text-center text-base-content/60 py-4">
+                                        <p class="font-medium">No past lessons found</p>
+                                        <p class="text-sm">This student has no completed lessons</p>
+                                    </div>
+                                {/if}
+                            {:else}
+                                <div class="text-center text-base-content/60 py-8">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-12 h-12 stroke-current mb-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <p class="font-medium">No lessons found</p>
+                                    <p class="text-sm">This student is not part of any lessons</p>
+                                </div>
+                            {/if}
+                        </div>
                     </div>
                 </div>
             </div>
