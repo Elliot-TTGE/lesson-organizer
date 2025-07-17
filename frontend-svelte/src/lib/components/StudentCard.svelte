@@ -176,6 +176,33 @@
         }
     }
 
+    async function saveNotesField(field: 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future', content: string) {
+        if (!student) return;
+        
+        try {
+            // Update student in database
+            const updatedStudent = await updateStudent(student.id, {
+                [field]: content
+            });
+
+            // Update local student data
+            student[field] = updatedStudent[field];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : `Failed to update ${field}`;
+            throw err; // Re-throw to let TipexEditor handle the error
+        }
+    }
+
+    const saveGeneralNotes = async (content: string) => saveNotesField('notes_general', content);
+    const saveFutureNotes = async (content: string) => saveNotesField('notes_future', content);
+    const saveStrengthsNotes = async (content: string) => saveNotesField('notes_strengths', content);
+    const saveWeaknessesNotes = async (content: string) => saveNotesField('notes_weaknesses', content);
+
     function handleUpdate() {
         // This would be called when student data is updated in the modal
         // For now, we'll just refresh the data
@@ -423,24 +450,40 @@
                 <div class="space-y-4">
                     <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
                         <div class="card-body p-4">
-                            <TipexEditor heading="General Notes" bind:body={student.notes_general}></TipexEditor>
+                            <TipexEditor 
+                                heading="General Notes" 
+                                bind:body={student.notes_general}
+                                onSave={saveGeneralNotes}
+                            />
                         </div>
                     </div>
                     <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
                         <div class="card-body p-4">
-                            <TipexEditor heading="Future Plans" bind:body={student.notes_future}></TipexEditor>
+                            <TipexEditor 
+                                heading="Future Plans" 
+                                bind:body={student.notes_future}
+                                onSave={saveFutureNotes}
+                            />
                         </div>
                     </div>
                 </div>
                 <div class="space-y-4">
                     <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
                         <div class="card-body p-4">
-                            <TipexEditor heading="Strengths" bind:body={student.notes_strengths}></TipexEditor>
+                            <TipexEditor 
+                                heading="Strengths" 
+                                bind:body={student.notes_strengths}
+                                onSave={saveStrengthsNotes}
+                            />
                         </div>
                     </div>
                     <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
                         <div class="card-body p-4">
-                            <TipexEditor heading="Areas of Improvement" bind:body={student.notes_weaknesses}></TipexEditor>
+                            <TipexEditor 
+                                heading="Areas of Improvement" 
+                                bind:body={student.notes_weaknesses}
+                                onSave={saveWeaknessesNotes}
+                            />
                         </div>
                     </div>
                 </div>

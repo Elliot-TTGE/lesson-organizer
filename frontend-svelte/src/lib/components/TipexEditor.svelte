@@ -7,19 +7,59 @@
   import "$lib/styles/TipexControls.css";
   import "$lib/styles/TipexProse.css";
 
-  let { body = $bindable(""), heading = "", height = "h-[30vh]" } = $props();
+  let { 
+    body = $bindable(""), 
+    heading = "", 
+    height = "h-[30vh]",
+    onSave = undefined
+  } = $props<{ 
+    body: string | undefined;
+    heading: string;
+    height?: string;
+    onSave?: (content: string) => Promise<void>;
+  }>();
+
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  let isSaving = $state(false);
+  let lastSavedContent = $state(body || "");
+
+  // Ensure body is never undefined
+  $effect(() => {
+    if (body === undefined) {
+      body = "";
+    }
+  });
 
   function handleUpdate(event: any) {
     const editor = event.editor;
     if (editor) {
       const htmlContent = editor.getHTML();
       body = htmlContent;
+      
+      // Debounce the save operation
+      if (onSave && htmlContent !== lastSavedContent) {
+        if (saveTimeout) {
+          clearTimeout(saveTimeout);
+        }
+        
+        saveTimeout = setTimeout(async () => {
+          isSaving = true;
+          try {
+            await onSave(htmlContent);
+            lastSavedContent = htmlContent;
+          } catch (error) {
+            console.error('Failed to save content:', error);
+          } finally {
+            isSaving = false;
+          }
+        }, 1000); // 1 second delay
+      }
     }
   }
 </script>
 
 <Tipex
-  body={body}
+  body={body || ""}
   controls={true}
   floating={false}
   class={height}
@@ -27,8 +67,16 @@
   autofocus={false}
 >
   {#snippet head()}
-    <div class="text-lg font-bold text-secondary mb-2 px-2">
-      {heading}
+    <div class="flex justify-between items-center mb-2 px-2">
+      <div class="text-lg font-bold text-secondary">
+        {heading}
+      </div>
+      {#if isSaving}
+        <div class="flex items-center gap-2 text-sm text-base-content/60">
+          <span class="loading loading-spinner loading-xs"></span>
+          Saving...
+        </div>
+      {/if}
     </div>
   {/snippet}
   {#snippet utilities()}
