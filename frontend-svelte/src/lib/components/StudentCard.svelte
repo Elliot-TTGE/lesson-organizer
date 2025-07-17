@@ -1,6 +1,8 @@
 <script lang="ts">
     import { type Student } from "../../types";
     import { fetchStudent } from "../../api/student";
+    import { createStudentStatusHistory, deleteStudentStatusHistory } from "../../api/studentStatusHistory";
+    import { createStudentLevelHistory, deleteStudentLevelHistory } from "../../api/studentLevelHistory";
     import { onMount } from "svelte";
     import { 
         getLatestLevelId, 
@@ -28,6 +30,10 @@
     let student = $state<Student | null>(null);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
+    let isUpdatingStatus = $state(false);
+    let isUpdatingLevel = $state(false);
+    let deletingStatusId = $state<number | null>(null);
+    let deletingLevelId = $state<number | null>(null);
 
     onMount(async () => {
         try {
@@ -48,6 +54,102 @@
         }
     });
 
+    async function handleStatusChange(newStatusId: number) {
+        if (!student || isUpdatingStatus) return;
+        
+        isUpdatingStatus = true;
+        try {
+            // Create new status history entry
+            const newStatusHistory = await createStudentStatusHistory({
+                student_id: student.id,
+                status_id: newStatusId,
+                changed_at: new Date().toISOString()
+            });
+
+            // Update local student data
+            student.status_history = [...(student.status_history || []), newStatusHistory];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to update status';
+        } finally {
+            isUpdatingStatus = false;
+        }
+    }
+
+    async function handleLevelChange(newLevelId: number) {
+        if (!student || isUpdatingLevel) return;
+        
+        isUpdatingLevel = true;
+        try {
+            // Create new level history entry
+            const newLevelHistory = await createStudentLevelHistory({
+                student_id: student.id,
+                level_id: newLevelId,
+                start_date: new Date().toISOString()
+            });
+
+            // Update local student data
+            student.level_history = [...(student.level_history || []), newLevelHistory];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to update level';
+        } finally {
+            isUpdatingLevel = false;
+        }
+    }
+
+    async function handleDeleteStatusHistory(statusHistoryId: number) {
+        if (!student || deletingStatusId) return;
+        
+        deletingStatusId = statusHistoryId;
+        try {
+            // Delete from database
+            await deleteStudentStatusHistory(statusHistoryId);
+
+            // Update local student data by filtering out the deleted entry
+            student.status_history = student.status_history?.filter(sh => sh.id !== statusHistoryId) || [];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to delete status history';
+        } finally {
+            deletingStatusId = null;
+        }
+    }
+
+    async function handleDeleteLevelHistory(levelHistoryId: number) {
+        if (!student || deletingLevelId) return;
+        
+        deletingLevelId = levelHistoryId;
+        try {
+            // Delete from database
+            await deleteStudentLevelHistory(levelHistoryId);
+
+            // Update local student data by filtering out the deleted entry
+            student.level_history = student.level_history?.filter(lh => lh.id !== levelHistoryId) || [];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to delete level history';
+        } finally {
+            deletingLevelId = null;
+        }
+    }
+
     function handleUpdate() {
         // This would be called when student data is updated in the modal
         // For now, we'll just refresh the data
@@ -56,7 +158,7 @@
         }
     }
 
-    function getCurrentStatusDisplay(): string {
+    const currentStatusDisplay = $derived(() => {
         if (!student) return '-';
         
         const latestStatusId = getLatestStatusId(student);
@@ -65,16 +167,16 @@
         }
 
         return getStatusNameById(latestStatusId) ?? '-';
-    }
+    });
 
-    function getLastLessonDisplay(): string {
+    const lastLessonDisplay = $derived(() => {
         if (!student) return '-';
         
         const lastLesson = getLastLessonFromStudent(student);
         return lastLesson ? formatLessonDateTime(lastLesson) : '-';
-    }
+    });
 
-    function getCurrentLevelDisplay(): string {
+    const currentLevelDisplay = $derived(() => {
         if (!student) return 'Not set';
         
         const latestLevelId = getLatestLevelId(student);
@@ -83,7 +185,10 @@
         }
 
         return getLevelDisplayById(latestLevelId) ?? 'Not set';
-    }
+    });
+
+    const latestStatusId = $derived(() => student ? getLatestStatusId(student) : null);
+    const latestLevelId = $derived(() => student ? getLatestLevelId(student) : null);
 </script>
 
 {#if isLoading}
@@ -101,7 +206,7 @@
         <span>Error: {error}</span>
     </div>
 {:else if student}
-    <div class="card bg-gradient-to-br from-primary to-secondary text-primary-content shadow-2xl">
+    <div class="card bg-primary text-primary-content shadow-2xl">
         <div class="card-body p-8">
             <!-- Header Section -->
             <div class="text-center mb-6">
@@ -121,7 +226,7 @@
                 </div>
             </div>
 
-            <!-- Current Status and Level Dropdowns -->
+            <!-- Current Status and Level Display -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div class="card bg-base-100 text-base-content shadow-lg">
                     <div class="card-body">
@@ -131,12 +236,7 @@
                             </svg>
                             Current Status
                         </h3>
-                        <select class="select select-bordered w-full max-w-xs" value={getLatestStatusId(student) || ''}>
-                            <option value="">Select Status</option>
-                            {#each statusState.statuses as status}
-                                <option value={status.id}>{status.name}</option>
-                            {/each}
-                        </select>
+                        <p class="text-lg font-semibold">{currentStatusDisplay()}</p>
                     </div>
                 </div>
 
@@ -148,12 +248,7 @@
                             </svg>
                             Current Level & Curriculum
                         </h3>
-                        <select class="select select-bordered w-full max-w-xs" value={getLatestLevelId(student) || ''}>
-                            <option value="">Select Level</option>
-                            {#each levelState.levels as level}
-                                <option value={level.id}>{level.curriculum.name}: {level.name}</option>
-                            {/each}
-                        </select>
+                        <p class="text-lg font-semibold">{currentLevelDisplay()}</p>
                     </div>
                 </div>
             </div>
@@ -168,7 +263,7 @@
                             </svg>
                             Last Lesson
                         </h3>
-                        <p class="text-lg font-semibold">{getLastLessonDisplay()}</p>
+                        <p class="text-lg font-semibold">{lastLessonDisplay()}</p>
                     </div>
                 </div>
                 
@@ -249,7 +344,38 @@
                             </svg>
                             Status History
                         </h3>
-                        <div class="max-h-48 overflow-y-auto">
+                        
+                        <!-- Change Status Dropdown -->
+                        <div class="mb-4">
+                            <label class="label" for="status-select">
+                                <span class="label-text text-primary-content/70">Change Status:</span>
+                            </label>
+                            <select 
+                                id="status-select"
+                                class="select select-bordered w-full max-w-xs"
+                                disabled={isUpdatingStatus}
+                                onchange={(e) => {
+                                    const newStatusId = parseInt(e.currentTarget.value);
+                                    if (student && newStatusId && newStatusId !== latestStatusId()) {
+                                        handleStatusChange(newStatusId);
+                                    }
+                                    e.currentTarget.value = ''; // Reset dropdown
+                                }}
+                            >
+                                <option value="">Select New Status</option>
+                                {#each statusState.statuses as status}
+                                    <option value={status.id} disabled={student && status.id === latestStatusId()}>
+                                        {status.name}
+                                    </option>
+                                {/each}
+                            </select>
+                            {#if isUpdatingStatus}
+                                <span class="loading loading-spinner loading-sm ml-2"></span>
+                            {/if}
+                        </div>
+
+                        <!-- Status History List -->
+                        <div class="max-h-64 overflow-y-auto">
                             {#if student.status_history && student.status_history.length > 0}
                                 <div class="timeline timeline-vertical timeline-compact">
                                     {#each student.status_history.slice().reverse() as statusHistory, index}
@@ -257,15 +383,31 @@
                                             <div class="timeline-middle">
                                                 <div class="w-2 h-2 bg-info rounded-full"></div>
                                             </div>
-                                            <div class="timeline-end mb-4">
-                                                <div class="text-sm opacity-75">{formatStudentDate(statusHistory.changed_at)}</div>
-                                                <div class="font-semibold">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
+                                            <div class="timeline-end mb-4 flex justify-between items-center w-full">
+                                                <div class="flex-1">
+                                                    <div class="text-sm opacity-75">{formatStudentDate(statusHistory.changed_at)}</div>
+                                                    <div class="font-semibold">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
+                                                </div>
+                                                <button 
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
+                                                    disabled={deletingStatusId === statusHistory.id}
+                                                    onclick={() => handleDeleteStatusHistory(statusHistory.id)}
+                                                    aria-label="Delete status history entry"
+                                                >
+                                                    {#if deletingStatusId === statusHistory.id}
+                                                        <span class="loading loading-spinner loading-xs"></span>
+                                                    {:else}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    {/if}
+                                                </button>
                                             </div>
                                         </li>
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-base-content/70 py-4">
+                                <div class="text-center text-primary-content/70 py-4">
                                     No status history available
                                 </div>
                             {/if}
@@ -281,7 +423,38 @@
                             </svg>
                             Level History
                         </h3>
-                        <div class="max-h-48 overflow-y-auto">
+                        
+                        <!-- Change Level Dropdown -->
+                        <div class="mb-4">
+                            <label class="label" for="level-select">
+                                <span class="label-text text-primary-content/70">Change Level:</span>
+                            </label>
+                            <select 
+                                id="level-select"
+                                class="select select-bordered w-full"
+                                disabled={isUpdatingLevel}
+                                onchange={(e) => {
+                                    const newLevelId = parseInt(e.currentTarget.value);
+                                    if (student && newLevelId && newLevelId !== latestLevelId()) {
+                                        handleLevelChange(newLevelId);
+                                    }
+                                    e.currentTarget.value = ''; // Reset dropdown
+                                }}
+                            >
+                                <option value="">Select New Level</option>
+                                {#each levelState.levels as level}
+                                    <option value={level.id} disabled={student && level.id === latestLevelId()}>
+                                        {level.curriculum.name}: {level.name}
+                                    </option>
+                                {/each}
+                            </select>
+                            {#if isUpdatingLevel}
+                                <span class="loading loading-spinner loading-sm ml-2"></span>
+                            {/if}
+                        </div>
+
+                        <!-- Level History List -->
+                        <div class="max-h-64 overflow-y-auto">
                             {#if student.level_history && student.level_history.length > 0}
                                 <div class="timeline timeline-vertical timeline-compact">
                                     {#each student.level_history.slice().reverse() as levelHistory, index}
@@ -289,15 +462,31 @@
                                             <div class="timeline-middle">
                                                 <div class="w-2 h-2 bg-success rounded-full"></div>
                                             </div>
-                                            <div class="timeline-end mb-4">
-                                                <div class="text-sm opacity-75">{formatStudentDate(levelHistory.start_date)}</div>
-                                                <div class="font-semibold">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
+                                            <div class="timeline-end mb-4 flex justify-between items-center w-full">
+                                                <div class="flex-1">
+                                                    <div class="text-sm opacity-75">{formatStudentDate(levelHistory.start_date)}</div>
+                                                    <div class="font-semibold">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
+                                                </div>
+                                                <button 
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
+                                                    disabled={deletingLevelId === levelHistory.id}
+                                                    onclick={() => handleDeleteLevelHistory(levelHistory.id)}
+                                                    aria-label="Delete level history entry"
+                                                >
+                                                    {#if deletingLevelId === levelHistory.id}
+                                                        <span class="loading loading-spinner loading-xs"></span>
+                                                    {:else}
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    {/if}
+                                                </button>
                                             </div>
                                         </li>
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-base-content/70 py-4">
+                                <div class="text-center text-primary-content/70 py-4">
                                     No level history available
                                 </div>
                             {/if}

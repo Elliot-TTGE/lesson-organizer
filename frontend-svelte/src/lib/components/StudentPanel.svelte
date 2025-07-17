@@ -42,7 +42,6 @@
         students = students.map(student => 
             student.id === updatedStudent.id ? updatedStudent : student
         );
-        closeModal();
     }
 
     function handleStudentCreated(newStudent: Student, status_history: StudentStatusHistory[], level_history: StudentLevelHistory[]) {
