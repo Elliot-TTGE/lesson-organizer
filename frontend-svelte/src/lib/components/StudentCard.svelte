@@ -348,7 +348,7 @@
                         <!-- Change Status Dropdown -->
                         <div class="mb-4">
                             <label class="label" for="status-select">
-                                <span class="label-text text-primary-content/70">Change Status:</span>
+                                <span class="label-text text-base-content font-medium">Change Status:</span>
                             </label>
                             <select 
                                 id="status-select"
@@ -375,7 +375,7 @@
                         </div>
 
                         <!-- Status History List -->
-                        <div class="max-h-64 overflow-y-auto">
+                        <div class="max-h-64 overflow-y-auto overflow-x-hidden">
                             {#if student.status_history && student.status_history.length > 0}
                                 <div class="timeline timeline-vertical timeline-compact">
                                     {#each student.status_history.slice().reverse() as statusHistory, index}
@@ -385,8 +385,8 @@
                                             </div>
                                             <div class="timeline-end mb-4 flex justify-between items-center w-full">
                                                 <div class="flex-1">
-                                                    <div class="text-sm opacity-75">{formatStudentDate(statusHistory.changed_at)}</div>
-                                                    <div class="font-semibold">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
+                                                    <div class="text-sm text-base-content/80 font-medium">{formatStudentDate(statusHistory.changed_at)}</div>
+                                                    <div class="font-semibold text-base-content">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
                                                 </div>
                                                 <button 
                                                     class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
@@ -407,7 +407,7 @@
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-primary-content/70 py-4">
+                                <div class="text-center text-base-content/60 py-4">
                                     No status history available
                                 </div>
                             {/if}
@@ -427,7 +427,7 @@
                         <!-- Change Level Dropdown -->
                         <div class="mb-4">
                             <label class="label" for="level-select">
-                                <span class="label-text text-primary-content/70">Change Level:</span>
+                                <span class="label-text text-base-content font-medium">Change Level:</span>
                             </label>
                             <select 
                                 id="level-select"
@@ -454,7 +454,7 @@
                         </div>
 
                         <!-- Level History List -->
-                        <div class="max-h-64 overflow-y-auto">
+                        <div class="max-h-64 overflow-y-auto overflow-x-hidden">
                             {#if student.level_history && student.level_history.length > 0}
                                 <div class="timeline timeline-vertical timeline-compact">
                                     {#each student.level_history.slice().reverse() as levelHistory, index}
@@ -464,8 +464,8 @@
                                             </div>
                                             <div class="timeline-end mb-4 flex justify-between items-center w-full">
                                                 <div class="flex-1">
-                                                    <div class="text-sm opacity-75">{formatStudentDate(levelHistory.start_date)}</div>
-                                                    <div class="font-semibold">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
+                                                    <div class="text-sm text-base-content/80 font-medium">{formatStudentDate(levelHistory.start_date)}</div>
+                                                    <div class="font-semibold text-base-content">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
                                                 </div>
                                                 <button 
                                                     class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
@@ -486,7 +486,7 @@
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-primary-content/70 py-4">
+                                <div class="text-center text-base-content/60 py-4">
                                     No level history available
                                 </div>
                             {/if}
