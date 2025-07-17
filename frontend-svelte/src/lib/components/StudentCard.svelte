@@ -359,7 +359,7 @@
                             </label>
                             <select 
                                 id="status-select"
-                                class="select select-bordered w-full max-w-xs"
+                                class="select select-bordered w-full"
                                 disabled={isUpdatingStatus}
                                 onchange={(e) => {
                                     const newStatusId = parseInt(e.currentTarget.value);
