@@ -210,7 +210,14 @@
         <div class="card-body p-8">
             <!-- Header Section -->
             <div class="text-center mb-6">
-                <h1 class="text-4xl font-bold">{getStudentFullName(student)}</h1>
+                <a 
+                    href="/students/{student.id}" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    class="text-4xl font-bold link link-hover text-primary-content hover:text-primary-content/80 transition-colors"
+                >
+                    {getStudentFullName(student)}
+                </a>
             </div>
 
             <!-- Stats Section -->
