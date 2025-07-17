@@ -8,6 +8,7 @@
         getLatestLevelId, 
         getLatestStatusId, 
         getLastLessonFromStudent, 
+        getNextLessonFromStudent,
         formatLessonDateTime, 
         getStudentFullName, 
         formatStudentDate 
@@ -229,6 +230,13 @@
         return lastLesson ? formatLessonDateTime(lastLesson) : '-';
     });
 
+    const nextLessonDisplay = $derived(() => {
+        if (!student) return '-';
+        
+        const nextLesson = getNextLessonFromStudent(student);
+        return nextLesson ? formatLessonDateTime(nextLesson) : '-';
+    });
+
     const currentLevelDisplay = $derived(() => {
         if (!student) return 'Not set';
         
@@ -367,6 +375,33 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Last Lesson and Next Lesson Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body text-center">
+                                <h3 class="card-title text-info justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Last Lesson
+                                </h3>
+                                <p class="text-lg font-semibold">{lastLessonDisplay()}</p>
+                            </div>
+                        </div>
+
+                        <div class="card bg-base-100 text-base-content shadow-lg">
+                            <div class="card-body text-center">
+                                <h3 class="card-title text-success justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Next Lesson
+                                </h3>
+                                <p class="text-lg font-semibold">{nextLessonDisplay()}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Column - Lessons -->
@@ -495,9 +530,9 @@
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
+                <div class="card bg-base-100 shadow-lg">
                     <div class="card-body">
-                        <h3 class="card-title text-info">
+                        <h3 class="card-title text-base-content mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -505,13 +540,13 @@
                         </h3>
                         
                         <!-- Change Status Dropdown -->
-                        <div class="mb-4">
+                        <div class="mb-6">
                             <label class="label" for="status-select">
                                 <span class="label-text text-base-content font-medium">Change Status:</span>
                             </label>
                             <select 
                                 id="status-select"
-                                class="select select-bordered w-full"
+                                class="select select-bordered w-full bg-base-100 text-base-content"
                                 disabled={isUpdatingStatus}
                                 onchange={(e) => {
                                     const newStatusId = parseInt(e.currentTarget.value);
@@ -529,7 +564,7 @@
                                 {/each}
                             </select>
                             {#if isUpdatingStatus}
-                                <span class="loading loading-spinner loading-sm ml-2"></span>
+                                <span class="loading loading-spinner loading-sm ml-2 text-base-content"></span>
                             {/if}
                         </div>
 
@@ -542,13 +577,13 @@
                                             <div class="timeline-middle">
                                                 <div class="w-2 h-2 bg-info rounded-full"></div>
                                             </div>
-                                            <div class="timeline-end mb-4 flex justify-between items-center w-full">
-                                                <div class="flex-1">
-                                                    <div class="text-sm text-base-content/80 font-medium">{formatStudentDate(statusHistory.changed_at)}</div>
+                                            <div class="timeline-end mb-6 flex justify-between items-center w-full">
+                                                <div class="flex-1 pr-3">
+                                                    <div class="text-sm text-base-content/80 font-medium mb-1">{formatStudentDate(statusHistory.changed_at)}</div>
                                                     <div class="font-semibold text-base-content">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
                                                 </div>
                                                 <button 
-                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0"
                                                     disabled={deletingStatusId === statusHistory.id}
                                                     onclick={() => handleDeleteStatusHistory(statusHistory.id)}
                                                     aria-label="Delete status history entry"
@@ -566,17 +601,18 @@
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-base-content/60 py-4">
-                                    No status history available
+                                <div class="text-center text-base-content/60 py-8">
+                                    <p class="font-medium">No status history available</p>
+                                    <p class="text-sm">Status changes will appear here</p>
                                 </div>
                             {/if}
                         </div>
                     </div>
                 </div>
                 
-                <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20">
+                <div class="card bg-base-100 shadow-lg">
                     <div class="card-body">
-                        <h3 class="card-title text-success">
+                        <h3 class="card-title text-base-content mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
@@ -584,13 +620,13 @@
                         </h3>
                         
                         <!-- Change Level Dropdown -->
-                        <div class="mb-4">
+                        <div class="mb-6">
                             <label class="label" for="level-select">
                                 <span class="label-text text-base-content font-medium">Change Level:</span>
                             </label>
                             <select 
                                 id="level-select"
-                                class="select select-bordered w-full"
+                                class="select select-bordered w-full bg-base-100 text-base-content"
                                 disabled={isUpdatingLevel}
                                 onchange={(e) => {
                                     const newLevelId = parseInt(e.currentTarget.value);
@@ -608,7 +644,7 @@
                                 {/each}
                             </select>
                             {#if isUpdatingLevel}
-                                <span class="loading loading-spinner loading-sm ml-2"></span>
+                                <span class="loading loading-spinner loading-sm ml-2 text-base-content"></span>
                             {/if}
                         </div>
 
@@ -621,13 +657,13 @@
                                             <div class="timeline-middle">
                                                 <div class="w-2 h-2 bg-success rounded-full"></div>
                                             </div>
-                                            <div class="timeline-end mb-4 flex justify-between items-center w-full">
-                                                <div class="flex-1">
-                                                    <div class="text-sm text-base-content/80 font-medium">{formatStudentDate(levelHistory.start_date)}</div>
+                                            <div class="timeline-end mb-6 flex justify-between items-center w-full">
+                                                <div class="flex-1 pr-3">
+                                                    <div class="text-sm text-base-content/80 font-medium mb-1">{formatStudentDate(levelHistory.start_date)}</div>
                                                     <div class="font-semibold text-base-content">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
                                                 </div>
                                                 <button 
-                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content flex-shrink-0 mr-2"
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0"
                                                     disabled={deletingLevelId === levelHistory.id}
                                                     onclick={() => handleDeleteLevelHistory(levelHistory.id)}
                                                     aria-label="Delete level history entry"
@@ -645,8 +681,9 @@
                                     {/each}
                                 </div>
                             {:else}
-                                <div class="text-center text-base-content/60 py-4">
-                                    No level history available
+                                <div class="text-center text-base-content/60 py-8">
+                                    <p class="font-medium">No level history available</p>
+                                    <p class="text-sm">Level changes will appear here</p>
                                 </div>
                             {/if}
                         </div>
