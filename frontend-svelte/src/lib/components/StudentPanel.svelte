@@ -139,58 +139,60 @@
         </div>
     </div>
 
-    <table class="table border bg-base-200 border-base-200">
-        <thead class="sticky z-10 top-32">
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Level</th>
-                <th>Status</th>
-                <th>Next Lesson</th>
-                <th>Last Lesson</th>
-                <th>Last Quiz</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody class="table-zebra">
-            {#if isLoading || statusState.isLoading || levelState.isLoading}
+    <div class="overflow-y-auto max-h-[calc(100vh-10rem)]">
+        <table class="table border bg-base-200 border-base-200">
+            <thead class="sticky top-0 z-10 bg-base-200">
                 <tr>
-                    <td colspan="8" class="text-center p-8">
-                        <span class="loading loading-spinner loading-lg"></span>
-                    </td>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>Status</th>
+                    <th>Next Lesson</th>
+                    <th>Last Lesson</th>
+                    <th>Last Quiz</th>
+                    <th>Actions</th>
                 </tr>
-            {:else if error || statusState.error || levelState.error}
-                <tr>
-                    <td colspan="8" class="p-4">
-                        <div class="alert alert-error">
-                            <span>Error: {error || statusState.error || levelState.error}</span>
-                        </div>
-                    </td>
-                </tr>
-            {:else}
-                {#each students as student (student.id)}
-                    <tr class="hover">
-                        <td>{student.id}</td>
-                        <td>{student.first_name} {student.last_name || ''}</td>
-                        <td>{getCurrentLevel(student)}</td>
-                        <td>{getCurrentStatus(student)}</td>
-                        <td>{getNextLesson(student)}</td>
-                        <td>{getLastLesson(student)}</td>
-                        <td>-</td> <!-- TODO: Add last quiz logic -->
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
+            </thead>
+            <tbody class="table-zebra">
+                {#if isLoading || statusState.isLoading || levelState.isLoading}
+                    <tr>
+                        <td colspan="8" class="text-center p-8">
+                            <span class="loading loading-spinner loading-lg"></span>
                         </td>
                     </tr>
-                {/each}
-            {/if}
-        </tbody>
-    </table>
+                {:else if error || statusState.error || levelState.error}
+                    <tr>
+                        <td colspan="8" class="p-4">
+                            <div class="alert alert-error">
+                                <span>Error: {error || statusState.error || levelState.error}</span>
+                            </div>
+                        </td>
+                    </tr>
+                {:else}
+                    {#each students as student (student.id)}
+                        <tr class="hover">
+                            <td>{student.id}</td>
+                            <td>{student.first_name} {student.last_name || ''}</td>
+                            <td>{getCurrentLevel(student)}</td>
+                            <td>{getCurrentStatus(student)}</td>
+                            <td>{getNextLesson(student)}</td>
+                            <td>{getLastLesson(student)}</td>
+                            <td>-</td> <!-- TODO: Add last quiz logic -->
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
+                            </td>
+                        </tr>
+                    {/each}
+                {/if}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {#if showModal}
     <dialog open class="modal modal-middle">
         <div class="modal-box max-w-[95vw] h-[95vh] p-0 bg-transparent shadow-none overflow-y-auto">
-            <div class="absolute top-4 right-4 z-10">
+            <div class="absolute top-4 right-4 z-20">
                 <button class="btn btn-circle btn-ghost bg-base-100/80 backdrop-blur-sm" onclick={closeModal} aria-label="Close modal">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
