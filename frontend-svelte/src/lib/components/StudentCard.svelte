@@ -35,9 +35,17 @@
     let isUpdatingStatus = $state(false);
     let isUpdatingLevel = $state(false);
     let isUpdatingClassesPerWeek = $state(false);
+    let isUpdatingStartDate = $state(false);
+    let isUpdatingName = $state(false);
     let deletingStatusId = $state<number | null>(null);
     let deletingLevelId = $state<number | null>(null);
+    let isEditingName = $state(false);
+    let editingFirstName = $state('');
+    let editingLastName = $state('');
+    let isEditingStartDate = $state(false);
+    let editingStartDate = $state('');
 
+    // ===== LIFECYCLE =====
     onMount(async () => {
         try {
             // Fetch student data and ensure states are loaded
@@ -57,99 +65,54 @@
         }
     });
 
-    async function handleStatusChange(newStatusId: number) {
-        if (!student || isUpdatingStatus) return;
+    // ===== BASIC STUDENT FIELD UPDATES =====
+    async function handleNameChange(firstName: string, lastName: string) {
+        if (!student || isUpdatingName) return;
         
-        isUpdatingStatus = true;
+        isUpdatingName = true;
         try {
-            // Create new status history entry
-            const newStatusHistory = await createStudentStatusHistory({
-                student_id: student.id,
-                status_id: newStatusId,
-                changed_at: new Date().toISOString()
+            // Update student in database
+            const updatedStudent = await updateStudent(student.id, {
+                first_name: firstName,
+                last_name: lastName
             });
 
             // Update local student data
-            student.status_history = [...(student.status_history || []), newStatusHistory];
+            student.first_name = updatedStudent.first_name;
+            student.last_name = updatedStudent.last_name;
             
             // Notify parent component
             if (onStudentUpdated) {
                 onStudentUpdated(student);
             }
         } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to update status';
+            error = err instanceof Error ? err.message : 'Failed to update name';
         } finally {
-            isUpdatingStatus = false;
+            isUpdatingName = false;
         }
     }
 
-    async function handleLevelChange(newLevelId: number) {
-        if (!student || isUpdatingLevel) return;
+    async function handleStartDateChange(newStartDate: string) {
+        if (!student || isUpdatingStartDate) return;
         
-        isUpdatingLevel = true;
+        isUpdatingStartDate = true;
         try {
-            // Create new level history entry
-            const newLevelHistory = await createStudentLevelHistory({
-                student_id: student.id,
-                level_id: newLevelId,
-                start_date: new Date().toISOString()
+            // Update student in database
+            const updatedStudent = await updateStudent(student.id, {
+                date_started: newStartDate
             });
 
             // Update local student data
-            student.level_history = [...(student.level_history || []), newLevelHistory];
+            student.date_started = updatedStudent.date_started;
             
             // Notify parent component
             if (onStudentUpdated) {
                 onStudentUpdated(student);
             }
         } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to update level';
+            error = err instanceof Error ? err.message : 'Failed to update start date';
         } finally {
-            isUpdatingLevel = false;
-        }
-    }
-
-    async function handleDeleteStatusHistory(statusHistoryId: number) {
-        if (!student || deletingStatusId) return;
-        
-        deletingStatusId = statusHistoryId;
-        try {
-            // Delete from database
-            await deleteStudentStatusHistory(statusHistoryId);
-
-            // Update local student data by filtering out the deleted entry
-            student.status_history = student.status_history?.filter(sh => sh.id !== statusHistoryId) || [];
-            
-            // Notify parent component
-            if (onStudentUpdated) {
-                onStudentUpdated(student);
-            }
-        } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to delete status history';
-        } finally {
-            deletingStatusId = null;
-        }
-    }
-
-    async function handleDeleteLevelHistory(levelHistoryId: number) {
-        if (!student || deletingLevelId) return;
-        
-        deletingLevelId = levelHistoryId;
-        try {
-            // Delete from database
-            await deleteStudentLevelHistory(levelHistoryId);
-
-            // Update local student data by filtering out the deleted entry
-            student.level_history = student.level_history?.filter(lh => lh.id !== levelHistoryId) || [];
-            
-            // Notify parent component
-            if (onStudentUpdated) {
-                onStudentUpdated(student);
-            }
-        } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to delete level history';
-        } finally {
-            deletingLevelId = null;
+            isUpdatingStartDate = false;
         }
     }
 
@@ -177,6 +140,149 @@
         }
     }
 
+    // ===== NAME EDITING HELPERS =====
+    function startEditingName() {
+        if (!student) return;
+        editingFirstName = student.first_name;
+        editingLastName = student.last_name || '';
+        isEditingName = true;
+    }
+
+    function cancelEditingName() {
+        isEditingName = false;
+        editingFirstName = '';
+        editingLastName = '';
+    }
+
+    async function saveNameChanges() {
+        if (!student || !editingFirstName.trim()) return;
+        
+        await handleNameChange(editingFirstName.trim(), editingLastName.trim());
+        isEditingName = false;
+        editingFirstName = '';
+        editingLastName = '';
+    }
+
+    // ===== START DATE EDITING HELPERS =====
+    function startEditingStartDate() {
+        if (!student) return;
+        // Format date to YYYY-MM-DD for input
+        editingStartDate = student.date_started ? student.date_started.split('T')[0] : '';
+        isEditingStartDate = true;
+    }
+
+    function cancelEditingStartDate() {
+        isEditingStartDate = false;
+        editingStartDate = '';
+    }
+
+    async function saveStartDateChanges() {
+        if (!student || !editingStartDate) return;
+        
+        await handleStartDateChange(editingStartDate);
+        isEditingStartDate = false;
+        editingStartDate = '';
+    }
+
+    // ===== STATUS HISTORY MANAGEMENT =====
+    async function handleStatusChange(newStatusId: number) {
+        if (!student || isUpdatingStatus) return;
+        
+        isUpdatingStatus = true;
+        try {
+            // Create new status history entry
+            const newStatusHistory = await createStudentStatusHistory({
+                student_id: student.id,
+                status_id: newStatusId,
+                changed_at: new Date().toISOString()
+            });
+
+            // Update local student data
+            student.status_history = [...(student.status_history || []), newStatusHistory];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to update status';
+        } finally {
+            isUpdatingStatus = false;
+        }
+    }
+
+    async function handleDeleteStatusHistory(statusHistoryId: number) {
+        if (!student || deletingStatusId) return;
+        
+        deletingStatusId = statusHistoryId;
+        try {
+            // Delete from database
+            await deleteStudentStatusHistory(statusHistoryId);
+
+            // Update local student data by filtering out the deleted entry
+            student.status_history = student.status_history?.filter(sh => sh.id !== statusHistoryId) || [];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to delete status history';
+        } finally {
+            deletingStatusId = null;
+        }
+    }
+
+    // ===== LEVEL HISTORY MANAGEMENT =====
+    async function handleLevelChange(newLevelId: number) {
+        if (!student || isUpdatingLevel) return;
+        
+        isUpdatingLevel = true;
+        try {
+            // Create new level history entry
+            const newLevelHistory = await createStudentLevelHistory({
+                student_id: student.id,
+                level_id: newLevelId,
+                start_date: new Date().toISOString()
+            });
+
+            // Update local student data
+            student.level_history = [...(student.level_history || []), newLevelHistory];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to update level';
+        } finally {
+            isUpdatingLevel = false;
+        }
+    }
+
+    async function handleDeleteLevelHistory(levelHistoryId: number) {
+        if (!student || deletingLevelId) return;
+        
+        deletingLevelId = levelHistoryId;
+        try {
+            // Delete from database
+            await deleteStudentLevelHistory(levelHistoryId);
+
+            // Update local student data by filtering out the deleted entry
+            student.level_history = student.level_history?.filter(lh => lh.id !== levelHistoryId) || [];
+            
+            // Notify parent component
+            if (onStudentUpdated) {
+                onStudentUpdated(student);
+            }
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to delete level history';
+        } finally {
+            deletingLevelId = null;
+        }
+    }
+
+    // ===== NOTES MANAGEMENT =====
     async function saveNotesField(field: 'notes_general' | 'notes_strengths' | 'notes_weaknesses' | 'notes_future', content: string) {
         if (!student) return;
         
@@ -204,6 +310,7 @@
     const saveStrengthsNotes = async (content: string) => saveNotesField('notes_strengths', content);
     const saveWeaknessesNotes = async (content: string) => saveNotesField('notes_weaknesses', content);
 
+    // ===== UTILITY FUNCTIONS =====
     function handleUpdate() {
         // This would be called when student data is updated in the modal
         // For now, we'll just refresh the data
@@ -212,6 +319,7 @@
         }
     }
 
+    // ===== COMPUTED VALUES =====
     const currentStatusDisplay = $derived(() => {
         if (!student) return '-';
         
@@ -271,14 +379,65 @@
         <div class="card-body p-8">
             <!-- Header Section -->
             <div class="text-center mb-6">
-                <a 
-                    href="/students/{student.id}" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="text-4xl font-bold link link-hover text-primary-content hover:text-primary-content/80 transition-colors"
-                >
-                    {getStudentFullName(student)}
-                </a>
+                {#if isEditingName}
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="flex flex-col sm:flex-row gap-2 w-full max-w-md">
+                            <input 
+                                type="text" 
+                                bind:value={editingFirstName}
+                                placeholder="First Name"
+                                class="input input-bordered input-primary bg-base-100 text-base-content flex-1"
+                                disabled={isUpdatingName}
+                            />
+                            <input 
+                                type="text" 
+                                bind:value={editingLastName}
+                                placeholder="Last Name"
+                                class="input input-bordered input-primary bg-base-100 text-base-content flex-1"
+                                disabled={isUpdatingName}
+                            />
+                        </div>
+                        <div class="flex gap-2">
+                            <button 
+                                class="btn btn-success btn-sm"
+                                disabled={isUpdatingName || !editingFirstName.trim()}
+                                onclick={saveNameChanges}
+                            >
+                                {#if isUpdatingName}
+                                    <span class="loading loading-spinner loading-xs"></span>
+                                {/if}
+                                Save
+                            </button>
+                            <button 
+                                class="btn btn-ghost btn-sm"
+                                disabled={isUpdatingName}
+                                onclick={cancelEditingName}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                {:else}
+                    <div class="flex items-center justify-center gap-3">
+                        <a 
+                            href="/students/{student.id}" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            class="text-4xl font-bold link link-hover text-primary-content hover:text-primary-content/80 transition-colors"
+                        >
+                            {getStudentFullName(student)}
+                        </a>
+                        <button 
+                            class="btn btn-ghost btn-sm text-primary-content hover:bg-primary-content/10"
+                            onclick={startEditingName}
+                            aria-label="Edit student name"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                {/if}
             </div>
 
             <!-- Main Info Section - Two Columns -->
@@ -289,9 +448,47 @@
                     <div class="stats shadow-lg bg-base-100 text-base-content w-full">
                         <div class="stat">
                             <div class="stat-figure text-primary">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
+                                {#if isEditingStartDate}
+                                    <div class="flex flex-col gap-2">
+                                        <input 
+                                            type="date"
+                                            bind:value={editingStartDate}
+                                            class="input input-bordered input-sm bg-base-100 text-base-content"
+                                            disabled={isUpdatingStartDate}
+                                        />
+                                        <div class="flex gap-1">
+                                            <button 
+                                                class="btn btn-success btn-xs"
+                                                disabled={isUpdatingStartDate || !editingStartDate}
+                                                onclick={saveStartDateChanges}
+                                            >
+                                                {#if isUpdatingStartDate}
+                                                    <span class="loading loading-spinner loading-xs"></span>
+                                                {:else}
+                                                    ✓
+                                                {/if}
+                                            </button>
+                                            <button 
+                                                class="btn btn-ghost btn-xs"
+                                                disabled={isUpdatingStartDate}
+                                                onclick={cancelEditingStartDate}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                {:else}
+                                    <button 
+                                        class="btn btn-ghost btn-sm text-primary hover:bg-primary hover:text-primary-content"
+                                        onclick={startEditingStartDate}
+                                        disabled={isUpdatingStartDate}
+                                        aria-label="Edit start date"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                {/if}
                             </div>
                             <div class="stat-title">Student Since</div>
                             <div class="stat-value text-lg">{formatStudentDate(student.date_started)}</div>
@@ -583,7 +780,7 @@
                                                     <div class="font-semibold text-base-content">{getStatusNameById(statusHistory.status_id) ?? 'Unknown Status'}</div>
                                                 </div>
                                                 <button 
-                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0"
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0 mr-2"
                                                     disabled={deletingStatusId === statusHistory.id}
                                                     onclick={() => handleDeleteStatusHistory(statusHistory.id)}
                                                     aria-label="Delete status history entry"
@@ -663,7 +860,7 @@
                                                     <div class="font-semibold text-base-content">{getLevelDisplayById(levelHistory.level_id) ?? 'Unknown Level'}</div>
                                                 </div>
                                                 <button 
-                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0"
+                                                    class="btn btn-ghost btn-xs text-error hover:bg-error hover:text-error-content border border-error/20 flex-shrink-0 mr-2"
                                                     disabled={deletingLevelId === levelHistory.id}
                                                     onclick={() => handleDeleteLevelHistory(levelHistory.id)}
                                                     aria-label="Delete level history entry"
