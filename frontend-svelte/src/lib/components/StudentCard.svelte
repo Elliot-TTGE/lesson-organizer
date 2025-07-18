@@ -432,7 +432,7 @@
                         </div>
 
                         <!-- Lesson Content -->
-                        <div class="bg-base-200 p-4 rounded-lg overflow-y-auto max-h-[38vh]">
+                        <div class="overflow-y-auto max-h-85">
                             {#if student.lessons && student.lessons.length > 0}
                                 {@const lastLesson = getLastLessonFromStudent(student)}
                                 {#if lastLesson}
