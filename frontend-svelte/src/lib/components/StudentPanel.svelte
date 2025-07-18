@@ -1,16 +1,35 @@
 <script lang="ts">
-    import type { Student } from "../../types";
+    import { type Student, type StudentLevelHistory, type StudentStatusHistory } from "../../types";
     import StudentCard from "./StudentCard.svelte";
     import StudentCreateModal from "./StudentCreateModal.svelte";
+    import { fetchStudents } from "../../api/student";
+    import { onMount } from "svelte";
+    import { 
+        getLatestLevelId, 
+        getLatestStatusId, 
+        getLastLessonFromStudent, 
+        getNextLessonFromStudent, 
+        formatLessonDateTime 
+    } from "../utils/studentUtils";
+    import {
+        statusState,
+        refreshStatuses,
+        getStatusNameById,
+        levelState,
+        refreshLevels,
+        getLevelDisplayById
+    } from "../states";
 
-    let students: Number[] = [];
+    let students = $state<Student[]>([]);
+    let isLoading = $state(true);
+    let error = $state<string | null>(null);
 
     let showModal = $state(false);
-    let selectedStudent = $state<Number | null>(null);
+    let selectedStudent = $state<number | null>(null);
 
-    function openModal(student: Number) {
+    function openModal(student: Student) {
         showModal = true;
-        selectedStudent = student;
+        selectedStudent = student.id;
     }
 
     function closeModal() {
@@ -18,14 +37,82 @@
         selectedStudent = null;
     }
 
-    function onMount() {
-        // Fetch all students from database.
+    async function handleStudentUpdated(updatedStudent: Student) {
+        // Update the student in the students array with fresh data
+        students = students.map(student => 
+            student.id === updatedStudent.id ? updatedStudent : student
+        );
     }
+
+    function handleStudentCreated(newStudent: Student, status_history: StudentStatusHistory[], level_history: StudentLevelHistory[]) {
+        // Initialize the student with empty arrays for relationships we don't need to fetch
+        const enrichedStudent: Student = {
+            ...newStudent,
+            lessons: [], // New students won't have lessons yet
+            quizzes: [], // New students won't have quizzes yet
+            // Use the history arrays passed from the modal
+            status_history: status_history || [],
+            level_history: level_history || []
+        };
+
+        // Add the enriched student to the existing list
+        students = [...students, enrichedStudent];
+        
+        // Close any existing modals
+        closeModal();
+        
+        // Open the StudentCard modal for the new student
+        showModal = true;
+        selectedStudent = enrichedStudent.id;
+    }
+
+    function getCurrentLevel(student: Student): string {
+        const latestLevelId = getLatestLevelId(student);
+        if (!latestLevelId) {
+            return '-';
+        }
+
+        return getLevelDisplayById(latestLevelId) ?? '-';
+    }
+
+    function getLastLesson(student: Student): string {
+        const lastLesson = getLastLessonFromStudent(student);
+        return lastLesson ? formatLessonDateTime(lastLesson) : '-';
+    }
+
+    function getNextLesson(student: Student): string {
+        const nextLesson = getNextLessonFromStudent(student);
+        return nextLesson ? formatLessonDateTime(nextLesson) : '-';
+    }
+
+    function getCurrentStatus(student: Student): string {
+        const latestStatusId = getLatestStatusId(student);
+        if (!latestStatusId) {
+            return '-';
+        }
+
+        return getStatusNameById(latestStatusId) ?? '-';
+    }
+
+    onMount(async () => {
+        try {
+            // Fetch all data in parallel
+            await Promise.all([
+                fetchStudents().then(response => { students = response.students; }),
+                refreshLevels(),
+                refreshStatuses()
+            ]);
+            isLoading = false;
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to fetch data';
+            isLoading = false;
+        }
+    });
 </script>
 
 <div class="sticky z-10 mt-16 top-16 bg-base-200">
     <div class="flex bg-base-200 mb-2">
-        <fieldset class="fielset mr-auto ml-8 w-100">
+        <fieldset class="fieldset mr-auto ml-8 w-100">
             <p class="fieldset-legend">Find a student</p>
             <label class="input input-accent">
                 <svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -45,53 +132,77 @@
         </fieldset>
         <div class="flex items-center">
             <div class="mr-8">
-                <StudentCreateModal>New Student</StudentCreateModal>
+                <StudentCreateModal onStudentCreated={handleStudentCreated}>New Student</StudentCreateModal>
             </div>
             <!-- Options for student search -->
         </div>
     </div>
 
-    <table class="table border bg-base-200 border-base-200">
-        <thead class="sticky z-10 top-32">
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Level</th>
-                <th>Next Lesson</th>
-                <th>Last Lesson</th>
-                <th>Last Quiz</th>
-            </tr>
-        </thead>
-    </table>
-</div>
-<div class="overflow-y-auto">
-    <table class="table table-zebra border border-base-200">
-        <tbody>
-            {#each students as student}
+    <div class="overflow-y-auto max-h-[calc(100vh-10rem)]">
+        <table class="table border bg-base-200 border-base-200">
+            <thead class="sticky top-0 z-10 bg-base-200">
                 <tr>
-                    <td>{student}</td>
-                    <td>student.name</td>
-                    <td>student.level</td>
-                    <td>student.nextLesson</td>
-                    <td>student.lastLesson</td>
-                    <td>student.lastQuiz</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
-                    </td>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>Status</th>
+                    <th>Next Lesson</th>
+                    <th>Last Lesson</th>
+                    <th>Last Quiz</th>
+                    <th>Actions</th>
                 </tr>
-            {/each}
-        </tbody>
-    </table>
+            </thead>
+            <tbody class="table-zebra">
+                {#if isLoading || statusState.isLoading || levelState.isLoading}
+                    <tr>
+                        <td colspan="8" class="text-center p-8">
+                            <span class="loading loading-spinner loading-lg"></span>
+                        </td>
+                    </tr>
+                {:else if error || statusState.error || levelState.error}
+                    <tr>
+                        <td colspan="8" class="p-4">
+                            <div class="alert alert-error">
+                                <span>Error: {error || statusState.error || levelState.error}</span>
+                            </div>
+                        </td>
+                    </tr>
+                {:else}
+                    {#each students as student (student.id)}
+                        <tr class="hover">
+                            <td>{student.id}</td>
+                            <td>{student.first_name} {student.last_name || ''}</td>
+                            <td>{getCurrentLevel(student)}</td>
+                            <td>{getCurrentStatus(student)}</td>
+                            <td>{getNextLesson(student)}</td>
+                            <td>{getLastLesson(student)}</td>
+                            <td>-</td> <!-- TODO: Add last quiz logic -->
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
+                            </td>
+                        </tr>
+                    {/each}
+                {/if}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 {#if showModal}
     <dialog open class="modal modal-middle">
-        <div class="modal-box bg-neutral text-neutral-content max-w-[85vw] h-[85vw]">
-            <!-- Replace the div below with your new StudentCard component -->
-            <div class="modal-action justify-end p-0 mb-2">
-                <button class="btn" onclick={closeModal}>Close</button>
+        <div class="modal-box max-w-[95vw] h-[95vh] p-0 bg-transparent shadow-none overflow-y-auto">
+            <div class="absolute top-4 right-4 z-20">
+                <button class="btn btn-circle btn-ghost bg-base-100/80 backdrop-blur-sm" onclick={closeModal} aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
-            <StudentCard student={selectedStudent} />
+            <div>
+                {#if selectedStudent}
+                    <StudentCard studentId={selectedStudent} onStudentUpdated={handleStudentUpdated} />
+                {/if}
+            </div>
         </div>
         <form method="dialog" class="modal-backdrop">
             <button onclick={closeModal}>close</button>

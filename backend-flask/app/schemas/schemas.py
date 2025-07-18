@@ -46,6 +46,11 @@ class StudentStatusHistorySchema(BaseSchema):
     student = Nested('StudentSchema', dump_only=True, exclude=['status_history', 'lessons'])
     status = Nested('StudentStatusSchema', dump_only=True)
     
+    # Keep the foreign key fields for loading/creation
+    student_id = fields.Integer(required=True, allow_none=False)
+    status_id = fields.Integer(required=True, allow_none=False)
+    changed_at = fields.DateTime(required=True, allow_none=False)
+    
     class Meta(BaseSchema.Meta):
         model = StudentStatusHistory
     # exclude = ("student",)  # Prevent duplicate Student during serialization
@@ -87,6 +92,11 @@ class StudentLevelHistorySchema(BaseSchema):
     student = Nested('StudentSchema', dump_only=True, exclude=['level_history', 'lessons'])
     level = Nested('LevelSchema', dump_only=True)
     
+    # Keep the foreign key fields for loading/creation
+    student_id = fields.Integer(required=True, allow_none=False)
+    level_id = fields.Integer(required=True, allow_none=False)
+    start_date = fields.DateTime(required=True, allow_none=False)
+    
     class Meta(BaseSchema.Meta):
         model = StudentLevelHistory
 
@@ -104,6 +114,13 @@ class StudentLessonQuizSchema(BaseSchema):
     student = Nested('StudentSchema', dump_only=True, exclude=['lessons', 'quizzes'])
     lesson = Nested('LessonSchema', dump_only=True, exclude=['students'])
     quiz = Nested('QuizSchema', dump_only=True, exclude=['lessons'])
+    
+    # Keep the foreign key fields for loading/creation
+    student_id = fields.Integer(required=True, allow_none=False)
+    lesson_id = fields.Integer(required=True, allow_none=False)
+    quiz_id = fields.Integer(allow_none=True)  # This is nullable in the model
+    points = fields.Integer(allow_none=True)
+    notes = fields.String(allow_none=True)
     
     class Meta(BaseSchema.Meta):
         model = StudentLessonQuiz
