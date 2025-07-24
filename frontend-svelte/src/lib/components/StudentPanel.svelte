@@ -18,10 +18,8 @@
         levelState,
         refreshLevels,
         getLevelDisplayById,
-        getLevelsByCurriculumId,
         curriculumState,
-        refreshCurriculums,
-        getCurriculumNameById
+        refreshCurriculums
     } from "../states";
 
     let students = $state<Student[]>([]);
