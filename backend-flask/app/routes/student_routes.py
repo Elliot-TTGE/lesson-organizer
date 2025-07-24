@@ -4,9 +4,11 @@ from app.db import db
 from app.models.student_model import Student
 from app.models.student_status_history_model import StudentStatusHistory
 from app.models.student_level_history_model import StudentLevelHistory
+from app.models.student_status_model import StudentStatus
+from app.models.level_model import Level
 from app.models.lesson_model import Lesson
 from app.schemas.schemas import StudentSchema
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from app.routes.utils import response_wrapper
 
 student_bp = Blueprint('student', __name__)
@@ -21,6 +23,7 @@ def get_students():
     Query Parameters:
     - status: str (optional) — Filter by current status (from StudentStatusHistory).
     - level: str (optional) — Filter by current level (from StudentLevelHistory).
+    - search: str (optional) — Search by first name or last name (case-insensitive).
     - lesson_start: str (optional, ISO date) — Filter students who had lessons after this date.
     - lesson_end: str (optional, ISO date) — Filter students who had lessons before this date.
     - is_in_group: str (optional, "true"/"false") — Filter students who had group lessons (multiple students in one lesson).
@@ -35,6 +38,7 @@ def get_students():
     """
     status = request.args.get("status")
     level = request.args.get("level")
+    search = request.args.get("search")                           # Search by name
     lesson_start = request.args.get("lesson_start")              # ISO date string
     lesson_end = request.args.get("lesson_end")                  # ISO date string
     is_in_group = request.args.get("is_in_group")                # "true" or "false"
@@ -45,6 +49,16 @@ def get_students():
     per_page = int(request.args.get("per_page", 20))
 
     query = Student.query
+
+    # Filter by name search (first name or last name)
+    if search:
+        search_term = f"%{search.lower()}%"
+        query = query.filter(
+            or_(
+                func.lower(Student.first_name).like(search_term),
+                func.lower(Student.last_name).like(search_term)
+            )
+        )
 
     # Filter by current status (latest StudentStatusHistory)
     if status:
@@ -61,13 +75,15 @@ def get_students():
                 StudentStatusHistory.student_id == subq.c.student_id,
                 StudentStatusHistory.changed_at == subq.c.max_changed_at
             )
-        ).filter(StudentStatusHistory.status == status)
+        ).join(
+            StudentStatus, StudentStatusHistory.status_id == StudentStatus.id
+        ).filter(StudentStatus.name == status)
 
     # Filter by current level (latest StudentLevelHistory)
     if level:
         subq = db.session.query(
             StudentLevelHistory.student_id,
-            func.max(StudentLevelHistory.changed_at).label("max_changed_at")
+            func.max(StudentLevelHistory.start_date).label("max_start_date")
         ).group_by(StudentLevelHistory.student_id).subquery()
 
         query = query.join(
@@ -76,9 +92,11 @@ def get_students():
             StudentLevelHistory,
             and_(
                 StudentLevelHistory.student_id == subq.c.student_id,
-                StudentLevelHistory.changed_at == subq.c.max_changed_at
+                StudentLevelHistory.start_date == subq.c.max_start_date
             )
-        ).filter(StudentLevelHistory.level == level)
+        ).join(
+            Level, StudentLevelHistory.level_id == Level.id
+        ).filter(Level.name == level)
 
     # Filter by students who had lessons in a time range
     if lesson_start or lesson_end:
