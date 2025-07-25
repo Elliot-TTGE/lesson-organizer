@@ -5,7 +5,7 @@
   import { lessonState, addLessonToState } from "$lib/states/lessonState.svelte";
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
   import TipexEditor from "./TipexEditor.svelte";
-  import StudentSelector from "./StudentSelector.svelte";
+  import StudentSelector, { type StudentSelectorContext } from "./StudentSelector.svelte";
 
   let { children } = $props();
 
@@ -146,7 +146,7 @@
             bind:studentSearchTerm={studentSearchTerm}
             isEditing={true}
           >
-            {#snippet children(ctx)}
+            {#snippet children(ctx: StudentSelectorContext)}
               <div class="flex flex-col space-y-2">
                 <label class="label" for="student-search">
                   <span class="label-text">Students</span>

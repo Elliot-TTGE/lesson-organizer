@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Lesson } from "../../types";
+  import type { Lesson, Student } from "../../types";
   import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import type { LessonCreateFields, LessonUpdateFields } from "../../api/lesson";
   import TipexEditor from "./TipexEditor.svelte";
-  import StudentSelector from "./StudentSelector.svelte";
+  import StudentSelector, { type StudentSelectorContext } from "./StudentSelector.svelte";
   import { initializeDateTimeInput } from "$lib/utils/dateUtils";
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
 
@@ -161,58 +161,62 @@
     bind:studentSearchTerm={studentSearchTerm}
     isEditing={isEditing}
   >
-    {#snippet children(ctx)}
-      {#if ctx.isEditing}
-        <!-- Editing Mode - Student Selection Interface -->
-        <div class="flex flex-col space-y-2">
-          <label class="label" for="lesson-card-student-search">
-            <span class="label-text text-secondary">Add Students</span>
-          </label>
-          
-          <!-- Student Search Input -->
-          <div class="relative">
-            <input
-              id="lesson-card-student-search"
-              type="text"
-              placeholder="Search students by name..."
-              bind:value={studentSearchTerm}
-              oninput={ctx.handleStudentSearch}
-              onfocus={() => ctx.showStudentDropdown = studentSearchTerm.length > 0}
-              onblur={() => {
-                setTimeout(() => ctx.showStudentDropdown = false, 150);
-              }}
-              class="input input-bordered w-full bg-neutral text-secondary border-secondary"
-            />
-            
-            <!-- Student Dropdown -->
-            {#if ctx.showStudentDropdown}
-              <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                {#if ctx.filteredStudents.length > 0}
-                  {#each ctx.filteredStudents as student (student.id)}
-                    <button
-                      type="button"
-                      class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary"
-                      onclick={() => ctx.addStudent(student)}
-                    >
-                      {student.first_name} {student.last_name || ''}
-                    </button>
-                  {/each}
-                {:else}
-                  <div class="px-4 py-2 text-sm text-secondary opacity-60">
-                    No students found matching "{studentSearchTerm}"
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-        </div>
-      {/if}
-      
+    {#snippet children(ctx: StudentSelectorContext)}
       <!-- Selected Students Display (shows in both editing and view mode) -->
       <div class="bg-neutral shadow-md rounded-lg p-3 min-h-24 mt-2">
         <span class="text-lg font-medium mb-2 block text-secondary">
-          {ctx.isEditing ? `Selected Students (${ctx.selectedStudents.length}):` : `Students (${ctx.selectedStudents.length}):`}
+          {#if ctx.selectedStudents.length <= 1}
+            {ctx.selectedStudents.length === 1 ? 'Student' : 'Students'}
+          {:else}
+            Students ({ctx.selectedStudents.length})
+          {/if}
         </span>
+        
+        {#if ctx.isEditing}
+          <!-- Editing Mode - Student Selection Interface -->
+          <div class="flex flex-col space-y-2 mb-4">
+            <label class="label" for="lesson-card-student-search">
+              <span class="label-text text-secondary">Add Students</span>
+            </label>
+            
+            <!-- Student Search Input -->
+            <div class="relative">
+              <input
+                id="lesson-card-student-search"
+                type="text"
+                placeholder="Search students by name..."
+                bind:value={studentSearchTerm}
+                oninput={ctx.handleStudentSearch}
+                onfocus={() => ctx.showStudentDropdown = studentSearchTerm.length > 0}
+                onblur={() => {
+                  setTimeout(() => ctx.showStudentDropdown = false, 150);
+                }}
+                class="input input-bordered w-full bg-neutral text-secondary border-secondary"
+              />
+              
+              <!-- Student Dropdown -->
+              {#if ctx.showStudentDropdown}
+                <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {#if ctx.filteredStudents.length > 0}
+                    {#each ctx.filteredStudents as student (student.id)}
+                      <button
+                        type="button"
+                        class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary"
+                        onclick={() => ctx.addStudent(student)}
+                      >
+                        {student.first_name} {student.last_name || ''}
+                      </button>
+                    {/each}
+                  {:else}
+                    <div class="px-4 py-2 text-sm text-secondary opacity-60">
+                      No students found matching "{studentSearchTerm}"
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/if}
         
         {#if ctx.selectedStudents.length > 0}
           <div class="flex flex-wrap gap-2">

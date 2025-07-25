@@ -2,6 +2,18 @@
   import type { Student } from "../../types";
   import { fetchStudents } from "../../api/student";
 
+  // Type for StudentSelector context - exported for use in parent components
+  export interface StudentSelectorContext {
+    studentSearchTerm: string;
+    filteredStudents: Student[];
+    showStudentDropdown: boolean;
+    handleStudentSearch: () => void;
+    addStudent: (student: Student) => void;
+    removeStudent: (studentId: number) => void;
+    isEditing: boolean;
+    selectedStudents: Student[];
+  }
+
   let { 
     selectedStudents = $bindable(),
     studentSearchTerm = $bindable(""),
