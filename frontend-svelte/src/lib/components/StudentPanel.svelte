@@ -458,15 +458,15 @@
                     </tr>
                 {:else}
                     {#each sortedStudents as student (student.id)}
-                        <tr class="hover">
-                            <td>{student.first_name} {student.last_name || ''}</td>
+                        <tr class="hover cursor-pointer hover:bg-primary/5 hover:shadow-sm active:bg-primary/10" onclick={() => openModal(student)}>
+                            <td class="hover:text-primary">{student.first_name} {student.last_name || ''}</td>
                             <td>{getCurrentLevel(student)}</td>
                             <td>{getCurrentStatus(student)}</td>
                             <td>{getNextLesson(student)}</td>
                             <td>{getLastLesson(student)}</td>
                             <td>-</td> <!-- TODO: Add last quiz logic -->
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick={() => openModal(student)}>Edit</button>
+                                <button class="btn btn-primary btn-sm" onclick={(e) => { e.stopPropagation(); openModal(student); }}>Edit</button>
                             </td>
                         </tr>
                     {/each}
