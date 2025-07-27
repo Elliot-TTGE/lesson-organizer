@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Lesson, Student } from "../../types";
-  import { deleteLesson, updateLesson, createLesson } from "../../api/lesson";
+  import { deleteLesson, updateLesson, createLesson, fetchLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import type { LessonCreateFields, LessonUpdateFields } from "../../api/lesson";
   import TipexEditor from "./TipexEditor.svelte";
@@ -8,27 +8,42 @@
   import { initializeDateTimeInput } from "$lib/utils/dateUtils";
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
 
-  let { lesson = $bindable() }: { lesson: Lesson } = $props();
+  let { lessonId }: { lessonId: number } = $props();
+  
+  let lessonPromise = $derived(fetchLesson(lessonId));
+  
   let isEditing: boolean = $state(false);
   let showDeleteModal: boolean = $state(false);
 
-  let { date, time } = $derived(initializeDateTime(lesson.datetime));
-  let weekday: string = $derived(new Date(lesson.datetime).toLocaleDateString("en-US", {
-    weekday: "long",
-  }));
-
   // This is a bit hacky, but I didn't have time to make a cleaner solution
-  let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput(lesson.datetime));
+  let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput());
   let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
 
   //let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
-  let plan: string = $state(lesson.plan ?? "");
-  let concepts: string = $state(lesson.concepts ?? "");
-  let notes: string = $state(lesson.notes ?? "");
-  let selectedStudents = $state(lesson.students || []);
+  let plan: string = $state("");
+  let concepts: string = $state("");
+  let notes: string = $state("");
+  let selectedStudents = $state<Student[]>([]);
   let studentSearchTerm = $state("");
 
+  // Update form fields when lesson promise resolves
+  $effect.pre(() => {
+    lessonPromise.then(lesson => {
+      if (lesson) {
+        ({ date: dateInput, time: timeInput } = initializeDateTimeInput(lesson.datetime));
+        plan = lesson.plan ?? "";
+        concepts = lesson.concepts ?? "";
+        notes = lesson.notes ?? "";
+        selectedStudents = lesson.students || [];
+      }
+    }).catch(() => {
+      // Error handling is done in the template with {#await}
+    });
+  });
+
   async function handleDelete() {
+    const lesson = await lessonPromise;
+    if (!lesson) return;
     await deleteLesson(lesson.id);
     removeLessonFromState(lesson.id);
     isEditing = false;
@@ -36,6 +51,8 @@
   }
 
   async function handleConfirm() {
+    const lesson = await lessonPromise;
+    if (!lesson) return;
     const datetime = new Date(`${dateInput}T${timeInput}`).toISOString();
     const updatedLesson : LessonUpdateFields = { ...lesson, datetime, plan, concepts, notes };
     const studentIds = selectedStudents.map(s => s.id);
@@ -65,10 +82,13 @@
     // Update the lesson with new student list
     const updated = await updateLesson(lesson.id, updatedLesson, studentIds);
     updateLessonInState(updated);
+    // Note: We can't update the lesson promise directly, but the parent state will be updated
     isEditing = false;
   }
 
-  function handleCancel() {
+  async function handleCancel() {
+    const lesson = await lessonPromise;
+    if (!lesson) return;
     isEditing = false;
     ({ date: dateInput, time: timeInput } = initializeDateTimeInput(lesson.datetime));
     plan = lesson.plan ?? "";
@@ -79,6 +99,8 @@
   }
 
   async function handleCopy() {
+    const lesson = await lessonPromise;
+    if (!lesson) return;
     const combinedDateTime = new Date(`${copyToDate}T${copyToTime}`).toISOString();
 
     const newLesson: LessonCreateFields = {
@@ -102,6 +124,13 @@
   }
 </script>
 
+{#await lessonPromise}
+  <div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
+    <div class="flex justify-center items-center h-32">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div>
+  </div>
+{:then lesson}
 <div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
   <!-- Action Buttons -->
   <div class="flex justify-end space-x-2">
@@ -147,6 +176,8 @@
     <input type="date" bind:value={dateInput} class="input input-bordered w-36" />
     <input type="time" bind:value={timeInput} class="input input-bordered w-28" />
   {:else}
+    {@const { date, time } = initializeDateTime(lesson.datetime)}
+    {@const weekday = new Date(lesson.datetime).toLocaleDateString("en-US", { weekday: "long" })}
     <div class="flex items-center justify-between bg-neutral p-4 rounded-lg shadow-sm">
       <div>
         <p class="text-lg font-semibold text-secondary">{weekday}</p>
@@ -299,3 +330,11 @@
     {/if}
   </div>
 </div>
+{:catch error}
+  <div class="w-full rounded-lg bg-error shadow-md p-4 space-y-4">
+    <div class="text-error-content">
+      <h3 class="font-bold text-lg">Error loading lesson</h3>
+      <p>{error.message || 'Failed to fetch lesson'}</p>
+    </div>
+  </div>
+{/await}

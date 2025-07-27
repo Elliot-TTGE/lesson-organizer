@@ -634,7 +634,7 @@
                                 {@const lastLesson = getLastLessonFromStudent(student)}
                                 {#if lastLesson}
                                     <!-- Use LessonCard component -->
-                                    <LessonCard lesson={lastLesson} />
+                                    <LessonCard lessonId={lastLesson.id} />
                                 {:else}
                                     <div class="text-center text-base-content/60 py-4">
                                         <p class="font-medium">No past lessons found</p>
