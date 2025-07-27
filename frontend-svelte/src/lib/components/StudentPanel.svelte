@@ -33,7 +33,45 @@
     let searchTerm = $state('');
     let statusFilter = $state<number | null>(null);
     let levelFilter = $state<number | null>(null);
-    let sortByRecentLessons = $state(false);
+    
+    // Sorting state
+    type SortField = 'name' | 'level' | 'status' | 'nextLesson' | 'lastLesson' | 'lastQuiz';
+    type SortDirection = 'asc' | 'desc';
+    
+    let sortField = $state<SortField>('lastLesson');
+    let sortDirection = $state<SortDirection>('desc');
+    
+    // Status cycling order for status sorting
+    const statusCycleOrder = ['active', 'trial', 'future', 'hold', 'inactive'];
+    let statusSortCycle = $state(0); // Track which status to prioritize
+
+    function getStatusSortValue(statusName: string, cycle: number): number {
+        const normalizedStatus = statusName.toLowerCase();
+        const baseIndex = statusCycleOrder.indexOf(normalizedStatus);
+        
+        if (baseIndex === -1) return 999; // Unknown statuses go to end
+        
+        // Rotate the order based on current cycle
+        const rotatedIndex = (baseIndex - cycle + statusCycleOrder.length) % statusCycleOrder.length;
+        return rotatedIndex;
+    }
+
+    // Helper function to handle empty value sorting (always puts empty values at bottom)
+    function compareWithEmptyHandling(
+        valueA: any, 
+        valueB: any, 
+        isEmpty: (val: any) => boolean, 
+        compare: (a: any, b: any) => number
+    ): { comparison: number; hasEmpty: boolean } {
+        const emptyA = isEmpty(valueA);
+        const emptyB = isEmpty(valueB);
+        
+        if (emptyA && emptyB) return { comparison: 0, hasEmpty: true };
+        if (emptyA) return { comparison: 1, hasEmpty: true }; // Empty always goes to end
+        if (emptyB) return { comparison: -1, hasEmpty: true }; // Empty always goes to end
+        
+        return { comparison: compare(valueA, valueB), hasEmpty: false };
+    }
 
     function openModal(student: Student) {
         showModal = true;
@@ -90,6 +128,118 @@
         return getStatusNameById(latestStatusId) ?? '-';
     }
 
+    function handleSort(field: SortField) {
+        if (sortField === field) {
+            if (field === 'status') {
+                // For status, cycle through the status priority order
+                statusSortCycle = (statusSortCycle + 1) % statusCycleOrder.length;
+            } else {
+                // If clicking the same field, toggle direction
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            }
+        } else {
+            // If clicking a new field, set it and use appropriate default direction
+            sortField = field;
+            statusSortCycle = 0; // Reset status cycle when switching fields
+            // Most fields default to ascending, but lastLesson defaults to descending (most recent first)
+            sortDirection = field === 'lastLesson' ? 'desc' : 'asc';
+        }
+    }
+
+    function sortStudents(students: Student[]): Student[] {
+        if (!students.length) return students;
+
+        return [...students].sort((a, b) => {
+            let result: { comparison: number; hasEmpty: boolean };
+
+            switch (sortField) {
+                case 'name':
+                    const nameA = `${a.first_name} ${a.last_name || ''}`.trim().toLowerCase();
+                    const nameB = `${b.first_name} ${b.last_name || ''}`.trim().toLowerCase();
+                    result = { comparison: nameA.localeCompare(nameB), hasEmpty: false };
+                    break;
+
+                case 'level':
+                    result = compareWithEmptyHandling(
+                        getCurrentLevel(a),
+                        getCurrentLevel(b),
+                        (val) => val === '-',
+                        (a, b) => a.localeCompare(b)
+                    );
+                    break;
+
+                case 'status':
+                    result = compareWithEmptyHandling(
+                        getCurrentStatus(a),
+                        getCurrentStatus(b),
+                        (val) => val === '-',
+                        (a, b) => {
+                            const orderA = getStatusSortValue(a.toLowerCase(), statusSortCycle);
+                            const orderB = getStatusSortValue(b.toLowerCase(), statusSortCycle);
+                            return orderA - orderB;
+                        }
+                    );
+                    break;
+
+                case 'nextLesson':
+                    result = compareWithEmptyHandling(
+                        getNextLessonFromStudent(a),
+                        getNextLessonFromStudent(b),
+                        (val) => !val,
+                        (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+                    );
+                    break;
+
+                case 'lastLesson':
+                    result = compareWithEmptyHandling(
+                        getLastLessonFromStudent(a),
+                        getLastLessonFromStudent(b),
+                        (val) => !val,
+                        (a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
+                    );
+                    break;
+
+                case 'lastQuiz':
+                    // TODO: Implement when quiz data is available
+                    result = { comparison: 0, hasEmpty: false };
+                    break;
+
+                default:
+                    result = { comparison: 0, hasEmpty: false };
+            }
+
+            // If we're dealing with empty values, don't apply sort direction reversal
+            // Empty values should always go to the bottom
+            if (result.hasEmpty) {
+                return result.comparison;
+            }
+
+            // For non-empty values, apply the sort direction
+            return sortDirection === 'asc' ? result.comparison : -result.comparison;
+        });
+    }
+
+    // Reactive sorted students
+    let sortedStudents = $derived(sortStudents(students));
+
+    function getSortIcon(field: SortField): string {
+        if (sortField !== field) {
+            return '⇅'; // Neutral sort icon
+        }
+        
+        if (field === 'status') {
+            const priorityStatus = statusCycleOrder[statusSortCycle];
+            return `↑${priorityStatus.charAt(0).toUpperCase()}`;
+        }
+        
+        return sortDirection === 'asc' ? '↑' : '↓';
+    }
+
+    function getSortButtonClass(field: SortField): string {
+        const baseClass = 'btn btn-ghost btn-sm text-left justify-start h-auto min-h-0 p-1 font-medium hover:bg-accent/10';
+        return sortField === field ? `${baseClass} text-accent` : `${baseClass} text-base-content`;
+    }
+
     async function loadStudents() {
         isLoading = true;
         error = null;
@@ -118,8 +268,7 @@
                 }
             }
             
-            // Note: sortByRecentLessons is handled client-side in the $effect below
-            // to ensure all students are shown, just sorted differently
+            // Note: Sorting is handled client-side for better UX
             
             const response = await fetchStudents(params);
             let fetchedStudents = response.students;
@@ -136,25 +285,11 @@
         searchTerm = '';
         statusFilter = null;
         levelFilter = null;
-        sortByRecentLessons = false;
+        // Reset sorting to default
+        sortField = 'lastLesson';
+        sortDirection = 'desc';
         loadStudents();
     }
-
-    // Sort by most recent lessons if requested (client-side for now)
-    $effect(() => {
-        if (sortByRecentLessons && students.length > 0) {
-            students.sort((a, b) => {
-                const lastLessonA = getLastLessonFromStudent(a);
-                const lastLessonB = getLastLessonFromStudent(b);
-                
-                if (!lastLessonA && !lastLessonB) return 0;
-                if (!lastLessonA) return 1;
-                if (!lastLessonB) return -1;
-                
-                return new Date(lastLessonB.datetime).getTime() - new Date(lastLessonA.datetime).getTime();
-            });
-        }
-    });
 
     // Debounced search for text input
     let searchTimeout: number;
@@ -226,13 +361,24 @@
                     {/each}
                 </select>
             </fieldset>
+            
+           
 
-            <!-- Sort by recent lessons -->
-            <div class="bg-base-100 shadow-sm border border-secondary rounded-lg p-3 hover:bg-base-50 transition-colors">
-                <label class="label cursor-pointer justify-start gap-3 m-0 p-0">
-                    <input type="checkbox" class="checkbox checkbox-accent checkbox-sm" bind:checked={sortByRecentLessons} onchange={handleFilterChange} />
-                    <span class="label-text text-sm font-medium text-accent">Sort by recent lessons</span>
-                </label>
+            <!-- Current Sort Info -->
+            <div class="bg-accent/10 border border-accent/20 rounded-lg p-3 text-sm">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    <span class="text-accent font-medium">
+                        Sorted by: {sortField === 'lastLesson' ? 'Last Lesson' : 
+                                   sortField === 'nextLesson' ? 'Next Lesson' :
+                                   sortField === 'lastQuiz' ? 'Last Quiz' :
+                                   sortField === 'status' ? `Status (${statusCycleOrder[statusSortCycle]} first)` :
+                                   sortField.charAt(0).toUpperCase() + sortField.slice(1)}
+                        {sortField !== 'status' ? `(${sortDirection})` : ''}
+                    </span>
+                </div>
             </div>
             
             <!-- Clear All button -->
@@ -254,12 +400,36 @@
         <table class="table border bg-base-200 border-base-200">
             <thead class="sticky top-0 z-10 bg-base-200">
                 <tr>
-                    <th>Name</th>
-                    <th>Level</th>
-                    <th>Status</th>
-                    <th>Next Lesson</th>
-                    <th>Last Lesson</th>
-                    <th>Last Quiz</th>
+                    <th>
+                        <button class={getSortButtonClass('name')} onclick={() => handleSort('name')}>
+                            Name {getSortIcon('name')}
+                        </button>
+                    </th>
+                    <th>
+                        <button class={getSortButtonClass('level')} onclick={() => handleSort('level')}>
+                            Level {getSortIcon('level')}
+                        </button>
+                    </th>
+                    <th>
+                        <button class={getSortButtonClass('status')} onclick={() => handleSort('status')}>
+                            Status {getSortIcon('status')}
+                        </button>
+                    </th>
+                    <th>
+                        <button class={getSortButtonClass('nextLesson')} onclick={() => handleSort('nextLesson')}>
+                            Next Lesson {getSortIcon('nextLesson')}
+                        </button>
+                    </th>
+                    <th>
+                        <button class={getSortButtonClass('lastLesson')} onclick={() => handleSort('lastLesson')}>
+                            Last Lesson {getSortIcon('lastLesson')}
+                        </button>
+                    </th>
+                    <th>
+                        <button class={getSortButtonClass('lastQuiz')} onclick={() => handleSort('lastQuiz')}>
+                            Last Quiz {getSortIcon('lastQuiz')}
+                        </button>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -278,7 +448,7 @@
                             </div>
                         </td>
                     </tr>
-                {:else if students.length === 0}
+                {:else if sortedStudents.length === 0}
                     <tr>
                         <td colspan="7" class="text-center p-8">
                             <div class="alert alert-info">
@@ -287,7 +457,7 @@
                         </td>
                     </tr>
                 {:else}
-                    {#each students as student (student.id)}
+                    {#each sortedStudents as student (student.id)}
                         <tr class="hover">
                             <td>{student.first_name} {student.last_name || ''}</td>
                             <td>{getCurrentLevel(student)}</td>
