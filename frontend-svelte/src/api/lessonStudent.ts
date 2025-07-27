@@ -43,3 +43,13 @@ export async function updateLessonStudent(id: number, lessonStudent: Partial<Les
 export async function deleteLessonStudent(id: number): Promise<void> {
     await apiRequest<void>(`/lesson-students/${id}`, 'DELETE');
 }
+
+export async function findLessonStudentByLessonAndStudent(lessonId: number, studentId: number): Promise<LessonStudent | null> {
+    try {
+        const response = await fetchLessonStudents({ lesson_id: lessonId, student_id: studentId });
+        return response.lesson_students.length > 0 ? response.lesson_students[0] : null;
+    } catch (error) {
+        console.error('Error finding lesson-student relationship:', error);
+        return null;
+    }
+}
