@@ -19,7 +19,6 @@
   let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput());
   let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
 
-  //let student: string = lesson.students.map((student) => (student.first_name + ' ' + student.last_name)).join(", ");
   let plan: string = $state("");
   let concepts: string = $state("");
   let notes: string = $state("");
