@@ -1,7 +1,6 @@
 import time
 import sys
 from app.main import app, db
-#from app.data.demo.load_demo_data import load_demo_data
 from app.data.initialize_data import create_all_data
 
 if __name__ == '__main__':
