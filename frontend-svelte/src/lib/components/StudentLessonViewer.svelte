@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Student } from "../../types";
-    import { getPastLessonsFromStudent, getSortedLessonsFromStudent, formatLessonDateTime } from "../utils";
+    import { getPastLessonsFromStudent, getSortedLessonsFromStudent } from "../utils";
     import LessonCard from "./LessonCard.svelte";
 
     let { student } = $props<{ student: Student }>();
