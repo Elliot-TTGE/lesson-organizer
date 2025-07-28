@@ -1,9 +1,6 @@
 <script lang="ts">
   import { Tipex } from "@friendofsvelte/tipex";
   import type { Editor } from "@tiptap/core";
-  import "@friendofsvelte/tipex/styles/Tipex.css";
-  import "@friendofsvelte/tipex/styles/EditLink.css";
-  import "@friendofsvelte/tipex/styles/CodeBlock.css";
   import "$lib/styles/TipexControls.css";
   import "$lib/styles/TipexProse.css";
 
