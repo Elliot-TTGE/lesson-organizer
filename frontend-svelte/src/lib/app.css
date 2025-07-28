@@ -1,6 +1,3 @@
-@import "@friendofsvelte/tipex/styles/Tipex.css";
-@import "@friendofsvelte/tipex/styles/EditLink.css";
-@import "@friendofsvelte/tipex/styles/CodeBlock.css";
 @import "tailwindcss";
 
 @plugin "daisyui"{
