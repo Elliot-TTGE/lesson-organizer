@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - LO-83
   pull_request:
     branches:
       - main
+      - LO-83
 
 jobs:
   build:
@@ -40,6 +42,11 @@ jobs:
       run: |
         docker compose up --no-build --detach backend
         sleep 10
+      env:
+        ADMIN_EMAIL: "admin@example.com"
+        ADMIN_PASSWORD: "YourSecurePassword"
+        ADMIN_FIRST_NAME: "Admin"
+        ADMIN_LAST_NAME: "User"
 
     - name: Check backend logs
       run: docker compose logs backend

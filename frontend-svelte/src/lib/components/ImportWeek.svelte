@@ -1,35 +1,33 @@
 <script lang="ts">
     import type { Lesson, Student } from "../../types";
-    import { createLesson } from "../../api/lesson";
+    import { createLesson, type LessonCreateFields } from "../../api/lesson";
     import { addLessonToState } from "$lib/states/lessonState.svelte";
     import Papa from "papaparse";
+    import LessonCreateModal from "./LessonCreateModal.svelte";
 
-    function parseCSV(csv: string): Partial<Lesson>[] {
+    function parseCSV(csv: string): LessonCreateFields[] {
         const result = Papa.parse(csv, { header: true, skipEmptyLines: true });
         if (result.errors.length > 0) {
             console.error("CSV parsing errors:", result.errors);
             return [];
         }
         return (result.data as Record<string, string>[]).map(obj => ({
-            id: obj.id ? Number(obj.id) : undefined,
-            datetime: obj.datetime ? new Date(obj.datetime).toISOString() : "",
-            created_date: obj.created_date ? new Date(obj.created_date).toISOString() : "",
-            students: [],
+            datetime: obj.datetime ? new Date(obj.datetime).toISOString() : new Date().toISOString(),
             plan: obj.plan || "",
             concepts: obj.concepts || "",
             notes: obj.notes || ""
         }));
     }
 
-    function parseJSON(json: string): Partial<Lesson>[] {
+    function parseJSON(json: string): LessonCreateFields[] {
         try {
             const arr = JSON.parse(json);
             if (Array.isArray(arr)) {
                 return arr.map(l => ({
-                    ...l,
-                    datetime: l.datetime ? new Date(l.datetime).toISOString() : "",
-                    created_date: l.created_date ? new Date(l.created_date).toISOString() : "",
-                    students: Array.isArray(l.students) ? l.students : []
+                    datetime: l.datetime ? new Date(l.datetime).toISOString() : new Date().toISOString(),
+                    plan: l.plan || "",
+                    concepts: l.concepts || "",
+                    notes: l.notes || ""
                 }));
             }
         } catch {
@@ -47,7 +45,7 @@
             if (!input.files?.length) return;
             const file = input.files[0];
             const text = await file.text();
-            let newLessons: Partial<Lesson>[] = [];
+            let newLessons: LessonCreateFields[] = [];
 
             if (file.name.endsWith(".csv")) {
                 newLessons = parseCSV(text);
@@ -57,10 +55,10 @@
 
             for (const lesson of newLessons) {
                 try {
-                    const created = await createLesson(lesson);
+                    const created = await createLesson(lesson, []); // Pass empty student_ids array
                     addLessonToState(created);
                 } catch (e) {
-
+                    console.error("Error creating lesson:", e);
                 }
             }
         };

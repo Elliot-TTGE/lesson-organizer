@@ -46,7 +46,7 @@ export function removeLessonFromState(lessonId: number) {
 export async function fetchCurrentWeekLessons() {
   try {
     const date = lessonWeekStartDate.current;
-    const newLessons = await fetchLessons({ "initial_date": date.toISOString() });
+    const newLessons = (await fetchLessons({ "start": date.toISOString(), "range_length": 7 })).lessons;
     const lessonsArray: Lesson[][] = Array(7).fill(null).map(() => []);
 
     newLessons.forEach((lesson: Lesson) => {

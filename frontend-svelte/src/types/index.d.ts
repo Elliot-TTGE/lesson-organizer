@@ -1,45 +1,135 @@
+// Students
 export interface Student {
   id: number;
+  created_date: string;
+  updated_date: string;
   first_name: string;
-  last_name: string;
-  created_date: string;
-  status: 'active' | 'inactive' | 'hold' | 'trial';
-  levels: Level[];
+  last_name?: string;
+  date_started?: string;
+  classes_per_week?: number;
+  notes_general?: string;
+  notes_strengths?: string;
+  notes_weaknesses?: string;
+  notes_future?: string;
+  lessons: Lesson[];
+  status_history: StudentStatusHistory[];
+  level_history: StudentLevelHistory[];
+  quizzes: Quiz[];
 }
 
-export interface Lesson {
-  id: number;
-  datetime: string;
-  plan: string;
-  concepts: string;
-  notes: string;
-  students: Student[];
-  created_date: string;
-}
-
-export interface Quiz {
+export interface StudentStatus {
   id: number;
   name: string;
+}
+
+export interface StudentStatusHistory {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  student_id: number;
+  status_id: number;
+  changed_at: string;
+}
+
+export interface StudentLevelHistory {
+  id: number
+  created_date: string;
+  updated_date: string;
+  student_id: number;
+  level_id: number;
+  start_date: string;
+}
+
+// Lessons
+export interface Lesson {
+  id: number;
+  created_date: string;
+  updated_date: string;
   datetime: string;
-  score: number;
-  notes: string;
+  plan?: string;
+  concepts?: string;
+  notes?: string;
+  students: Student[];
+  quizzes: Quiz[];
+}
+
+export interface LessonStudent {
+  id: number;
+  created_date: string;
+  updated_date: string;
   lesson_id: number;
   student_id: number;
 }
 
-export interface Level {
+// Quizzes
+export interface Quiz {
   id: number;
-  student_id: number;
-  start_date: string;
-  level_category: string;
+  created_date: string;
+  updated_date: string;
+  name: string;
+  max_points: number;
+  unit_id?: number;
+  unit: Unit;
+  lessons: Lesson[];
+  students: Student[];
 }
 
+export interface StudentLessonQuiz {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  student_id: number;
+  lesson_id: number;
+  quiz_id: number;
+  points: number;
+  notes: string;
+}
+
+// Curriculum
+export interface Curriculum {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  name: string;
+  levels: Level[];
+}
+
+export interface Level {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  name: string;
+  curriculum_id: number;
+  curriculum: Curriculum;
+  student_level_history: StudentLevelHistory[];
+  units: Unit[];
+}
+export interface Unit {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  name: string;
+  level_id: number;
+  level: Level;
+  quizzes: Quiz[];
+}
+
+// User
 export interface User {
   id: number;
+  created_date: string;
+  updated_date: string;
   first_name: string;
   last_name: string;
-  created_date: string;
   last_login?: string;
+  email: string;
   password: string;
   role: string;
+}
+
+export interface Pagination {
+  page: number;
+  per_page: number;
+  pages: number;
+  total: number;
 }
