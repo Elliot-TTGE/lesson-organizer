@@ -22,12 +22,12 @@
         getLevelDisplayById
     } from "../states";
     import TipexEditor from "./TipexEditor.svelte";
-    import LessonCard from "./LessonCard.svelte";
     import LoadingState from "./LoadingState.svelte";
     import StatCard from "./StatCard.svelte";
     import NumberCounter from "./NumberCounter.svelte";
     import HistoryTimeline from "./HistoryTimeline.svelte";
     import EditableField from "./EditableField.svelte";
+    import StudentLessonViewer from "./StudentLessonViewer.svelte";
 
     let { studentId, onStudentUpdated } = $props<{ 
         studentId: number; 
@@ -534,57 +534,7 @@
                 </div>
 
                 <!-- Right Column - Lessons -->
-                <div class="card bg-base-100 text-base-content shadow-lg">
-                    <div class="card-body">
-                        <h3 class="card-title text-info">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Lessons
-                        </h3>
-                        
-                        <!-- Lesson Navigation -->
-                        <div class="flex justify-between items-center">
-                            <button class="btn btn-ghost btn-sm" disabled>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                </svg>
-                                Previous
-                            </button>
-                            <span class="text-sm font-medium">Most Recent</span>
-                            <button class="btn btn-ghost btn-sm" disabled>
-                                Next
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <!-- Lesson Content -->
-                        <div class="overflow-y-auto max-h-85">
-                            {#if student.lessons && student.lessons.length > 0}
-                                {@const lastLesson = getLastLessonFromStudent(student)}
-                                {#if lastLesson}
-                                    <!-- Use LessonCard component -->
-                                    <LessonCard lessonId={lastLesson.id} />
-                                {:else}
-                                    <div class="text-center text-base-content/60 py-4">
-                                        <p class="font-medium">No past lessons found</p>
-                                        <p class="text-sm">This student has no completed lessons</p>
-                                    </div>
-                                {/if}
-                            {:else}
-                                <div class="text-center text-base-content/60 py-8">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-12 h-12 stroke-current mb-2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                    </svg>
-                                    <p class="font-medium">No lessons found</p>
-                                    <p class="text-sm">This student is not part of any lessons</p>
-                                </div>
-                            {/if}
-                        </div>
-                    </div>
-                </div>
+                <StudentLessonViewer {student} />
             </div>
 
             <!-- Quiz Results Section -->
