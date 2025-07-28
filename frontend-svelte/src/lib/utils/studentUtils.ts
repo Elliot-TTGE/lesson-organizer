@@ -149,3 +149,37 @@ export function getNextLessonFromStudent(student: Student): Lesson | null {
     
     return futureLessons.length > 0 ? futureLessons[0] : null;
 }
+
+/**
+ * Gets all lessons from a student sorted chronologically (newest first)
+ * @param student - The student object containing lessons
+ * @returns Array of lessons sorted by datetime descending
+ */
+export function getSortedLessonsFromStudent(student: Student): Lesson[] {
+    if (!student.lessons || student.lessons.length === 0) {
+        return [];
+    }
+    
+    // Sort by datetime descending (newest first)
+    return [...student.lessons].sort((a, b) => 
+        new Date(b.datetime).getTime() - new Date(a.datetime).getTime()
+    );
+}
+
+/**
+ * Gets all past lessons from a student sorted chronologically (newest first)
+ * @param student - The student object containing lessons
+ * @returns Array of past lessons sorted by datetime descending
+ */
+export function getPastLessonsFromStudent(student: Student): Lesson[] {
+    if (!student.lessons || student.lessons.length === 0) {
+        return [];
+    }
+
+    const now = new Date();
+    
+    // Filter lessons to only include those in the past, then sort by datetime descending
+    return student.lessons
+        .filter(lesson => new Date(lesson.datetime) < now)
+        .sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+}
