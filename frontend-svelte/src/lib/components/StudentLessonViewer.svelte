@@ -50,11 +50,6 @@
         return currentLessonIndex > 0;
     });
     
-    // Display text for current position
-    const positionText = $derived(() => {
-        return "Most Recent";
-    });
-    
     // Check if we're currently viewing the default lesson
     const isAtDefaultLesson = $derived(() => currentLessonIndex === defaultLessonIndex());
 
@@ -121,7 +116,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         {/if}
-                        <span class="text-sm font-medium">{positionText()}</span>
+                        <span class="text-sm font-medium">{"Most Recent"}</span>
                     </div>
                 </button>
             </div>
