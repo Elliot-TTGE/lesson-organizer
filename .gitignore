@@ -4,6 +4,7 @@ frontend-svelte/package-lock
 
 # Backend
 backend-flask/venv
+*.db
 
 # Backups
 db_backups
