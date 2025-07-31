@@ -1,11 +1,22 @@
 [
     {
+        "version": "v1.0",
+        "date": "July 27, 2025",
+        "changes": [
+            "Updated database to include quiz, student, and curriculum data support",
+            "Updated backend to include routes for the new database changes.",
+            "Implemented new student tab to the frontend for listing all students.",
+            "Created Student card page that allows editing of each student.",
+            "Added ability to attach students to lessons and track lesson history for each student."
+        ]
+    },
+    {
         "version": "v0.6",
         "date": "June 17, 2025",
         "changes": [
             "Fixed bug where backend data does not persist between updates.",
             "Added backup functionality to production server database.",
-            "Fixed bug where CSV exports would not parse commas and other characters in data correcrtly.",
+            "Fixed bug where CSV exports would not parse commas and other characters in data correctly.",
             "Fixed bug where production server would not automatically power on after power loss."
         ]
     },
