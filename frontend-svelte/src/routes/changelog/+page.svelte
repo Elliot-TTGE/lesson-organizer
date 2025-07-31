@@ -4,8 +4,8 @@
 </script>
 
 <Navbar />
-<div class="flex justify-center items-center min-h-screen bg-base-200 text-base-content">
-  <div class="card bg-base-100 shadow-xl w-full max-w-3xl">
+<div class="flex justify-center items-center min-h-screen text-base-content">
+  <div class="card bg-base-200 shadow-xl w-full max-w-3xl top-16">
     <div class="card-body">
       <h1 class="card-title text-primary text-center text-3xl">Changelog</h1>
       {#each changelog as entry, index}
