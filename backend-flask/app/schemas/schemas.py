@@ -58,7 +58,6 @@ class StudentStatusHistorySchema(BaseSchema):
 class LessonSchema(BaseSchema):
     # Nested relationships - avoiding circular references with dump_only
     students = Nested('StudentSchema', many=True, dump_only=True, exclude=['lessons'])
-    quizzes = Nested('QuizSchema', many=True, dump_only=True)
     
     class Meta(BaseSchema.Meta):
         model = Lesson
@@ -103,8 +102,7 @@ class StudentLevelHistorySchema(BaseSchema):
 class QuizSchema(BaseSchema):
     # Nested relationships
     unit = Nested('UnitSchema', dump_only=True, exclude=['quizzes'])
-    lessons = Nested('LessonSchema', many=True, dump_only=True, exclude=['quizzes'])
-    students = Nested('StudentSchema', many=True, dump_only=True, exclude=['quizzes'])
+    # Remove circular relationships - access through StudentLessonQuiz instead
     
     class Meta(BaseSchema.Meta):
         model = Quiz
@@ -113,7 +111,7 @@ class StudentLessonQuizSchema(BaseSchema):
     # Nested relationships to show full objects
     student = Nested('StudentSchema', dump_only=True, exclude=['lessons', 'quizzes'])
     lesson = Nested('LessonSchema', dump_only=True, exclude=['students'])
-    quiz = Nested('QuizSchema', dump_only=True, exclude=['lessons'])
+    quiz = Nested('QuizSchema', dump_only=True)
     
     # Keep the foreign key fields for loading/creation
     student_id = fields.Integer(required=True, allow_none=False)

@@ -43,7 +43,7 @@ def get_levels():
     level_schema = LevelSchema(many=True)
     return level_schema.dump(levels), 200
 
-#@level_bp.route('/levels', methods=['POST'])
+@level_bp.route('/levels', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_level():
@@ -95,7 +95,7 @@ def create_level():
     db.session.commit()
     return level_schema.dump(level), 201
 
-#@level_bp.route('/levels/<int:id>', methods=['PUT'])
+@level_bp.route('/levels/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_level(id):
@@ -144,7 +144,7 @@ def update_level(id):
     db.session.commit()
     return level_schema.dump(updated_level), 200
 
-#@level_bp.route('/levels/<int:id>', methods=['DELETE'])
+@level_bp.route('/levels/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_level(id):

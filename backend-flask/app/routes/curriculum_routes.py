@@ -33,7 +33,7 @@ def get_curriculums():
     curriculum_schema = CurriculumSchema(many=True)
     return curriculum_schema.dump(curriculums), 200
 
-#@curriculum_bp.route('/curriculums', methods=['POST'])
+@curriculum_bp.route('/curriculums', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_curriculum():
@@ -74,7 +74,7 @@ def create_curriculum():
     db.session.commit()
     return curriculum_schema.dump(curriculum), 201
 
-#@curriculum_bp.route('/curriculums/<int:id>', methods=['PUT'])
+@curriculum_bp.route('/curriculums/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_curriculum(id):
@@ -115,7 +115,7 @@ def update_curriculum(id):
     db.session.commit()
     return curriculum_schema.dump(updated_curriculum), 200
 
-#@curriculum_bp.route('/curriculums/<int:id>', methods=['DELETE'])
+@curriculum_bp.route('/curriculums/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_curriculum(id):

@@ -15,8 +15,3 @@ class Lesson(BaseModel):
         secondary="lesson_student",
         back_populates="lessons"
     )
-    quizzes = db.relationship(
-        "Quiz",
-        secondary="student_lesson_quiz",
-        back_populates="lessons"
-    )
