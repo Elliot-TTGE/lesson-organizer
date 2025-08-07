@@ -6,6 +6,7 @@
   import { lessonWeekStartDate } from "$lib/states/lessonWeekStartDate.svelte";
   import ExportWeek from "$lib/components/ExportWeek.svelte";
   import ImportWeek from "$lib/components/ImportWeek.svelte";
+  import { lessonMinimizedState, toggleGlobalMinimized } from "$lib/states/lessonMinimizedState.svelte";
 
   // Fetch lessons on mount and when week changes
   $effect.pre(() => {
@@ -20,7 +21,23 @@
     <SelectWeek bind:startDate={lessonWeekStartDate.current} />
     <ExportWeek bind:startDate={lessonWeekStartDate.current}/>
     <ImportWeek />
+    
+    
     <div class="ml-auto">
+      <!-- Global Minimize Toggle -->
+      <button 
+        onclick={toggleGlobalMinimized}
+        class="btn btn-secondary ml-auto"
+        class:btn-active={lessonMinimizedState.globalMinimized}
+        title={lessonMinimizedState.globalMinimized ? "Expand all lessons" : "Minimize all lessons"}
+      >
+        <img 
+          src="/images/icons/{lessonMinimizedState.globalMinimized ? 'chevron-down' : 'minus-sign'}.svg" 
+          alt={lessonMinimizedState.globalMinimized ? "Expand" : "Minimize"} 
+          class="w-4 h-4 filter brightness-0 invert" 
+        />
+        {lessonMinimizedState.globalMinimized ? "Expand All" : "Minimize All"}
+      </button>
       <LessonCreateModal>Create Lesson</LessonCreateModal>
     </div>
   </div>
