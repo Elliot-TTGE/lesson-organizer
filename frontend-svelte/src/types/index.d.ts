@@ -14,7 +14,7 @@ export interface Student {
   lessons: Lesson[];
   status_history: StudentStatusHistory[];
   level_history: StudentLevelHistory[];
-  quizzes: Quiz[];
+  quizzes: StudentLessonQuiz[];
 }
 
 export interface StudentStatus {
@@ -50,7 +50,6 @@ export interface Lesson {
   concepts?: string;
   notes?: string;
   students: Student[];
-  quizzes: Quiz[];
 }
 
 export interface LessonStudent {
@@ -70,8 +69,6 @@ export interface Quiz {
   max_points: number;
   unit_id?: number;
   unit: Unit;
-  lessons: Lesson[];
-  students: Student[];
 }
 
 export interface StudentLessonQuiz {

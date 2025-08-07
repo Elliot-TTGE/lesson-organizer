@@ -4,6 +4,7 @@ from app.models.curriculum_model import Curriculum
 from app.models.level_model import Level
 from app.models.unit_model import Unit
 from app.models.quiz_model import Quiz
+from app.models.student_lesson_quiz_model import StudentLessonQuiz
 from app.db import db
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash
@@ -73,35 +74,147 @@ def create_all_levels():
 
     db.session.commit()
 
+def delete_all_units_quizzes_and_results():
+    """
+    Debug function to delete all units, quizzes, and student lesson quiz results.
+    WARNING: This will permanently delete all quiz data!
+    """
+    print("Deleting all student lesson quiz results...")
+    StudentLessonQuiz.query.delete()
+    
+    print("Deleting all quizzes...")
+    Quiz.query.delete()
+    
+    print("Deleting all units...")
+    Unit.query.delete()
+    
+    db.session.commit()
+    print("All units, quizzes, and student lesson quiz results have been deleted!")
+
 def create_all_units():
     # Get all levels
     levels = Level.query.all()
     for level in levels:
-        for i in range(1, 9):
-            unit_name = str(i)
-            existing = db.session.execute(
-                db.select(Unit).where(Unit.name == unit_name, Unit.level_id == level.id)
-            ).scalar_one_or_none()
-            if not existing:
-                db.session.add(Unit(name=unit_name, level_id=level.id))
+        curriculum_name = level.curriculum.name
+        
+        if curriculum_name == "Interchange":
+            # Determine unit range based on level suffix
+            if level.name.endswith("-A"):
+                # A levels: units 1-8
+                unit_range = range(1, 9)
+            elif level.name.endswith("-B"):
+                # B levels: units 9-16
+                unit_range = range(9, 17)
+            else:
+                # Default for other Interchange levels
+                unit_range = range(1, 9)
+                
+            for unit_num in unit_range:
+                unit_name = str(unit_num)
+                existing = db.session.execute(
+                    db.select(Unit).where(Unit.name == unit_name, Unit.level_id == level.id)
+                ).scalar_one_or_none()
+                if not existing:
+                    db.session.add(Unit(name=unit_name, level_id=level.id))
+                    
+        elif curriculum_name == "Passages":
+            # Passages: 12 units per level (1-12)
+            for unit_num in range(1, 13):
+                unit_name = str(unit_num)
+                existing = db.session.execute(
+                    db.select(Unit).where(Unit.name == unit_name, Unit.level_id == level.id)
+                ).scalar_one_or_none()
+                if not existing:
+                    db.session.add(Unit(name=unit_name, level_id=level.id))
+        else:
+            # Default: 8 units (1-8)
+            for unit_num in range(1, 9):
+                unit_name = str(unit_num)
+                existing = db.session.execute(
+                    db.select(Unit).where(Unit.name == unit_name, Unit.level_id == level.id)
+                ).scalar_one_or_none()
+                if not existing:
+                    db.session.add(Unit(name=unit_name, level_id=level.id))
     db.session.commit()
 
 def create_all_quizzes():
-    # For each unit with an even-numbered name, create a quiz
-    units = Unit.query.all()
-    for unit in units:
-        # Only create a quiz for units with even-numbered names
-        try:
-            unit_number = int(unit.name)
-        except ValueError:
-            continue  # Skip units with non-integer names
-        if unit_number % 2 == 0:
-            quiz_name = f"Quiz {unit.name}"
-            existing = db.session.execute(
-                db.select(Quiz).where(Quiz.name == quiz_name, Quiz.unit_id == unit.id)
+    # Get all levels to create quizzes based on curriculum
+    levels = Level.query.all()
+    
+    for level in levels:
+        curriculum_name = level.curriculum.name
+        
+        if curriculum_name == "Interchange":
+            # Interchange: Quiz every 2 units with max score of 25
+            max_score = 25
+            
+            if level.name.endswith("-A"):
+                # A levels (units 1-8): quizzes at units 2, 4, 6, 8
+                quiz_units = [2, 4, 6, 8]
+            elif level.name.endswith("-B"):
+                # B levels (units 9-16): quizzes at units 10, 12, 14, 16
+                quiz_units = [10, 12, 14, 16]
+            else:
+                # Default for other Interchange levels
+                quiz_units = [2, 4, 6, 8]
+                
+            for unit_num in quiz_units:
+                unit = db.session.execute(
+                    db.select(Unit).where(Unit.name == str(unit_num), Unit.level_id == level.id)
+                ).scalar_one_or_none()
+                
+                if unit:
+                    quiz_name = f"{curriculum_name} {level.name} - Units {unit_num-1}-{unit_num}"
+                        
+                    existing = db.session.execute(
+                        db.select(Quiz).where(Quiz.name == quiz_name, Quiz.unit_id == unit.id)
+                    ).scalar_one_or_none()
+                    if not existing:
+                        db.session.add(Quiz(name=quiz_name, max_points=max_score, unit_id=unit.id))
+                        
+        elif curriculum_name == "Passages":
+            # Passages: Quiz every unit (units 1-12) with max score of 50
+            max_score = 50
+            for unit_num in range(1, 13):
+                unit = db.session.execute(
+                    db.select(Unit).where(Unit.name == str(unit_num), Unit.level_id == level.id)
+                ).scalar_one_or_none()
+                
+                if unit:
+                    quiz_name = f"{curriculum_name} {level.name} - Unit {unit_num}"
+                    existing = db.session.execute(
+                        db.select(Quiz).where(Quiz.name == quiz_name, Quiz.unit_id == unit.id)
+                    ).scalar_one_or_none()
+                    if not existing:
+                        db.session.add(Quiz(name=quiz_name, max_points=max_score, unit_id=unit.id))
+            
+            # Add Midterm and Final quizzes for Passages (tied to specific units)
+            # Midterm tied to unit 6
+            midterm_unit = db.session.execute(
+                db.select(Unit).where(Unit.name == "6", Unit.level_id == level.id)
             ).scalar_one_or_none()
-            if not existing:
-                db.session.add(Quiz(name=quiz_name, max_points=100, unit_id=unit.id))
+            
+            if midterm_unit:
+                midterm_name = f"{curriculum_name} {level.name} - Midterm"
+                existing_midterm = db.session.execute(
+                    db.select(Quiz).where(Quiz.name == midterm_name, Quiz.unit_id == midterm_unit.id)
+                ).scalar_one_or_none()
+                if not existing_midterm:
+                    db.session.add(Quiz(name=midterm_name, max_points=max_score, unit_id=midterm_unit.id))
+            
+            # Final tied to unit 12
+            final_unit = db.session.execute(
+                db.select(Unit).where(Unit.name == "12", Unit.level_id == level.id)
+            ).scalar_one_or_none()
+            
+            if final_unit:
+                final_name = f"{curriculum_name} {level.name} - Final"
+                existing_final = db.session.execute(
+                    db.select(Quiz).where(Quiz.name == final_name, Quiz.unit_id == final_unit.id)
+                ).scalar_one_or_none()
+                if not existing_final:
+                    db.session.add(Quiz(name=final_name, max_points=max_score, unit_id=final_unit.id))
+    
     db.session.commit()
 
 
@@ -113,5 +226,16 @@ def create_all_data():
     create_all_levels()
     create_all_units()
     create_all_quizzes()
-    
-    
+    reset_units_and_quizzes()
+
+def reset_units_and_quizzes():
+    """
+    Debug function to delete and recreate all units and quizzes.
+    This preserves student and level data but resets the quiz system.
+    """
+    delete_all_units_quizzes_and_results()
+    create_all_units()
+    create_all_quizzes()
+    print("Units and quizzes have been reset and recreated!")
+
+

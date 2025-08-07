@@ -43,7 +43,7 @@ def get_quizzes():
     schema = QuizSchema(many=True)
     return schema.dump(quizzes), 200
 
-#@quiz_bp.route('/quizzes', methods=['POST'])
+@quiz_bp.route('/quizzes', methods=['POST'])
 @jwt_required()
 @response_wrapper
 def create_quiz():
@@ -97,7 +97,7 @@ def create_quiz():
     db.session.commit()
     return schema.dump(quiz), 201
 
-#@quiz_bp.route('/quizzes/<int:id>', methods=['PUT'])
+@quiz_bp.route('/quizzes/<int:id>', methods=['PUT'])
 @jwt_required()
 @response_wrapper
 def update_quiz(id):
@@ -147,7 +147,7 @@ def update_quiz(id):
     db.session.commit()
     return schema.dump(updated_quiz), 200
 
-#@quiz_bp.route('/quizzes/<int:id>', methods=['DELETE'])
+@quiz_bp.route('/quizzes/<int:id>', methods=['DELETE'])
 @jwt_required()
 @response_wrapper
 def delete_quiz(id):
