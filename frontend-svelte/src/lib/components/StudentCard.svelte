@@ -28,6 +28,7 @@
     import HistoryTimeline from "./HistoryTimeline.svelte";
     import EditableField from "./EditableField.svelte";
     import StudentLessonViewer from "./StudentLessonViewer.svelte";
+    import QuizCard from "./QuizCard.svelte";
 
     let { studentId, onStudentUpdated } = $props<{ 
         studentId: number; 
@@ -538,22 +539,11 @@
             </div>
 
             <!-- Quiz Results Section -->
-            <div class="card bg-base-100/10 backdrop-blur-sm border border-primary-content/20 mb-6">
-                <div class="card-body">
-                    <h2 class="card-title text-warning">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Quiz Results
-                    </h2>
-                    <div class="alert alert-info">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <span>Quiz functionality will be implemented here. This section is reserved for entering and displaying quiz results.</span>
-                    </div>
-                </div>
+            <div class="divider text-primary-content/70">
+                <span class="text-lg font-semibold">Quizzes</span>
             </div>
+
+            <QuizCard {student} />
 
             <!-- Notes Section -->
             <div class="divider text-primary-content/70">
