@@ -188,20 +188,32 @@ def create_all_quizzes():
                     if not existing:
                         db.session.add(Quiz(name=quiz_name, max_points=max_score, unit_id=unit.id))
             
-            # Add Midterm and Final quizzes for Passages (not tied to specific units)
-            midterm_name = f"{curriculum_name} {level.name} - Midterm"
-            existing_midterm = db.session.execute(
-                db.select(Quiz).where(Quiz.name == midterm_name, Quiz.unit_id == None)
+            # Add Midterm and Final quizzes for Passages (tied to specific units)
+            # Midterm tied to unit 6
+            midterm_unit = db.session.execute(
+                db.select(Unit).where(Unit.name == "6", Unit.level_id == level.id)
             ).scalar_one_or_none()
-            if not existing_midterm:
-                db.session.add(Quiz(name=midterm_name, max_points=max_score, unit_id=None))
             
-            final_name = f"{curriculum_name} {level.name} - Final"
-            existing_final = db.session.execute(
-                db.select(Quiz).where(Quiz.name == final_name, Quiz.unit_id == None)
+            if midterm_unit:
+                midterm_name = f"{curriculum_name} {level.name} - Midterm"
+                existing_midterm = db.session.execute(
+                    db.select(Quiz).where(Quiz.name == midterm_name, Quiz.unit_id == midterm_unit.id)
+                ).scalar_one_or_none()
+                if not existing_midterm:
+                    db.session.add(Quiz(name=midterm_name, max_points=max_score, unit_id=midterm_unit.id))
+            
+            # Final tied to unit 12
+            final_unit = db.session.execute(
+                db.select(Unit).where(Unit.name == "12", Unit.level_id == level.id)
             ).scalar_one_or_none()
-            if not existing_final:
-                db.session.add(Quiz(name=final_name, max_points=max_score, unit_id=None))
+            
+            if final_unit:
+                final_name = f"{curriculum_name} {level.name} - Final"
+                existing_final = db.session.execute(
+                    db.select(Quiz).where(Quiz.name == final_name, Quiz.unit_id == final_unit.id)
+                ).scalar_one_or_none()
+                if not existing_final:
+                    db.session.add(Quiz(name=final_name, max_points=max_score, unit_id=final_unit.id))
     
     db.session.commit()
 
@@ -225,5 +237,5 @@ def reset_units_and_quizzes():
     create_all_units()
     create_all_quizzes()
     print("Units and quizzes have been reset and recreated!")
-    
-    
+
+
