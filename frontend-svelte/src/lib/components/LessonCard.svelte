@@ -139,13 +139,13 @@
     {#if !isEditing}
       <button 
         onclick={() => toggleLessonMinimized(lessonId)}
-        class="btn btn-outline btn-sm"
+        class="btn btn-outline btn-sm group"
         title={isMinimized ? "Expand lesson" : "Minimize lesson"}
       >
         <img 
           src="/images/icons/{isMinimized ? 'chevron-down' : 'minus-sign'}.svg" 
           alt={isMinimized ? "Expand" : "Minimize"} 
-          class="w-4 h-4" 
+          class="w-4 h-4 group-hover:filter group-hover:brightness-0 group-hover:invert" 
         />
       </button>
     {:else}
@@ -199,7 +199,6 @@
   {#if isMinimized && !isEditing}
     <!-- Minimized View -->
     {@const { date, time } = initializeDateTime(lesson.datetime)}
-    {@const weekday = new Date(lesson.datetime).toLocaleDateString("en-US", { weekday: "short" })}
     
     <div class="flex items-center bg-neutral p-3 rounded-lg shadow-sm h-16 overflow-hidden">
       <div class="flex-1 min-w-0">
