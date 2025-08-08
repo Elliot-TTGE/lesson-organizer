@@ -19,12 +19,14 @@
     studentSearchTerm = $bindable(""),
     isEditing = false,
     onStudentsChange = () => {},
+    reset = $bindable(),
     children
   }: { 
     selectedStudents: Student[];
     studentSearchTerm?: string;
     isEditing?: boolean;
     onStudentsChange?: (students: Student[]) => void;
+    reset?: () => void;
     children?: any;
   } = $props();
 
@@ -33,6 +35,15 @@
   let filteredStudents = $state<Student[]>([]);
   let showStudentDropdown = $state(false);
   let studentSearchTimeout: number;
+
+  // Set up reset function
+  reset = () => {
+    showStudentDropdown = false;
+    studentSearchTerm = "";
+    if (studentSearchTimeout) {
+      clearTimeout(studentSearchTimeout);
+    }
+  };
 
   // Load students when component mounts or when isEditing becomes true
   $effect(() => {

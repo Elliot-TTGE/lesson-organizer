@@ -23,6 +23,12 @@
   let dateWarning = $state(false);
   let timeWarning = $state(false);
 
+  // Reset functions for TipexEditor components
+  let resetPlan: (() => void) | undefined;
+  let resetConcepts: (() => void) | undefined;
+  let resetNotes: (() => void) | undefined;
+  let resetStudentSelector: (() => void) | undefined;
+
   // Reset form state
   function resetForm() {
     date = "";
@@ -34,6 +40,14 @@
     studentSearchTerm = "";
     dateWarning = false;
     timeWarning = false;
+    
+    // Call TipexEditor reset functions
+    resetPlan?.();
+    resetConcepts?.();
+    resetNotes?.();
+    
+    // Call StudentSelector reset function
+    resetStudentSelector?.();
   }
 
   // Close modal and reset form
@@ -119,6 +133,7 @@
         <div class="flex flex-col space-y-4 w-1/2">
           <TipexEditor
             bind:body={plan}
+            bind:reset={resetPlan}
             heading="Today's Plan"
             height="h-[20vh]"
           />
@@ -126,6 +141,7 @@
         <div class="flex flex-col space-y-4 w-1/2">
           <TipexEditor
             bind:body={concepts}
+            bind:reset={resetConcepts}
             heading="Concepts Taught"
             height="h-[20vh]"
           />
@@ -135,6 +151,7 @@
         <div class="flex flex-col space-y-4 w-1/2">
           <TipexEditor
             bind:body={notes}
+            bind:reset={resetNotes}
             heading="Lesson Notes"
             height="h-[20vh]"
           />
@@ -144,6 +161,7 @@
           <StudentSelector 
             bind:selectedStudents={selectedStudents}
             bind:studentSearchTerm={studentSearchTerm}
+            bind:reset={resetStudentSelector}
             isEditing={true}
           >
             {#snippet children(ctx: StudentSelectorContext)}
