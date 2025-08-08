@@ -4,6 +4,14 @@
   import "$lib/styles/TipexControls.css";
   import "$lib/styles/TipexProse.css";
 
+  // Define interface for Tipex editor instance
+  interface TipexEditor {
+    commands: {
+      setContent: (content: string) => void;
+    };
+    getHTML: () => string;
+  }
+
   let { 
     body = $bindable(""), 
     heading = "", 
@@ -21,7 +29,7 @@
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let isSaving = $state(false);
   let lastSavedContent = $state(body || "");
-  let editorInstance: any = $state(null);
+  let editorInstance: TipexEditor | null = $state(null);
 
   // Set up reset function
   reset = () => {
@@ -38,7 +46,7 @@
     }
   });
 
-  function handleUpdate(event: any) {
+  function handleUpdate(event: { editor: TipexEditor }) {
     const editor = event.editor;
     if (editor) {
       editorInstance = editor; // Store editor instance for reset function
