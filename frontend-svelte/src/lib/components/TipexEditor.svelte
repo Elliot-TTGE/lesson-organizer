@@ -4,21 +4,40 @@
   import "$lib/styles/TipexControls.css";
   import "$lib/styles/TipexProse.css";
 
+  // Define interface for Tipex editor instance
+  interface TipexEditor {
+    commands: {
+      setContent: (content: string) => void;
+    };
+    getHTML: () => string;
+  }
+
   let { 
     body = $bindable(""), 
     heading = "", 
     height = "h-[30vh]",
-    onSave = undefined
+    onSave = undefined,
+    reset = $bindable()
   } = $props<{ 
     body: string | undefined;
     heading: string;
     height?: string;
     onSave?: (content: string) => Promise<void>;
+    reset?: () => void;
   }>();
 
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let isSaving = $state(false);
   let lastSavedContent = $state(body || "");
+  let editorInstance: TipexEditor | null = $state(null);
+
+  // Set up reset function
+  reset = () => {
+    body = "";
+    if (editorInstance) {
+      editorInstance.commands.setContent("");
+    }
+  };
 
   // Ensure body is never undefined
   $effect(() => {
@@ -27,9 +46,10 @@
     }
   });
 
-  function handleUpdate(event: any) {
+  function handleUpdate(event: { editor: TipexEditor }) {
     const editor = event.editor;
     if (editor) {
+      editorInstance = editor; // Store editor instance for reset function
       const htmlContent = editor.getHTML();
       body = htmlContent;
       
