@@ -22,6 +22,18 @@ services:
       - FLASK_ENV=production
     volumes:
       - backend_db:/app/instance
+    # Remove development volume mounts in production
+
+  frontend:
+    command: npm run preview
+    ports:
+      - "3000:4173"
+    volumes:
+      # Remove development volume mounts in production
+      - frontend-cache:/app/node_modules/.cache
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - NODE_ENV=production
 
   cron-backup:
     image: alpine:latest
@@ -60,3 +72,4 @@ networks:
 
 volumes:
   backend_db:
+  frontend-cache:

@@ -1,13 +1,32 @@
-FROM node:23-alpine
+# Multi-stage build for production
+FROM node:23-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install --include=dev
+# Install all dependencies (including dev) for building
+RUN npm ci --include=dev
 
 COPY . ./
 
-EXPOSE 3000
+# Build the application
+RUN npm run build
 
-CMD ["npm", "run", "dev"]
+# Production stage
+FROM node:23-alpine AS production
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/package.json ./package.json
+
+EXPOSE 4173
+
+CMD ["npm", "run", "preview"]
