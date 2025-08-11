@@ -226,16 +226,5 @@ def create_all_data():
     create_all_levels()
     create_all_units()
     create_all_quizzes()
-    reset_units_and_quizzes()
-
-def reset_units_and_quizzes():
-    """
-    Debug function to delete and recreate all units and quizzes.
-    This preserves student and level data but resets the quiz system.
-    """
-    delete_all_units_quizzes_and_results()
-    create_all_units()
-    create_all_quizzes()
-    print("Units and quizzes have been reset and recreated!")
 
 
