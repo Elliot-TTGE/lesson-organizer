@@ -18,6 +18,7 @@ from .routes.student_status_routes import student_status_bp
 from .routes.student_status_history_routes import student_status_history_bp
 from .routes.user_routes import user_bp
 from .models.user_model import User
+from .models import * 
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
 app = Flask(__name__)
@@ -69,6 +70,4 @@ def hello_world():
     return 'Hello, World!'
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host='0.0.0.0', port=4000)
