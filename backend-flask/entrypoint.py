@@ -1,6 +1,6 @@
 import time
 import sys
-import subprocess
+from flask_migrate import upgrade
 from app.main import app, db
 from app.data.initialize_data import create_all_data
 
@@ -14,12 +14,10 @@ if __name__ == '__main__':
     with app.app_context():
         # Run database migrations automatically
         try:
-            subprocess.run(['flask', 'db', 'upgrade'], check=True)
+            upgrade()
             print("Database migrations applied successfully")
-        except subprocess.CalledProcessError:
-            print("Migration failed or no migrations to apply")
-        except FileNotFoundError:
-            print("Flask command not found - migrations may need to be run manually")
+        except Exception as e:
+            print(f"Migration failed: {e}")
         
         if load_init:
             create_all_data()
