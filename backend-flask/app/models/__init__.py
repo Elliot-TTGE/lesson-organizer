@@ -14,19 +14,18 @@ from .student_status_history_model import StudentStatusHistory
 from .student_status_model import StudentStatus
 from .unit_model import Unit
 
-# Export all models for easy importing
-__all__ = [
-    'User',
-    'Curriculum',
-    'Lesson',
-    'LessonStudent',
-    'Level',
-    'Quiz',
-    'StockImage',
-    'StudentLessonQuiz',
-    'StudentLevelHistory',
-    'Student',
-    'StudentStatusHistory',
-    'StudentStatus',
-    'Unit'
+ALL_MODELS = [
+    User,
+    Curriculum,
+    Lesson,
+    LessonStudent,
+    Level,
+    Quiz,
+    StockImage,
+    StudentLessonQuiz,
+    StudentLevelHistory,
+    Student,
+    StudentStatusHistory,
+    StudentStatus,
+    Unit,
 ]

@@ -17,8 +17,7 @@ from .routes.student_lesson_quiz_routes import student_lesson_quiz_bp
 from .routes.student_status_routes import student_status_bp
 from .routes.student_status_history_routes import student_status_history_bp
 from .routes.user_routes import user_bp
-from .models.user_model import User
-from .models import * 
+from .models import ALL_MODELS, User
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
 app = Flask(__name__)
