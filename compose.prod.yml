@@ -1,8 +1,45 @@
 services:
+  backend:
+    build:
+      context: ./backend-flask/
+      dockerfile: Dockerfile.backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - backend_db:/app/instance
+    networks:
+      - app-network
+    environment:
+      - FLASK_APP=app.main
+      - FLASK_ENV=production
+      - ADMIN_FIRST_NAME=${ADMIN_FIRST_NAME}
+      - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend-svelte/
+      dockerfile: Dockerfile.frontend
+    ports: 
+      - "3000:4173"
+    volumes:
+      - frontend-cache:/app/node_modules/.cache
+    command: npm run preview
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      - NODE_ENV=production
+    restart: unless-stopped
+
   tailscale:
     container_name: tailscaled
     image: tailscale/tailscale
-    hostname: lessonorganizer
+    hostname: lessonorganizer2
     network_mode: host
     cap_add:
       - NET_ADMIN
@@ -16,24 +53,6 @@ services:
       - TS_AUTH_KEY=${TS_AUTH_KEY}
       - TAILSCALE_UP_ARGS=--snat-subnet-routes=false
     restart: unless-stopped
-      
-  backend:
-    environment:
-      - FLASK_ENV=production
-    volumes:
-      - backend_db:/app/instance
-    # Remove development volume mounts in production
-
-  frontend:
-    command: npm run preview
-    ports:
-      - "3000:4173"
-    volumes:
-      # Remove development volume mounts in production
-      - frontend-cache:/app/node_modules/.cache
-    environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
-      - NODE_ENV=production
 
   cron-backup:
     image: alpine:latest
@@ -73,3 +92,5 @@ networks:
 volumes:
   backend_db:
   frontend-cache:
+  caddy_data:
+  caddy_config:
