@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required
 from app.db import db
 from app.models.user_model import User
 from app.schemas.schemas import UserSchema
-from app.routes.utils import response_wrapper
+from app.routes.utils import response_wrapper, get_current_user
 
 user_bp = Blueprint('user', __name__)
 
@@ -20,7 +20,14 @@ def get_users():
 
     Returns:
     - 200: JSON array of users.
+    - 403: If user is not admin
     """
+    current_user = get_current_user()
+    
+    # Only admins can view all users
+    if not current_user.is_admin():
+        return {"message": "Admin access required"}, 403
+    
     email = request.args.get('email')
     role = request.args.get('role')
 
@@ -66,7 +73,14 @@ def create_user():
     Returns:
     - 201: JSON object of the created user (marshmallow schema)
     - 400: If validation fails or required fields are missing
+    - 403: If user is not admin
     """
+    current_user = get_current_user()
+    
+    # Only admins can create users
+    if not current_user.is_admin():
+        return {"message": "Admin access required"}, 403
+    
     data = request.get_json()
     if not data or 'user' not in data:
         return {"message": "User data is required in 'user' key"}, 400
@@ -84,14 +98,19 @@ def create_user():
     if existing_user:
         return {"message": "Email already exists"}, 400
 
-    schema = UserSchema()
-    try:
-        user = schema.load(user_data)
-    except Exception as e:
-        return {"message": str(e)}, 400
+    # Create new user
+    user = User(
+        first_name=user_data['first_name'],
+        last_name=user_data['last_name'],
+        email=user_data['email'],
+        role=user_data['role']
+    )
+    user.set_password(user_data['password'])
 
     db.session.add(user)
     db.session.commit()
+    
+    schema = UserSchema()
     return schema.dump(user), 201
 
 @user_bp.route('/users/<int:id>', methods=['PUT'])
@@ -122,9 +141,16 @@ def update_user(id):
     Returns:
     - 200: JSON object of the updated user (marshmallow schema)
     - 400: If validation fails or email already exists
+    - 403: If user lacks permission to update this user
     - 404: If user not found
     """
+    current_user = get_current_user()
     user = User.query.get_or_404(id)
+    
+    # Check if current user can access this user's data
+    if not current_user.can_access_user_data(user.id):
+        return {"message": "Insufficient permissions"}, 403
+    
     data = request.get_json()
     if not data or 'user' not in data:
         return {"message": "User data is required in 'user' key"}, 400
@@ -137,14 +163,36 @@ def update_user(id):
         if existing_user:
             return {"message": "Email already exists"}, 400
 
-    schema = UserSchema(partial=True)
-    try:
-        updated_user = schema.load(user_data, instance=user, partial=True)
-    except Exception as e:
-        return {"message": str(e)}, 400
+    # Update user fields
+    if 'first_name' in user_data:
+        user.first_name = user_data['first_name']
+    if 'last_name' in user_data:
+        user.last_name = user_data['last_name']
+    if 'email' in user_data:
+        user.email = user_data['email']
+    if 'role' in user_data:
+        # Only admins can change roles
+        if not current_user.is_admin():
+            return {"message": "Admin access required to change role"}, 403
+        
+        # Prevent admins from changing their own role
+        if user.id == current_user.id:
+            return {"message": "Cannot change your own role"}, 403
+        
+        # Prevent demoting the last admin (check if this would be the last admin)
+        if user.role == 'admin' and user_data['role'] != 'admin':
+            admin_count = User.query.filter_by(role='admin').count()
+            if admin_count <= 1:
+                return {"message": "Cannot demote the last admin in the system"}, 403
+        
+        user.role = user_data['role']
+    if 'password' in user_data:
+        user.set_password(user_data['password'])
 
     db.session.commit()
-    return schema.dump(updated_user), 200
+    
+    schema = UserSchema()
+    return schema.dump(user), 200
 
 @user_bp.route('/users/<int:id>', methods=['DELETE'])
 @jwt_required()
@@ -161,9 +209,27 @@ def delete_user(id):
 
     Returns:
     - 204: No content (successful deletion)
+    - 403: If user is not admin
     - 404: If user not found
     """
+    current_user = get_current_user()
+    
+    # Only admins can delete users
+    if not current_user.is_admin():
+        return {"message": "Admin access required"}, 403
+    
     user = User.query.get_or_404(id)
+    
+    # Prevent admin from deleting themselves
+    if user.id == current_user.id:
+        return {"message": "Cannot delete your own account"}, 400
+    
+    # Prevent deleting the last admin
+    if user.role == 'admin':
+        admin_count = User.query.filter_by(role='admin').count()
+        if admin_count <= 1:
+            return {"message": "Cannot delete the last admin in the system"}, 403
+    
     db.session.delete(user)
     db.session.commit()
     return '', 204
@@ -183,8 +249,32 @@ def get_user(user_id):
 
     Returns:
     - 200: JSON object of the user (marshmallow schema)
+    - 403: If user lacks permission to view this user
     - 404: If user not found
     """
+    current_user = get_current_user()
     user = User.query.get_or_404(user_id)
+    
+    # Check if current user can access this user's data
+    if not current_user.can_access_user_data(user.id):
+        return {"message": "Insufficient permissions"}, 403
+    
     schema = UserSchema()
-    return schema.dump(user)
+    return schema.dump(user), 200
+
+@user_bp.route('/users/me', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_current_user_profile():
+    """
+    GET /users/me
+
+    Description:
+    Get the current user's profile information.
+
+    Returns:
+    - 200: JSON object of the current user
+    """
+    current_user = get_current_user()
+    schema = UserSchema()
+    return schema.dump(current_user), 200
