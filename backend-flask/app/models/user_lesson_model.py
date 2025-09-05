@@ -15,9 +15,6 @@ class UserLesson(BaseModel):
     )
     shared_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     
-    # Track who shared it
-    shared_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    
     # Ensure unique user-lesson combinations
     __table_args__ = (
         db.UniqueConstraint('user_id', 'lesson_id', name='unique_user_lesson'),

@@ -58,6 +58,7 @@ class StudentStatusHistorySchema(BaseSchema):
 class LessonSchema(BaseSchema):
     # Nested relationships - avoiding circular references with dump_only
     students = Nested('StudentSchema', many=True, dump_only=True, exclude=['lessons'])
+    owner = Nested('UserSchema', dump_only=True, exclude=['owned_lessons', 'shared_lessons'])
     
     class Meta(BaseSchema.Meta):
         model = Lesson

@@ -5,7 +5,8 @@ from app.models.lesson_model import Lesson
 from app.schemas.schemas import LessonSchema
 from app.models.student_model import Student
 from app.models.quiz_model import Quiz
-from app.routes.utils import response_wrapper
+from app.services.lesson_service import LessonService
+from app.routes.utils import response_wrapper, get_current_user
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import func
 
@@ -20,6 +21,8 @@ def get_lessons():
     GET /lessons
 
     Query Parameters:
+    - user_id: int (optional) — Get lessons for a specific user (admin only, defaults to current user).
+    - include_shared: bool (optional, default=true) — Include shared lessons for the user.
     - student_id: int (optional) — Filter lessons by student ID.
     - start: str (optional, ISO date) — Filter lessons after this date (defaults to today if range_length is used).
     - end: str (optional, ISO date) — Filter lessons before this date (takes priority over range_length).
@@ -31,9 +34,24 @@ def get_lessons():
 
     Returns:
     - 200: JSON object with lessons, pagination info.
+    - 403: If user lacks permission to access requested data.
     
     Note: If no start date is provided but range_length is used, start defaults to today.
     """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
+    # Determine target user (defaults to current user)
+    target_user_id = request.args.get('user_id', type=int)
+    if target_user_id is None:
+        target_user_id = current_user.id
+    
+    # Check if current user can access the target user's data
+    if not current_user.can_access_user_data(target_user_id):
+        return {"message": "Access denied"}, 403
+    
+    include_shared = request.args.get('include_shared', 'true').lower() == 'true'
     student_id = request.args.get('student_id', type=int)
     start = request.args.get('start')
     end = request.args.get('end')
@@ -43,10 +61,22 @@ def get_lessons():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
 
-    # Build query
-    query = Lesson.query
+    # Get user's accessible lessons using service layer
+    try:
+        if target_user_id != current_user.id:
+            # Admin accessing another user's lessons
+            lessons = LessonService.get_lessons_for_user(current_user.id, target_user_id)
+        else:
+            # User accessing their own lessons
+            lessons = LessonService.get_user_lessons(target_user_id, include_shared)
+    except PermissionError as e:
+        return {"message": str(e)}, 403
 
-    # Apply filters
+    # Convert to query for further filtering
+    lesson_ids = [lesson.id for lesson in lessons]
+    query = Lesson.query.filter(Lesson.id.in_(lesson_ids))
+
+    # Apply additional filters
     if student_id:
         query = query.join(Lesson.students).filter(Student.id == student_id)
     
@@ -117,8 +147,8 @@ def get_lessons():
         }
     else:
         # Return all results without pagination
-        lessons = query.all()
-        return {"lessons": schema.dump(lessons)}
+        filtered_lessons = query.all()
+        return {"lessons": schema.dump(filtered_lessons)}
 
 @lesson_bp.route('/lessons', methods=['POST'])
 @jwt_required()
@@ -129,6 +159,7 @@ def create_lesson():
 
     Description:
     Create a new lesson. Only one lesson object should be sent per request.
+    The lesson will be owned by the current authenticated user.
 
     Request JSON Body:
     {
@@ -144,15 +175,25 @@ def create_lesson():
     Returns:
     - 201: JSON object of the created lesson (marshmallow schema)
     - 400: If validation fails or required fields are missing
+    - 401: If user is not authenticated
     """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
     data = request.get_json()
     lesson_data = data.get("lesson", {})
     student_ids = data.get("student_ids", [])
 
     lesson_schema = LessonSchema()
     lesson = lesson_schema.load(lesson_data, partial=True)
+    
+    # Set the owner to the current user
+    lesson.owner_id = current_user.id
+    
     if student_ids:
         lesson.students = Student.query.filter(Student.id.in_(student_ids)).all()
+    
     db.session.add(lesson)
     db.session.commit()
     return lesson_schema.dump(lesson), 201
@@ -165,7 +206,7 @@ def update_lesson(id):
     PUT /lessons/<lesson_id>
 
     Description:
-    Update a single lesson by ID.
+    Update a single lesson by ID. User must have edit permissions for the lesson.
 
     Path Parameters:
     - lesson_id: int — The ID of the lesson to update.
@@ -184,9 +225,20 @@ def update_lesson(id):
     Returns:
     - 200: JSON object of the updated lesson (marshmallow schema)
     - 400: If validation fails or required fields are missing
+    - 401: If user is not authenticated
+    - 403: If user lacks edit permission for the lesson
     - 404: If lesson not found
     """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
     lesson = Lesson.query.get_or_404(id)
+    
+    # Check if user can edit this lesson using service layer
+    if not LessonService.can_user_edit_lesson(current_user.id, lesson.id):
+        return {"message": "You don't have permission to edit this lesson"}, 403
+    
     data = request.get_json()
     lesson_data = data.get("lesson", {})
     student_ids = data.get("student_ids", [])
@@ -206,16 +258,27 @@ def delete_lesson(id):
     DELETE /lessons/<lesson_id>
 
     Description:
-    Delete a single lesson by ID.
+    Delete a single lesson by ID. User must have edit permissions for the lesson.
 
     Path Parameters:
     - lesson_id: int — The ID of the lesson to delete.
 
     Returns:
     - 204: No content if deletion is successful
+    - 401: If user is not authenticated
+    - 403: If user lacks edit permission for the lesson
     - 404: If lesson not found
     """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
     lesson = Lesson.query.get_or_404(id)
+    
+    # Check if user can edit (and therefore delete) this lesson using service layer
+    if not LessonService.can_user_edit_lesson(current_user.id, lesson.id):
+        return {"message": "You don't have permission to delete this lesson"}, 403
+    
     db.session.delete(lesson)
     db.session.commit()
     return '', 204
@@ -228,15 +291,161 @@ def get_lesson(lesson_id):
     GET /lessons/<lesson_id>
 
     Description:
-    Get a single lesson by ID.
+    Get a single lesson by ID. User must have access permissions for the lesson.
 
     Path Parameters:
     - lesson_id: int — The ID of the lesson to retrieve.
 
     Returns:
     - 200: JSON object of the lesson (marshmallow schema)
+    - 401: If user is not authenticated
+    - 403: If user lacks access permission for the lesson
     - 404: If lesson not found
     """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
     lesson = Lesson.query.get_or_404(lesson_id)
+    
+    # Check if user can access this lesson using service layer
+    if not LessonService.can_user_access_lesson(current_user.id, lesson.id):
+        return {"message": "You don't have permission to access this lesson"}, 403
+    
     schema = LessonSchema()
     return schema.dump(lesson)
+
+@lesson_bp.route('/lessons/<int:lesson_id>/share', methods=['POST'])
+@jwt_required()
+@response_wrapper
+def share_lesson(lesson_id):
+    """
+    POST /lessons/<lesson_id>/share
+
+    Description:
+    Share a lesson with another user. Only lesson owners and admins can share lessons.
+
+    Path Parameters:
+    - lesson_id: int — The ID of the lesson to share.
+
+    Request JSON Body:
+    {
+        "user_id": int,                    # required, ID of user to share with
+        "permission_level": str            # optional, "view"|"edit"|"admin" (default: "view")
+    }
+
+    Returns:
+    - 200: Success message
+    - 400: If validation fails or required fields are missing
+    - 401: If user is not authenticated
+    - 403: If user lacks permission to share the lesson
+    - 404: If lesson or target user not found
+    """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
+    data = request.get_json()
+    target_user_id = data.get('user_id')
+    permission_level = data.get('permission_level', 'view')
+    
+    if not target_user_id:
+        return {"message": "user_id is required"}, 400
+    
+    if permission_level not in ['view', 'edit', 'admin']:
+        return {"message": "permission_level must be 'view', 'edit', or 'admin'"}, 400
+    
+    try:
+        LessonService.share_lesson(lesson_id, current_user.id, target_user_id, permission_level)
+        return {"message": "Lesson shared successfully"}
+    except ValueError as e:
+        return {"message": str(e)}, 404
+    except PermissionError as e:
+        return {"message": str(e)}, 403
+
+@lesson_bp.route('/lessons/<int:lesson_id>/unshare', methods=['POST'])
+@jwt_required()
+@response_wrapper
+def unshare_lesson(lesson_id):
+    """
+    POST /lessons/<lesson_id>/unshare
+
+    Description:
+    Remove lesson sharing with a user. Only lesson owners and admins can unshare lessons.
+
+    Path Parameters:
+    - lesson_id: int — The ID of the lesson to unshare.
+
+    Request JSON Body:
+    {
+        "user_id": int                     # required, ID of user to remove sharing from
+    }
+
+    Returns:
+    - 200: Success message
+    - 400: If validation fails or required fields are missing
+    - 401: If user is not authenticated
+    - 403: If user lacks permission to unshare the lesson
+    - 404: If lesson or target user not found
+    """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
+    data = request.get_json()
+    target_user_id = data.get('user_id')
+    
+    if not target_user_id:
+        return {"message": "user_id is required"}, 400
+    
+    try:
+        LessonService.unshare_lesson(lesson_id, current_user.id, target_user_id)
+        return {"message": "Lesson unshared successfully"}
+    except ValueError as e:
+        return {"message": str(e)}, 404
+    except PermissionError as e:
+        return {"message": str(e)}, 403
+
+@lesson_bp.route('/lessons/assign-ownership', methods=['POST'])
+@jwt_required()
+@response_wrapper
+def assign_ownership_to_existing_lessons():
+    """
+    POST /lessons/assign-ownership
+
+    Description:
+    Assign ownership to existing lessons that don't have an owner.
+    Only admins can perform this operation.
+
+    Request JSON Body:
+    {
+        "default_owner_id": int            # required, ID of user to assign as owner
+    }
+
+    Returns:
+    - 200: JSON object with count of lessons updated
+    - 400: If validation fails or required fields are missing
+    - 401: If user is not authenticated
+    - 403: If user is not an admin
+    """
+    current_user = get_current_user()
+    if not current_user:
+        return {"message": "Invalid authentication"}, 401
+    
+    if not current_user.is_admin():
+        return {"message": "Only admins can assign ownership to existing lessons"}, 403
+    
+    data = request.get_json()
+    default_owner_id = data.get('default_owner_id')
+    
+    if not default_owner_id:
+        return {"message": "default_owner_id is required"}, 400
+    
+    # Verify the target user exists
+    from app.models.user_model import User
+    target_user = User.query.get(default_owner_id)
+    if not target_user:
+        return {"message": "Target user not found"}, 404
+    
+    count = LessonService.assign_ownership_to_existing_lessons(default_owner_id)
+    return {"message": f"Assigned ownership to {count} lessons", "count": count}
