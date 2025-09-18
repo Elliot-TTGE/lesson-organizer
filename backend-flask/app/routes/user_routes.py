@@ -121,7 +121,7 @@ def update_user(id):
     PUT /users/<user_id>
 
     Description:
-    Update a single user by ID.
+    Update a single user by ID. Users can only change their own passwords.
 
     Path Parameters:
     - user_id: int — The ID of the user to update.
@@ -132,8 +132,8 @@ def update_user(id):
             "first_name": str,       # optional
             "last_name": str,        # optional
             "email": str,            # optional
-            "password": str,         # optional
-            "role": str,             # optional
+            "password": str,         # optional (only for own account)
+            "role": str,             # optional (admin only)
             "last_login": str        # optional, ISO date string
         }
     }
@@ -141,7 +141,7 @@ def update_user(id):
     Returns:
     - 200: JSON object of the updated user (marshmallow schema)
     - 400: If validation fails or email already exists
-    - 403: If user lacks permission to update this user
+    - 403: If user lacks permission to update this user or tries to change another user's password
     - 404: If user not found
     """
     current_user = get_current_user()
@@ -187,6 +187,9 @@ def update_user(id):
         
         user.role = user_data['role']
     if 'password' in user_data:
+        # Only allow users to change their own password, not other users' passwords
+        if current_user.id != user.id:
+            return {"message": "Cannot change another user's password"}, 403
         user.set_password(user_data['password'])
 
     db.session.commit()
