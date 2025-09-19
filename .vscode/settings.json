@@ -4,11 +4,14 @@
         "*.css": "tailwindcss"
     },
     "github.copilot.chat.codeGeneration.instructions": [
-    {
-      "file": "./.vscode/daisyui.md"
-    },
-    {
-      "file": "./.vscode/svelte5.md"
-    }
+      {
+        "file": "./.vscode/daisyui.md"
+      },
+      {
+        "file": "./.vscode/svelte5.md"
+      },
+      {
+        "file": "./.vscode/instructions.md"
+      }
   ]
 }
