@@ -59,7 +59,7 @@ class StudentStatusHistorySchema(BaseSchema):
 class LessonSchema(BaseSchema):
     # Nested relationships - avoiding circular references with dump_only
     students = Nested('StudentSchema', many=True, dump_only=True, exclude=['lessons'])
-    owner = Nested('UserSchema', dump_only=True, exclude=['owned_lessons', 'shared_lessons'])
+    owner = Nested('UserRelationshipSchema', dump_only=True)
     
     class Meta(BaseSchema.Meta):
         model = Lesson
@@ -129,9 +129,16 @@ class UserSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = User
 
+class UserRelationshipSchema(BaseSchema):
+    """Schema for User when used as a relationship - excludes private fields"""
+    class Meta(BaseSchema.Meta):
+        model = User
+        # Only include public fields when user is a relationship
+        fields = ('id', 'first_name', 'last_name', 'email', 'role', 'created_date', 'updated_date')
+
 class UserLessonSchema(BaseSchema):
     # Nested relationships to show full objects
-    user = Nested('UserSchema', dump_only=True, exclude=['lesson_shares'])
+    user = Nested('UserRelationshipSchema', dump_only=True)
     lesson = Nested('LessonSchema', dump_only=True, exclude=['user_shares'])
     
     # Keep the foreign key fields for loading/creation
