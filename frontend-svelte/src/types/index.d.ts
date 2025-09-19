@@ -50,6 +50,20 @@ export interface Lesson {
   concepts?: string;
   notes?: string;
   students: Student[];
+  owner_id?: number;
+  owner?: User;
+}
+
+export interface UserLesson {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  user_id: number;
+  lesson_id: number;
+  permission_level: 'view' | 'edit' | 'manage';
+  shared_at?: string;
+  user?: User;
+  lesson?: Lesson;
 }
 
 export interface LessonStudent {
