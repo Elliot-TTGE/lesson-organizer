@@ -17,6 +17,7 @@ from .routes.student_lesson_quiz_routes import student_lesson_quiz_bp
 from .routes.student_status_routes import student_status_bp
 from .routes.student_status_history_routes import student_status_history_bp
 from .routes.user_routes import user_bp
+from .routes.user_lesson_routes import user_lesson_bp
 from .models import ALL_MODELS, User
 from .routes.authentication import auth_bp, refresh_expiring_jwts
 
@@ -61,6 +62,7 @@ app.register_blueprint(student_lesson_quiz_bp, url_prefix='/api')
 app.register_blueprint(student_status_bp, url_prefix='/api')
 app.register_blueprint(student_status_history_bp, url_prefix='/api')
 app.register_blueprint(user_bp, url_prefix='/api')
+app.register_blueprint(user_lesson_bp, url_prefix='/api')
 
 app.after_request(refresh_expiring_jwts)
 

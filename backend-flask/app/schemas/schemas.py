@@ -12,6 +12,7 @@ from app.models.student_lesson_quiz_model import StudentLessonQuiz
 from app.models.user_model import User
 from app.models.stock_image_model import StockImage
 from app.models.lesson_model import Lesson
+from app.models.user_lesson_model import UserLesson
 from marshmallow import fields
 from marshmallow_sqlalchemy.fields import Nested
 
@@ -127,6 +128,19 @@ class StudentLessonQuizSchema(BaseSchema):
 class UserSchema(BaseSchema):
     class Meta(BaseSchema.Meta):
         model = User
+
+class UserLessonSchema(BaseSchema):
+    # Nested relationships to show full objects
+    user = Nested('UserSchema', dump_only=True, exclude=['lesson_shares'])
+    lesson = Nested('LessonSchema', dump_only=True, exclude=['user_shares'])
+    
+    # Keep the foreign key fields for loading/creation
+    user_id = fields.Integer(required=True, allow_none=False)
+    lesson_id = fields.Integer(required=True, allow_none=False)
+    permission_level = fields.String(required=True, allow_none=False)
+    
+    class Meta(BaseSchema.Meta):
+        model = UserLesson
 
 class StockImageSchema(BaseSchema):
     class Meta(BaseSchema.Meta):

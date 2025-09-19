@@ -9,7 +9,7 @@ class UserLesson(BaseModel):
     
     # Permission levels for sharing features
     permission_level = db.Column(
-        db.Enum('view', 'edit', 'admin', name='permission_level'), 
+        db.Enum('view', 'edit', 'manage', name='permission_level'), 
         default='view', 
         nullable=False
     )

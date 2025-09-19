@@ -65,7 +65,7 @@ def get_lessons():
     try:
         if target_user_id != current_user.id:
             # Admin accessing another user's lessons
-            lessons = LessonService.get_lessons_for_user(current_user.id, target_user_id)
+            lessons = LessonService.get_lessons_for_user(current_user.id, target_user_id, include_shared)
         else:
             # User accessing their own lessons
             lessons = LessonService.get_user_lessons(target_user_id, include_shared)
@@ -314,97 +314,6 @@ def get_lesson(lesson_id):
     
     schema = LessonSchema()
     return schema.dump(lesson)
-
-@lesson_bp.route('/lessons/<int:lesson_id>/share', methods=['POST'])
-@jwt_required()
-@response_wrapper
-def share_lesson(lesson_id):
-    """
-    POST /lessons/<lesson_id>/share
-
-    Description:
-    Share a lesson with another user. Only lesson owners and admins can share lessons.
-
-    Path Parameters:
-    - lesson_id: int — The ID of the lesson to share.
-
-    Request JSON Body:
-    {
-        "user_id": int,                    # required, ID of user to share with
-        "permission_level": str            # optional, "view"|"edit"|"admin" (default: "view")
-    }
-
-    Returns:
-    - 200: Success message
-    - 400: If validation fails or required fields are missing
-    - 401: If user is not authenticated
-    - 403: If user lacks permission to share the lesson
-    - 404: If lesson or target user not found
-    """
-    current_user = get_current_user()
-    if not current_user:
-        return {"message": "Invalid authentication"}, 401
-    
-    data = request.get_json()
-    target_user_id = data.get('user_id')
-    permission_level = data.get('permission_level', 'view')
-    
-    if not target_user_id:
-        return {"message": "user_id is required"}, 400
-    
-    if permission_level not in ['view', 'edit', 'admin']:
-        return {"message": "permission_level must be 'view', 'edit', or 'admin'"}, 400
-    
-    try:
-        LessonService.share_lesson(lesson_id, current_user.id, target_user_id, permission_level)
-        return {"message": "Lesson shared successfully"}
-    except ValueError as e:
-        return {"message": str(e)}, 404
-    except PermissionError as e:
-        return {"message": str(e)}, 403
-
-@lesson_bp.route('/lessons/<int:lesson_id>/unshare', methods=['POST'])
-@jwt_required()
-@response_wrapper
-def unshare_lesson(lesson_id):
-    """
-    POST /lessons/<lesson_id>/unshare
-
-    Description:
-    Remove lesson sharing with a user. Only lesson owners and admins can unshare lessons.
-
-    Path Parameters:
-    - lesson_id: int — The ID of the lesson to unshare.
-
-    Request JSON Body:
-    {
-        "user_id": int                     # required, ID of user to remove sharing from
-    }
-
-    Returns:
-    - 200: Success message
-    - 400: If validation fails or required fields are missing
-    - 401: If user is not authenticated
-    - 403: If user lacks permission to unshare the lesson
-    - 404: If lesson or target user not found
-    """
-    current_user = get_current_user()
-    if not current_user:
-        return {"message": "Invalid authentication"}, 401
-    
-    data = request.get_json()
-    target_user_id = data.get('user_id')
-    
-    if not target_user_id:
-        return {"message": "user_id is required"}, 400
-    
-    try:
-        LessonService.unshare_lesson(lesson_id, current_user.id, target_user_id)
-        return {"message": "Lesson unshared successfully"}
-    except ValueError as e:
-        return {"message": str(e)}, 404
-    except PermissionError as e:
-        return {"message": str(e)}, 403
 
 @lesson_bp.route('/lessons/assign-ownership', methods=['POST'])
 @jwt_required()
