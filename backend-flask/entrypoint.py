@@ -1,5 +1,6 @@
 import time
 import sys
+from flask_migrate import upgrade
 from app.main import app, db
 from app.data.initialize_data import create_all_data
 
@@ -11,7 +12,20 @@ if __name__ == '__main__':
     load_demo = '--load-demo' in sys.argv or '-d' in sys.argv
 
     with app.app_context():
-        db.create_all()
+        # Run database migrations automatically
+        try:
+            upgrade()
+            print("Database migrations applied successfully")
+        except Exception as e:
+            print(f"Migration failed: {e}")
+        
+        # Always ensure tables exist (safe for both fresh and existing databases)
+        try:
+            db.create_all()
+            print("Database tables verified/created successfully")
+        except Exception as e:
+            print(f"Table creation failed: {e}")
+        
         if load_init:
             create_all_data()
         #if load_demo:
