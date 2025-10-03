@@ -19,6 +19,13 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"Migration failed: {e}")
         
+        # Always ensure tables exist (safe for both fresh and existing databases)
+        try:
+            db.create_all()
+            print("Database tables verified/created successfully")
+        except Exception as e:
+            print(f"Table creation failed: {e}")
+        
         if load_init:
             create_all_data()
         #if load_demo:
