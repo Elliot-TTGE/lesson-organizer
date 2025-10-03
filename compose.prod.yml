@@ -39,7 +39,7 @@ services:
   tailscale:
     container_name: tailscaled
     image: tailscale/tailscale
-    hostname: lessonorganizer2
+    hostname: lessonorganizer
     network_mode: host
     cap_add:
       - NET_ADMIN
