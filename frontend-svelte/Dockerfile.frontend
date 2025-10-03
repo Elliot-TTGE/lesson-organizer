@@ -1,32 +1,62 @@
 # Multi-stage build for production
 FROM node:23-alpine AS builder
 
+# Accept build argument
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
 # Install all dependencies (including dev) for building
-RUN npm ci --include=dev
+RUN npm install --include=dev
 
+# Copy source code
 COPY . ./
 
-# Build the application
+# Build the application for production
 RUN npm run build
 
 # Production stage
 FROM node:23-alpine AS production
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S svelte -u 1001
+
 WORKDIR /app
 
+# Set ownership of the working directory
+RUN chown svelte:nodejs /app
+
+# Copy package files and install only production dependencies
 COPY package*.json ./
+RUN npm install --omit=dev && npm cache clean --force
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Copy only necessary built files from builder stage
+COPY --from=builder --chown=svelte:nodejs /app/.svelte-kit ./.svelte-kit
+COPY --from=builder --chown=svelte:nodejs /app/static ./static
+COPY --from=builder --chown=svelte:nodejs /app/svelte.config.js ./
+COPY --from=builder --chown=svelte:nodejs /app/vite.config.ts ./
+COPY --from=builder --chown=svelte:nodejs /app/package.json ./package.json
 
-# Copy built application from builder stage
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/package.json ./package.json
+# Ensure svelte user owns everything
+RUN chown -R svelte:nodejs /app
+
+# Switch to non-root user
+USER svelte
+
+# Set environment variables for SvelteKit
+ENV HOST=0.0.0.0
+ENV PORT=4173
 
 EXPOSE 4173
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:4173/ || exit 1
+
+# Run the built SvelteKit application
 CMD ["npm", "run", "preview"]
