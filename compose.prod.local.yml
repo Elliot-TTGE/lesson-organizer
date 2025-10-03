@@ -2,17 +2,16 @@ services:
   backend:
     build:
       context: ./backend-flask/
-      dockerfile: Dockerfile.backend.dev
+      dockerfile: Dockerfile.backend
     ports:
       - "4000:4000"
     volumes:
-      - ./backend-flask:/app
       - backend_db:/app/instance
     networks:
       - app-network
     environment:
       - FLASK_APP=app.main
-      - FLASK_ENV=development
+      - FLASK_ENV=production
       - ADMIN_FIRST_NAME=${ADMIN_FIRST_NAME}
       - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
@@ -22,25 +21,19 @@ services:
   frontend:
     build:
       context: ./frontend-svelte/
-      dockerfile: Dockerfile.frontend.dev
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports: 
-      - "3000:5173"
-    volumes:
-      - ./frontend-svelte:/app
-      - node_modules:/app/node_modules
-      - frontend-cache:/app/node_modules/.cache
-    command: npm run dev
+      - "3000:4173"
     networks:
       - app-network
     depends_on:
       - backend
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - PORT=4173
     restart: unless-stopped
-
-
-
 
 networks:
   app-network:
@@ -48,7 +41,4 @@ networks:
 
 volumes:
   backend_db:
-  node_modules:
   frontend-cache:
-  caddy_data:
-  caddy_config:

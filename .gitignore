@@ -6,6 +6,9 @@ frontend-svelte/package-lock
 backend-flask/venv
 *.db
 
+# Tailscale
+tailscale
+
 # Backups
 db_backups
 

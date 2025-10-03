@@ -2,7 +2,22 @@
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 {dev|prod|clean} [docker-compose-commands...]"
+  echo "Usage: $0 {MODE} [docker-compose-commands...]"
+  echo ""
+  echo "DOCKER COMMAND WRAPPERS:"
+  echo "  dev         - Development mode with hot reload (docker compose --env-file .env.dev)"
+  echo "  prod        - Production deployment (docker compose -f compose.prod.yml --env-file .env.prod)"
+  echo "  prod-local  - Test production builds locally (docker compose -f compose.prod.local.yml --env-file .env.prod.local)"
+  echo ""
+  echo "EXCLUSIVE COMMANDS:"
+  echo "  clean       - Clean up all Docker containers, images, and volumes"
+  echo "  backup      - Create timestamped database backup in ./db_backups/"
+  echo ""
+  echo "Examples:"
+  echo "  $0 dev up -d                    # Start development environment in background"
+  echo "  $0 prod-local build --no-cache  # Build production images locally without cache"
+  echo "  $0 clean                        # Clean up Docker resources"
+  echo "  $0 backup                       # Backup database"
   exit 1
 }
 
@@ -21,12 +36,16 @@ case $MODE in
     BASE_COMMAND="docker compose --env-file .env.dev"
     ;;
   prod)
-    BASE_COMMAND="docker compose -f compose.yml -f compose.prod.yml --env-file .env.prod"
+    BASE_COMMAND="docker compose -f compose.prod.yml --env-file .env.prod"
+    ;;
+  prod-local)
+    BASE_COMMAND="docker compose -f compose.prod.local.yml --env-file .env.prod.local"
     ;;
   clean)
     echo "Cleaning up Docker containers, images, and volumes..."
     docker-compose down --volumes --rmi all
     echo "Cleanup complete."
+    exit 0
     ;;
   backup)
     TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
@@ -38,13 +57,14 @@ case $MODE in
       alpine \
       cp /db/lesson_organizer.db /backup/$BACKUP_FILE
     echo "Backup complete."
+    exit 0
     ;;
   *)
     usage
     ;;
 esac
 
-# Execute the constructed command
+# Execute the constructed command (only for docker wrapper modes)
 COMMAND="$BASE_COMMAND $*"
 echo "Running: $COMMAND"
 eval $COMMAND

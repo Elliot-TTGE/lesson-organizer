@@ -4,14 +4,14 @@ RUN apt update
 
 WORKDIR /app
 
-COPY backend-flask/requirements.txt requirements.txt
+COPY requirements.txt requirements.txt
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY backend-flask/ /app/
+COPY . /app/
 
-COPY backend-flask/entrypoint.py /app/entrypoint.py
+COPY entrypoint.py /app/entrypoint.py
 
 EXPOSE 4000
 
