@@ -22,6 +22,8 @@ services:
     build:
       context: ./frontend-svelte/
       dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports: 
       - "3000:4173"
     volumes:
@@ -32,14 +34,13 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
       - NODE_ENV=production
     restart: unless-stopped
 
   tailscale:
     container_name: tailscaled
     image: tailscale/tailscale
-    hostname: lessonorganizer2
+    hostname: lessonorganizer
     network_mode: host
     cap_add:
       - NET_ADMIN

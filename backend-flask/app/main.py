@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from flask_migrate import Migrate
+from flask_migrate import Migrate, upgrade
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
@@ -65,6 +65,34 @@ app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(user_lesson_bp, url_prefix='/api')
 
 app.after_request(refresh_expiring_jwts)
+
+# Flask CLI command for development initialization
+@app.cli.command()
+def init_dev():
+    """Initialize database for development"""
+    import time
+    
+    # Wait for database to be ready
+    time.sleep(5)
+    
+    try:
+        upgrade()
+        print("Database migrations applied successfully")
+    except Exception as e:
+        print(f"Migration failed: {e}")
+    
+    try:
+        db.create_all()
+        print("Database tables verified/created successfully")
+    except Exception as e:
+        print(f"Table creation failed: {e}")
+    
+    try:
+        from .data.initialize_data import create_all_data
+        create_all_data()
+        print("Data initialization completed successfully")
+    except Exception as e:
+        print(f"Data initialization failed: {e}")
 
 @app.route('/')
 def hello_world():

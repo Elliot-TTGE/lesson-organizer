@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend-flask/
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile.backend.dev
     ports:
       - "4000:4000"
     volumes:
