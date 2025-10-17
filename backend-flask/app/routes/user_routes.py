@@ -15,11 +15,14 @@ def get_users():
     GET /users
 
     Query Parameters:
+    - search: str (optional) — Search users by name or email
     - email: str (optional) — Filter users by email (partial match).
     - role: str (optional) — Filter users by role.
+    - page: int (optional) — Page number for pagination (default: 1)
+    - per_page: int (optional) — Items per page (default: 20, max: 100)
 
     Returns:
-    - 200: JSON array of users.
+    - 200: JSON object with users array and pagination info
     - 403: If user is not admin
     """
     current_user = get_current_user()
@@ -28,26 +31,53 @@ def get_users():
     if not current_user.is_admin():
         return {"message": "Admin access required"}, 403
     
+    search = request.args.get('search', '').strip()
     email = request.args.get('email')
     role = request.args.get('role')
+    page = request.args.get('page', 1, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
 
     # Build query
     query = User.query
 
-    # Filter by email (partial match)
+    # Search by name or email
+    if search:
+        search_filter = db.or_(
+            (User.first_name + ' ' + User.last_name).ilike(f'%{search}%'),
+            User.email.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+
+    # Filter by email (partial match) - kept for backward compatibility
     if email:
         query = query.filter(User.email.ilike(f'%{email}%'))
 
     # Filter by role
-    if role:
+    if role and role in ['admin', 'assistant', 'instructor']:
         query = query.filter(User.role == role)
 
-    # Order by email for consistent ordering
-    query = query.order_by(User.email)
+    # Order by last name, first name for consistent ordering
+    query = query.order_by(User.last_name, User.first_name)
 
-    users = query.all()
+    # Always return paginated results
+    pagination = query.paginate(
+        page=page, 
+        per_page=per_page, 
+        error_out=False
+    )
+    
+    users = pagination.items
     schema = UserSchema(many=True)
-    return schema.dump(users), 200
+    
+    return {
+        "users": schema.dump(users),
+        "pagination": {
+            "page": page,
+            "pages": pagination.pages,
+            "per_page": per_page,
+            "total": pagination.total
+        }
+    }, 200
 
 @user_bp.route('/users', methods=['POST'])
 @jwt_required()
@@ -281,3 +311,44 @@ def get_current_user_profile():
     current_user = get_current_user()
     schema = UserSchema()
     return schema.dump(current_user), 200
+
+@user_bp.route('/users/stats', methods=['GET'])
+@jwt_required()
+@response_wrapper
+def get_user_stats():
+    """
+    GET /users/stats
+
+    Admin-only endpoint to get system statistics.
+
+    Returns:
+    - 200: JSON object with system stats
+    - 403: If user is not admin
+    """
+    current_user = get_current_user()
+    
+    # Only admins can view stats
+    if not current_user.is_admin():
+        return {"message": "Admin access required"}, 403
+    
+    # Count users by role
+    admin_count = User.query.filter_by(role='admin').count()
+    assistant_count = User.query.filter_by(role='assistant').count()
+    instructor_count = User.query.filter_by(role='instructor').count()
+    total_users = User.query.count()
+    
+    # You can add more stats here like lessons, students, etc.
+    from app.models.lesson_model import Lesson
+    total_lessons = Lesson.query.count()
+    
+    return {
+        "users": {
+            "total": total_users,
+            "admins": admin_count,
+            "assistants": assistant_count,
+            "instructors": instructor_count
+        },
+        "lessons": {
+            "total": total_lessons
+        }
+    }, 200
