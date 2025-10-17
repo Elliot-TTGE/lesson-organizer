@@ -9,6 +9,7 @@ from flask_jwt_extended import (
 )
 from datetime import datetime, timedelta, timezone
 from app.models.user_model import User
+from app.db import db
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -19,6 +20,10 @@ def login():
     user = User.query.filter_by(email=email).first()
     
     if user and user.verify_password(password):
+        # Update last_login timestamp
+        user.last_login = datetime.now(timezone.utc)
+        db.session.commit()
+        
         access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=4))
         
         response = jsonify(status='success', data={'access_token': access_token})
