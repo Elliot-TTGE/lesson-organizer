@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { Lesson, Student } from "../../types";
+  import type { Lesson, Student, UserLesson } from "../../types/index.d";
   import { deleteLesson, updateLesson, createLesson, fetchLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import type { LessonCreateFields, LessonUpdateFields } from "../../api/lesson";
   import TipexEditor from "./TipexEditor.svelte";
   import StudentSelector, { type StudentSelectorContext } from "./StudentSelector.svelte";
+  import UserShareSelector, { type UserShareSelectorContext } from "./UserShareSelector.svelte";
   import { initializeDateTimeInput } from "$lib/utils/dateUtils";
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
   import { isLessonMinimized, toggleLessonMinimized } from "$lib/states/lessonMinimizedState.svelte";
@@ -26,6 +27,10 @@
   let notes: string = $state("");
   let selectedStudents = $state<Student[]>([]);
   let studentSearchTerm = $state("");
+  
+  // Sharing state
+  let selectedShares = $state<UserLesson[]>([]);
+  let userSearchTerm = $state("");
 
   // Update form fields when lesson promise resolves
   $effect.pre(() => {
@@ -122,6 +127,25 @@
         minute: "2-digit",
       }),
     };
+  }
+
+  // Permission styling helper functions
+  function getPermissionColor(permission: string): string {
+    switch (permission) {
+      case 'view': return 'badge-info';
+      case 'edit': return 'badge-warning';
+      case 'manage': return 'badge-error';
+      default: return 'badge-neutral';
+    }
+  }
+
+  function getPermissionLabel(permission: string): string {
+    switch (permission) {
+      case 'view': return 'View';
+      case 'edit': return 'Edit';
+      case 'manage': return 'Manage';
+      default: return permission;
+    }
   }
 </script>
 
@@ -232,7 +256,7 @@
     {:else}
       {@const { date, time } = initializeDateTime(lesson.datetime)}
       {@const weekday = new Date(lesson.datetime).toLocaleDateString("en-US", { weekday: "long" })}
-      <div class="flex items-center justify-between bg-neutral p-4 rounded-lg shadow-sm">
+      <div class="card-body flex items-center justify-between bg-neutral rounded-lg shadow-sm">
         <div>
           <p class="text-lg font-semibold text-secondary">{weekday}</p>
             <div class="flex items-center gap-2 mb-1">
@@ -252,14 +276,14 @@
     >
       {#snippet children(ctx: StudentSelectorContext)}
         <!-- Selected Students Display (shows in both editing and view mode) -->
-        <div class="bg-neutral shadow-md rounded-lg p-3 min-h-24 mt-2">
-          <span class="text-lg font-medium mb-2 block text-secondary">
+        <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
+          <h2 class="mb-2 card-title text-secondary">
             {#if ctx.selectedStudents.length <= 1}
               {ctx.selectedStudents.length === 1 ? 'Student' : 'Students'}
             {:else}
               Students ({ctx.selectedStudents.length})
             {/if}
-          </span>
+          </h2>
           
           {#if ctx.isEditing}
             <!-- Editing Mode - Student Selection Interface -->
@@ -273,7 +297,7 @@
                 <input
                   id="lesson-card-student-search"
                   type="text"
-                  placeholder="Search students by name..."
+                  placeholder="Search students..."
                   bind:value={studentSearchTerm}
                   oninput={ctx.handleStudentSearch}
                   onfocus={() => ctx.showStudentDropdown = studentSearchTerm.length > 0}
@@ -387,6 +411,127 @@
         </div>
       {/if}
     </div>
+
+    <!-- Sharing Section -->
+    <UserShareSelector 
+      lessonId={lessonId}
+      bind:selectedShares={selectedShares}
+      bind:userSearchTerm={userSearchTerm}
+      isEditing={isEditing}
+    >
+      {#snippet children(ctx: UserShareSelectorContext)}
+        <!-- Shared Users Display (shows in both editing and view mode) -->
+        <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
+          <h2 class="mb-2 card-title text-secondary">
+            {#if ctx.selectedShares.length <= 1}
+              {ctx.selectedShares.length === 1 ? 'Shared User' : 'Sharing'}
+            {:else}
+              Shared Users ({ctx.selectedShares.length})
+            {/if}
+          </h2>
+          
+          {#if ctx.isEditing}
+            <!-- Editing Mode - User Selection Interface -->
+            <div class="flex flex-col space-y-2 mb-4">
+              <label class="label" for="lesson-card-user-search">
+                <span class="label-text text-secondary">Share with users</span>
+              </label>
+              
+              <!-- User Search Input -->
+              <div class="relative">
+                <input
+                  id="lesson-card-user-search"
+                  type="text"
+                  placeholder="Search users..."
+                  bind:value={userSearchTerm}
+                  oninput={ctx.handleUserSearch}
+                  onfocus={() => ctx.showUserDropdown = userSearchTerm.length > 0}
+                  onblur={() => {
+                    setTimeout(() => ctx.showUserDropdown = false, 150);
+                  }}
+                  class="input input-bordered w-full bg-neutral text-secondary border-secondary"
+                />
+                
+                <!-- User Dropdown -->
+                {#if ctx.showUserDropdown}
+                  <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {#if ctx.filteredUsers.length > 0}
+                      {#each ctx.filteredUsers as user (user.id)}
+                        <button
+                          type="button"
+                          class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary flex justify-between items-center"
+                          onclick={() => ctx.addUser(user, 'view')}
+                        >
+                          <div>
+                            <div class="font-medium">{user.first_name} {user.last_name}</div>
+                            <div class="text-xs opacity-70">{user.email}</div>
+                          </div>
+                          <span class="badge badge-xs badge-info">
+                            view
+                          </span>
+                        </button>
+                      {/each}
+                    {:else}
+                      <div class="px-4 py-2 text-sm text-secondary opacity-60">
+                        No users found matching "{userSearchTerm}"
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          {/if}
+          
+          {#if ctx.selectedShares.length > 0}
+            <div class="flex flex-wrap gap-2">
+              {#each ctx.selectedShares as share (share.id)}
+                {@const user = share.user}
+                {#if user}
+                  {#if ctx.isEditing}
+                    <div class="flex items-center gap-1 bg-neutral shadow-md rounded-full px-3 py-1 text-sm">
+                      <span class="truncate max-w-32 text-secondary">{user.first_name} {user.last_name}</span>
+                      
+                      <!-- Permission Badge Dropdown -->
+                      <div class="dropdown dropdown-end">
+                        <button tabindex="0" class="badge badge-xs {getPermissionColor(share.permission_level)} cursor-pointer">
+                          {getPermissionLabel(share.permission_level)}
+                        </button>
+                        <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-20">
+                          <li><button class="btn btn-xs btn-info" onclick={() => ctx.updatePermission(user.id, 'view')}>View</button></li>
+                          <li><button class="btn btn-xs btn-warning" onclick={() => ctx.updatePermission(user.id, 'edit')}>Edit</button></li>
+                          <li><button class="btn btn-xs btn-error" onclick={() => ctx.updatePermission(user.id, 'manage')}>Manage</button></li>
+                        </ul>
+                      </div>
+                      
+                      <!-- Remove Button -->
+                      <button
+                        type="button"
+                        onclick={() => ctx.removeUser(user.id)}
+                        class="ml-1 text-error hover:bg-error hover:text-error-content rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                        title="Remove share"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  {:else}
+                    <div class="bg-neutral shadow-md rounded-full px-3 py-1 text-sm flex items-center gap-1">
+                      <span class="truncate max-w-32 text-secondary">{user.first_name} {user.last_name}</span>
+                      <span class="badge badge-xs {getPermissionColor(share.permission_level)}">
+                        {getPermissionLabel(share.permission_level)}
+                      </span>
+                    </div>
+                  {/if}
+                {/if}
+              {/each}
+            </div>
+          {:else}
+            <div class="text-sm text-secondary opacity-60 italic flex items-center">
+              {ctx.isEditing ? 'No users have access to this lesson' : 'This lesson is not shared'}
+            </div>
+          {/if}
+        </div>
+      {/snippet}
+    </UserShareSelector>
   {/if}
 </div>
 {:catch error}
@@ -397,3 +542,5 @@
     </div>
   </div>
 {/await}
+
+

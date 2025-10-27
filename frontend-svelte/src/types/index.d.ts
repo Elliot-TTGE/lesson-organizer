@@ -51,7 +51,8 @@ export interface Lesson {
   notes?: string;
   students: Student[];
   owner_id?: number;
-  owner?: User;
+  owner?: UserRelationship;
+  user_shares?: UserLesson[];
 }
 
 export interface UserLesson {
@@ -62,7 +63,7 @@ export interface UserLesson {
   lesson_id: number;
   permission_level: 'view' | 'edit' | 'manage';
   shared_at?: string;
-  user?: User;
+  user?: UserRelationship;
   lesson?: Lesson;
 }
 
@@ -135,6 +136,20 @@ export interface User {
   last_login?: string;
   email: string;
   password: string;
+  role: string;
+  owned_lessons?: Lesson[];
+  shared_lessons?: Lesson[];
+  user_lesson_shares?: UserLesson[];
+}
+
+// User data when appearing in relationships (matches UserRelationshipSchema)
+export interface UserRelationship {
+  id: number;
+  created_date: string;
+  updated_date: string;
+  first_name: string;
+  last_name: string;
+  email: string;
   role: string;
 }
 

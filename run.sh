@@ -12,12 +12,14 @@ usage() {
   echo "EXCLUSIVE COMMANDS:"
   echo "  clean       - Clean up all Docker containers, images, and volumes"
   echo "  backup      - Create timestamped database backup in ./db_backups/"
+  echo "  migrate     - Generate database migration (upgrade handled by entrypoint.py)"
   echo ""
   echo "Examples:"
   echo "  $0 dev up -d                    # Start development environment in background"
   echo "  $0 prod-local build --no-cache  # Build production images locally without cache"
   echo "  $0 clean                        # Clean up Docker resources"
   echo "  $0 backup                       # Backup database"
+  echo "  $0 migrate \"Add user sharing\"     # Generate migration (applied on container restart)"
   exit 1
 }
 
@@ -57,6 +59,39 @@ case $MODE in
       alpine \
       cp /db/lesson_organizer.db /backup/$BACKUP_FILE
     echo "Backup complete."
+    exit 0
+    ;;
+  migrate)
+    if [ "$#" -lt 1 ]; then
+      echo "Error: Migration message is required"
+      echo "Usage: $0 migrate \"Migration message\""
+      exit 1
+    fi
+    MIGRATION_MESSAGE="$1"
+    echo "Generating database migration with message: $MIGRATION_MESSAGE"
+    
+    # Function to run migration generation
+    run_migration() {
+      docker compose --env-file .env.dev exec backend flask db migrate -m "$MIGRATION_MESSAGE"
+      echo "Migration file generated successfully!"
+      echo "Note: Migration will be applied automatically when backend container restarts (handled by entrypoint.py)"
+      echo ""
+      echo "Current database version:"
+      docker compose --env-file .env.dev exec backend flask db current
+    }
+    
+    # Check if backend container is running
+    if docker compose --env-file .env.dev ps backend | grep -q "Up"; then
+      echo "Backend container is running, generating migration..."
+      run_migration
+    else
+      echo "Backend container is not running, starting services..."
+      docker compose --env-file .env.dev up -d backend
+      sleep 5  # Give the container time to start
+      echo "Generating migration..."
+      run_migration
+    fi
+    
     exit 0
     ;;
   *)

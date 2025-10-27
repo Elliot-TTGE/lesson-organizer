@@ -55,14 +55,36 @@ Table lesson {
     plan varchar
     concepts varchar
     notes varchar
+    owner_id integer [ref: > user.id] // User ownership - nullable for existing data
 }
 
 Table lesson_student {
     id integer [pk, not null, unique, increment]
     created_date datetime [not null]
     updated_date datetime [not null]
+    lesson_id integer [not null]
+    student_id integer [not null]
+}
+
+// --- User lesson sharing ---
+Table user_lesson {
+    id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
+    user_id integer [not null, ref: > user.id]
     lesson_id integer [not null, ref: > lesson.id]
-    student_id integer [not null, ref: > student.id]
+    permission_level permission_level [not null, default: 'view']
+    shared_at datetime [default: `current_timestamp`]
+    
+    indexes {
+        (user_id, lesson_id) [unique] // unique_user_lesson constraint
+    }
+}
+
+enum permission_level {
+    view
+    edit
+    manage
 }
 
 // --- Quiz tracking ---
@@ -107,7 +129,7 @@ Table curriculum {
     id integer [pk, not null, unique, increment]
     created_date datetime [not null]
     updated_date datetime [not null]
-    varchar name [not null]
+    name varchar [not null]
 }
 
 // --- User and permissions ---
@@ -117,11 +139,11 @@ Table user {
     updated_date datetime [not null]
     first_name varchar [not null]
     last_name varchar [not null]
-    created_date datetime [not null]
     last_login datetime
-    email varchar [not null]
+    email varchar [not null, unique]
     password varchar [not null]
     role user_role [not null]
+    fs_uniquifier varchar [unique, not null] // Flask-Security unique identifier
 }
 
 enum user_role {
@@ -133,6 +155,8 @@ enum user_role {
 // --- Miscellaneous ---
 Table stock_image {
     id integer [pk, not null, unique, increment]
+    created_date datetime [not null]
+    updated_date datetime [not null]
     istock_name varchar
     istock_id integer
     uses varchar

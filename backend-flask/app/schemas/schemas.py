@@ -60,6 +60,7 @@ class LessonSchema(BaseSchema):
     # Nested relationships - avoiding circular references with dump_only
     students = Nested('StudentSchema', many=True, dump_only=True, exclude=['lessons'])
     owner = Nested('UserRelationshipSchema', dump_only=True)
+    user_shares = Nested('UserLessonSchema', many=True, dump_only=True, exclude=['lesson'])
     
     class Meta(BaseSchema.Meta):
         model = Lesson
@@ -137,7 +138,7 @@ class UserRelationshipSchema(BaseSchema):
         fields = ('id', 'first_name', 'last_name', 'email', 'role', 'created_date', 'updated_date')
 
 class UserLessonSchema(BaseSchema):
-    # Nested relationships to show full objects
+    # Nested relationships to show full objects instead of just IDs
     user = Nested('UserRelationshipSchema', dump_only=True)
     lesson = Nested('LessonSchema', dump_only=True, exclude=['user_shares'])
     

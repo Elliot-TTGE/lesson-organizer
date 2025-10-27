@@ -27,6 +27,11 @@ class User(BaseModel):
         secondary="user_lesson",
         back_populates="collaborators"
     )
+    
+    user_lesson_shares = db.relationship(
+        "UserLesson",
+        back_populates="user"
+    )
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -54,4 +59,4 @@ class User(BaseModel):
             lesson_id=lesson.id
         ).first()
         
-        return user_lesson and user_lesson.permission_level in ['edit', 'admin']
+        return user_lesson and user_lesson.permission_level in ['edit', 'manage']

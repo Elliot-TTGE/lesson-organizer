@@ -25,6 +25,11 @@ class Lesson(BaseModel):
         back_populates="shared_lessons"
     )
     
+    user_shares = db.relationship(
+        "UserLesson",
+        back_populates="lesson"
+    )
+    
     students = db.relationship(
         "Student",
         secondary="lesson_student",
@@ -61,4 +66,4 @@ class Lesson(BaseModel):
             lesson_id=self.id
         ).first()
         
-        return user_lesson and user_lesson.permission_level in ['edit', 'admin']
+        return user_lesson and user_lesson.permission_level in ['edit', 'manage']
