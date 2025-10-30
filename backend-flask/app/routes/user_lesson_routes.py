@@ -221,7 +221,9 @@ def delete_user_lesson(user_lesson_id):
 
     Description:
     Remove a lesson sharing relationship.
-    Only lesson owners, users with manage permission, and system admins can remove sharing.
+    - Lesson owners and users with manage permission can remove any sharing for their lessons
+    - Users can remove lessons that are shared with them (unsubscribe)
+    - System admins can remove any sharing relationship
 
     Path Parameters:
     - user_lesson_id: int — The ID of the user lesson relationship to delete
@@ -237,10 +239,23 @@ def delete_user_lesson(user_lesson_id):
     
     user_lesson = UserLesson.query.get_or_404(user_lesson_id)
     
-    # Check if current user can manage this lesson (unless admin)
-    if not current_user.is_admin():
-        if not LessonService.can_user_manage_lesson(current_user.id, user_lesson.lesson_id):
-            return {"message": "You don't have permission to remove this lesson sharing"}, 403
+    # Check permissions - allow if:
+    # 1. User is admin
+    # 2. User can manage the lesson (owner or has manage permission)
+    # 3. User is removing a lesson shared with them (unsubscribing)
+    can_delete = False
+    
+    if current_user.is_admin():
+        can_delete = True
+    elif LessonService.can_user_manage_lesson(current_user.id, user_lesson.lesson_id):
+        # Lesson owner or user with manage permission can remove sharing
+        can_delete = True
+    elif user_lesson.user_id == current_user.id:
+        # User can remove lessons shared with them (unsubscribe)
+        can_delete = True
+    
+    if not can_delete:
+        return {"message": "You don't have permission to remove this lesson sharing"}, 403
     
     db.session.delete(user_lesson)
     db.session.commit()

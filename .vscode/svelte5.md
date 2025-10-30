@@ -33,3 +33,5 @@ Don’t use:
     <slot> elements
 
     Store $ syntax
+
+Generally speaking, you should not update state inside $effects, as it will make code more convoluted and will often lead to never-ending update cycles.

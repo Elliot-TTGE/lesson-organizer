@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Lesson, Student, UserLesson } from "../../types/index.d";
+  import type { Lesson, Student, UserLesson, User } from "../../types/index.d";
   import { deleteLesson, updateLesson, createLesson, fetchLesson } from "../../api/lesson";
   import { addLessonToState, lessonState, removeLessonFromState, updateLessonInState } from "$lib/states/lessonState.svelte";
   import type { LessonCreateFields, LessonUpdateFields } from "../../api/lesson";
@@ -9,6 +9,8 @@
   import { initializeDateTimeInput } from "$lib/utils/dateUtils";
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
   import { isLessonMinimized, toggleLessonMinimized } from "$lib/states/lessonMinimizedState.svelte";
+  import { getCurrentUser } from "$lib/utils/auth";
+  import { deleteUserLesson } from "../../api/userLesson";
 
   let { lessonId }: { lessonId: number } = $props();
   
@@ -17,6 +19,12 @@
   
   let isEditing: boolean = $state(false);
   let showDeleteModal: boolean = $state(false);
+  let showUnsubscribeModal: boolean = $state(false);
+
+  // Current user state
+  let currentUser: User | null = $state(null);
+  let currentUserShare: UserLesson | null = $state(null);
+  let userLoaded = $state(false);
 
   // This is a bit hacky, but I didn't have time to make a cleaner solution
   let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput());
@@ -32,6 +40,15 @@
   let selectedShares = $state<UserLesson[]>([]);
   let userSearchTerm = $state("");
 
+  // Load current user once
+  getCurrentUser().then(user => {
+    currentUser = user;
+    userLoaded = true;
+  }).catch(() => {
+    currentUser = null;
+    userLoaded = true;
+  });
+
   // Update form fields when lesson promise resolves
   $effect.pre(() => {
     lessonPromise.then(lesson => {
@@ -41,6 +58,12 @@
         concepts = lesson.concepts ?? "";
         notes = lesson.notes ?? "";
         selectedStudents = lesson.students || [];
+        selectedShares = lesson.user_shares || [];
+        
+        // Find current user's share relationship
+        if (currentUser && lesson.user_shares) {
+          currentUserShare = lesson.user_shares.find(share => share.user_id === currentUser!.id) || null;
+        }
       }
     }).catch(() => {
       // Error handling is done in the template with {#await}
@@ -119,6 +142,23 @@
     addLessonToState(createdLesson);
   }
 
+  // Simple stop sharing with confirmation
+  async function handleStopSharingDirect() {
+    if (!currentUserShare) {
+      console.error('No current user share found');
+      return;
+    }
+    
+    try {
+      await deleteUserLesson(currentUserShare.id);
+      removeLessonFromState(lessonId);
+      showUnsubscribeModal = false;
+    } catch (error) {
+      console.error('Failed to stop sharing:', error);
+      alert('Failed to unsubscribe from lesson. Please try again.');
+    }
+  }
+
   function initializeDateTime(datetime: string) {
     return {
       date: new Date(datetime).toLocaleDateString("en-US"),
@@ -146,6 +186,50 @@
       case 'manage': return 'Manage';
       default: return permission;
     }
+  }
+
+  // Helper functions to determine permissions given a lesson and current user
+  function getUserPermission(lesson: Lesson): string | null {
+    if (!currentUser || !userLoaded) return null;
+    if (lesson && lesson.owner && lesson.owner.id === currentUser.id) return 'owner';
+    
+    // Check if user has a share relationship with this lesson
+    if (lesson.user_shares) {
+      const userShare = lesson.user_shares.find(share => share.user_id === currentUser!.id);
+      if (userShare) return userShare.permission_level;
+    }
+    
+    return null;
+  }
+
+  function canUserEdit(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm === 'owner' || perm === 'edit' || perm === 'manage';
+  }
+
+  function canUserDelete(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm === 'owner' || perm === 'manage';
+  }
+
+  function canUserCopy(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm === 'owner' || perm === 'edit' || perm === 'manage';
+  }
+
+  function canUserManageSharing(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm === 'owner' || perm === 'manage';
+  }
+
+  function hasLessonAccess(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm !== null; // Has any access (owner, manage, edit, or view)
+  }
+
+  function isLessonSharedWithUser(lesson: Lesson): boolean {
+    const perm = getUserPermission(lesson);
+    return perm !== null && perm !== 'owner';
   }
 </script>
 
@@ -182,26 +266,46 @@
       {#if isEditing}
         <button onclick={handleConfirm} class="btn btn-success btn-sm">Confirm</button>
         <button onclick={handleCancel} class="btn btn-warning btn-sm">Cancel</button>
-        <button onclick={() => showDeleteModal = true} class="btn btn-error btn-sm">
-          <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
-        </button>
-      {:else if !isMinimized}
-        <div class="dropdown">
-          <button tabindex="0" class="btn btn-info btn-sm">
-            <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
+        {#if canUserDelete(lesson)}
+          <button onclick={() => showDeleteModal = true} class="btn btn-error btn-sm">
+            <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
           </button>
-          <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md">
-            <input type="date" bind:value={copyToDate} class="input input-bordered w-full mb-2" />
-            <input type="time" bind:value={copyToTime} class="input input-bordered w-full mb-2" />
-            <button onclick={handleCopy} class="btn btn-success btn-sm w-full">Confirm</button>
+        {/if}
+      {:else if !isMinimized}
+        <!-- Copy button - only show if user can copy -->
+        {#if canUserCopy(lesson)}
+          <div class="dropdown">
+            <button tabindex="0" class="btn btn-info btn-sm">
+              <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
+            </button>
+            <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md">
+              <input type="date" bind:value={copyToDate} class="input input-bordered w-full mb-2" />
+              <input type="time" bind:value={copyToTime} class="input input-bordered w-full mb-2" />
+              <button onclick={handleCopy} class="btn btn-success btn-sm w-full">Confirm</button>
+            </div>
           </div>
-        </div>
-        <button onclick={() => isEditing = true} class="btn btn-accent btn-sm">
-          <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
-        </button>
-        <button onclick={() => showDeleteModal = true} class="btn btn-error btn-sm">
-          <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
-        </button>
+        {/if}
+        
+        <!-- Edit button - only show if user can edit -->
+        {#if canUserEdit(lesson)}
+          <button onclick={() => isEditing = true} class="btn btn-accent btn-sm">
+            <img src="/images/icons/pencil-fill.svg" alt="Edit Icon" class="w-4 h-4" />
+          </button>
+        {/if}
+        
+        <!-- Delete button - only show if user can delete -->
+        {#if canUserDelete(lesson)}
+          <button onclick={() => showDeleteModal = true} class="btn btn-error btn-sm">
+            <img src="/images/icons/trash3.svg" alt="Trash Icon" class="w-4 h-4" />
+          </button>
+        {/if}
+        
+        <!-- Stop sharing button - only show if this is a shared lesson -->
+        {#if isLessonSharedWithUser(lesson)}
+          <button onclick={() => showUnsubscribeModal = true} class="btn btn-warning btn-sm" title="Stop receiving this shared lesson">
+            ×
+          </button>
+        {/if}
       {/if}
     </div>
   </div>
@@ -215,6 +319,32 @@
         <div class="modal-action">
           <button onclick={handleDelete} class="btn btn-error">Delete</button>
           <button onclick={() => showDeleteModal = false} class="btn">Cancel</button>
+        </div>
+      </div>
+    </dialog>
+  {/if}
+
+  <!-- Unsubscribe Confirmation Modal -->
+  {#if showUnsubscribeModal}
+    <dialog class="modal modal-open" aria-modal="true" aria-labelledby="unsubscribe-modal-title">
+      <div class="modal-box">
+        <h3 id="unsubscribe-modal-title" class="font-bold text-lg">Unsubscribe from Shared Lesson</h3>
+        <p class="py-4">
+          Are you sure you want to unsubscribe from this shared lesson? 
+          <br><br>
+          <strong>You will no longer have access to:</strong>
+        </p>
+        <ul class="list-disc list-inside py-2 text-sm opacity-80">
+          <li>View the lesson content</li>
+          <li>Edit the lesson (if you had edit permissions)</li>
+          <li>See the lesson in your lesson list</li>
+        </ul>
+        <p class="text-sm opacity-70 mt-2">
+          The lesson owner can share it with you again if needed.
+        </p>
+        <div class="modal-action">
+          <button onclick={handleStopSharingDirect} class="btn btn-warning">Unsubscribe</button>
+          <button onclick={() => showUnsubscribeModal = false} class="btn">Keep Access</button>
         </div>
       </div>
     </dialog>
@@ -265,6 +395,15 @@
               <p class="text-xs text-secondary opacity-70 truncate">{date}</p>
             </div>
         </div>
+        
+        <!-- Shared lesson indicator -->
+        {#if isLessonSharedWithUser(lesson) && currentUserShare}
+          <div class="flex items-center gap-2">
+            <span class="badge badge-outline badge-sm">
+              Shared - {getPermissionLabel(currentUserShare.permission_level)}
+            </span>
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -412,126 +551,104 @@
       {/if}
     </div>
 
-    <!-- Sharing Section -->
-    <UserShareSelector 
-      lessonId={lessonId}
-      bind:selectedShares={selectedShares}
-      bind:userSearchTerm={userSearchTerm}
-      isEditing={isEditing}
-    >
-      {#snippet children(ctx: UserShareSelectorContext)}
-        <!-- Shared Users Display (shows in both editing and view mode) -->
-        <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
-          <h2 class="mb-2 card-title text-secondary">
-            {#if ctx.selectedShares.length <= 1}
-              {ctx.selectedShares.length === 1 ? 'Shared User' : 'Sharing'}
-            {:else}
-              Shared Users ({ctx.selectedShares.length})
-            {/if}
-          </h2>
+    <!-- Lesson Access Section - show to anyone with lesson access -->
+    {#if hasLessonAccess(lesson)}
+      <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
+        <h2 class="mb-2 card-title text-secondary">Who Can See This Lesson</h2>
+        
+        <div class="flex flex-wrap gap-2">
+          <!-- Show lesson owner first -->
+          {#if lesson.owner}
+            <div class="bg-neutral shadow-md rounded-full px-3 py-1 text-sm flex items-center gap-1">
+              <span class="truncate max-w-32 text-secondary">
+                {lesson.owner.id === currentUser?.id ? 'You' : `${lesson.owner.first_name} ${lesson.owner.last_name}`}
+              </span>
+              <span class="badge badge-xs badge-primary">Owner</span>
+            </div>
+          {/if}
           
-          {#if ctx.isEditing}
-            <!-- Editing Mode - User Selection Interface -->
-            <div class="flex flex-col space-y-2 mb-4">
-              <label class="label" for="lesson-card-user-search">
-                <span class="label-text text-secondary">Share with users</span>
-              </label>
-              
-              <!-- User Search Input -->
-              <div class="relative">
-                <input
-                  id="lesson-card-user-search"
-                  type="text"
-                  placeholder="Search users..."
-                  bind:value={userSearchTerm}
-                  oninput={ctx.handleUserSearch}
-                  onfocus={() => ctx.showUserDropdown = userSearchTerm.length > 0}
-                  onblur={() => {
-                    setTimeout(() => ctx.showUserDropdown = false, 150);
-                  }}
-                  class="input input-bordered w-full bg-neutral text-secondary border-secondary"
-                />
-                
-                <!-- User Dropdown -->
-                {#if ctx.showUserDropdown}
-                  <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {#if ctx.filteredUsers.length > 0}
-                      {#each ctx.filteredUsers as user (user.id)}
-                        <button
-                          type="button"
-                          class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary flex justify-between items-center"
-                          onclick={() => ctx.addUser(user, 'view')}
-                        >
-                          <div>
-                            <div class="font-medium">{user.first_name} {user.last_name}</div>
-                            <div class="text-xs opacity-70">{user.email}</div>
+          <!-- Show shared users -->
+          {#if selectedShares.length > 0}
+            {#each selectedShares as share (share.id)}
+              {@const user = share.user}
+              {#if user}
+                <div class="bg-neutral shadow-md rounded-full px-3 py-1 text-sm flex items-center gap-1">
+                  <span class="truncate max-w-32 text-secondary">
+                    {user.id === currentUser?.id ? 'You' : `${user.first_name} ${user.last_name}`}
+                  </span>
+                  <span class="badge badge-xs {getPermissionColor(share.permission_level)}">
+                    {getPermissionLabel(share.permission_level)}
+                  </span>
+                </div>
+              {/if}
+            {/each}
+          {/if}
+        </div>
+        
+        <!-- Show management options only if user can manage sharing and is editing -->
+        {#if canUserManageSharing(lesson) && isEditing}
+          <div class="mt-4 pt-4 border-t border-secondary/20">
+            <UserShareSelector 
+              lessonId={lessonId}
+              bind:selectedShares={selectedShares}
+              bind:userSearchTerm={userSearchTerm}
+              isEditing={true}
+            >
+              {#snippet children(ctx: UserShareSelectorContext)}
+                <div class="flex flex-col space-y-2">
+                  <label class="label" for="lesson-card-user-search">
+                    <span class="label-text text-secondary">Share with more users</span>
+                  </label>
+                  
+                  <!-- User Search Input -->
+                  <div class="relative">
+                    <input
+                      id="lesson-card-user-search"
+                      type="text"
+                      placeholder="Search users..."
+                      bind:value={userSearchTerm}
+                      oninput={ctx.handleUserSearch}
+                      onfocus={() => ctx.showUserDropdown = userSearchTerm.length > 0}
+                      onblur={() => {
+                        setTimeout(() => ctx.showUserDropdown = false, 150);
+                      }}
+                      class="input input-bordered w-full bg-neutral text-secondary border-secondary"
+                    />
+                    
+                    <!-- User Dropdown -->
+                    {#if ctx.showUserDropdown}
+                      <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                        {#if ctx.filteredUsers.length > 0}
+                          {#each ctx.filteredUsers as user (user.id)}
+                            <button
+                              type="button"
+                              class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary flex justify-between items-center"
+                              onclick={() => ctx.addUser(user, 'view')}
+                            >
+                              <div>
+                                <div class="font-medium">{user.first_name} {user.last_name}</div>
+                                <div class="text-xs opacity-70">{user.email}</div>
+                              </div>
+                              <span class="badge badge-xs badge-info">
+                                view
+                              </span>
+                            </button>
+                          {/each}
+                        {:else}
+                          <div class="px-4 py-2 text-sm text-secondary opacity-60">
+                            No users found matching "{userSearchTerm}"
                           </div>
-                          <span class="badge badge-xs badge-info">
-                            view
-                          </span>
-                        </button>
-                      {/each}
-                    {:else}
-                      <div class="px-4 py-2 text-sm text-secondary opacity-60">
-                        No users found matching "{userSearchTerm}"
+                        {/if}
                       </div>
                     {/if}
                   </div>
-                {/if}
-              </div>
-            </div>
-          {/if}
-          
-          {#if ctx.selectedShares.length > 0}
-            <div class="flex flex-wrap gap-2">
-              {#each ctx.selectedShares as share (share.id)}
-                {@const user = share.user}
-                {#if user}
-                  {#if ctx.isEditing}
-                    <div class="flex items-center gap-1 bg-neutral shadow-md rounded-full px-3 py-1 text-sm">
-                      <span class="truncate max-w-32 text-secondary">{user.first_name} {user.last_name}</span>
-                      
-                      <!-- Permission Badge Dropdown -->
-                      <div class="dropdown dropdown-end">
-                        <button tabindex="0" class="badge badge-xs {getPermissionColor(share.permission_level)} cursor-pointer">
-                          {getPermissionLabel(share.permission_level)}
-                        </button>
-                        <ul tabindex="0" class="dropdown-content menu p-1 shadow bg-base-100 rounded-box w-20">
-                          <li><button class="btn btn-xs btn-info" onclick={() => ctx.updatePermission(user.id, 'view')}>View</button></li>
-                          <li><button class="btn btn-xs btn-warning" onclick={() => ctx.updatePermission(user.id, 'edit')}>Edit</button></li>
-                          <li><button class="btn btn-xs btn-error" onclick={() => ctx.updatePermission(user.id, 'manage')}>Manage</button></li>
-                        </ul>
-                      </div>
-                      
-                      <!-- Remove Button -->
-                      <button
-                        type="button"
-                        onclick={() => ctx.removeUser(user.id)}
-                        class="ml-1 text-error hover:bg-error hover:text-error-content rounded-full w-4 h-4 flex items-center justify-center text-xs"
-                        title="Remove share"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  {:else}
-                    <div class="bg-neutral shadow-md rounded-full px-3 py-1 text-sm flex items-center gap-1">
-                      <span class="truncate max-w-32 text-secondary">{user.first_name} {user.last_name}</span>
-                      <span class="badge badge-xs {getPermissionColor(share.permission_level)}">
-                        {getPermissionLabel(share.permission_level)}
-                      </span>
-                    </div>
-                  {/if}
-                {/if}
-              {/each}
-            </div>
-          {:else}
-            <div class="text-sm text-secondary opacity-60 italic flex items-center">
-              {ctx.isEditing ? 'No users have access to this lesson' : 'This lesson is not shared'}
-            </div>
-          {/if}
-        </div>
-      {/snippet}
-    </UserShareSelector>
+                </div>
+              {/snippet}
+            </UserShareSelector>
+          </div>
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>
 {:catch error}
