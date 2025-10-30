@@ -10,7 +10,7 @@
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
   import { isLessonMinimized, toggleLessonMinimized } from "$lib/states/lessonMinimizedState.svelte";
   import { getCurrentUser } from "$lib/utils/auth";
-  import { deleteUserLesson } from "../../api/userLesson";
+  import { deleteUserLesson, updateUserLesson } from "../../api/userLesson";
 
   let { lessonId }: { lessonId: number } = $props();
   
@@ -159,6 +159,48 @@
     }
   }
 
+  // Update permission level for a shared user
+  async function updateSharePermission(userId: number, permission: 'view' | 'edit' | 'manage') {
+    try {
+      const shareToUpdate = selectedShares.find(share => share.user_id === userId);
+      if (shareToUpdate) {
+        const updatedShare = await updateUserLesson(shareToUpdate.id, {
+          permission_level: permission
+        });
+        
+        // Update the local state
+        selectedShares = selectedShares.map(share => 
+          share.user_id === userId ? updatedShare : share
+        );
+        
+        // Refresh the lesson data to update user_shares
+        lessonPromise = fetchLesson(lessonId);
+      }
+    } catch (error) {
+      console.error('Error updating permission:', error);
+      alert('Failed to update permission. Please try again.');
+    }
+  }
+
+  // Remove a user share
+  async function removeShare(userId: number) {
+    try {
+      const shareToRemove = selectedShares.find(share => share.user_id === userId);
+      if (shareToRemove) {
+        await deleteUserLesson(shareToRemove.id);
+        
+        // Update local state
+        selectedShares = selectedShares.filter(share => share.user_id !== userId);
+        
+        // Refresh the lesson data to update user_shares
+        lessonPromise = fetchLesson(lessonId);
+      }
+    } catch (error) {
+      console.error('Error removing share:', error);
+      alert('Failed to remove share. Please try again.');
+    }
+  }
+
   function initializeDateTime(datetime: string) {
     return {
       date: new Date(datetime).toLocaleDateString("en-US"),
@@ -231,7 +273,43 @@
     const perm = getUserPermission(lesson);
     return perm !== null && perm !== 'owner';
   }
+
+  // Reusable permission dropdown snippet
+  interface PermissionDropdownProps {
+    onSelectView: () => void;
+    onSelectEdit: () => void;
+    onSelectManage: () => void;
+  }
 </script>
+
+{#snippet permissionDropdownContent(props: PermissionDropdownProps)}
+  <div tabindex="0" class="dropdown-content z-50 mt-1 bg-transparent flex flex-col p-0">
+    <button
+      type="button"
+      class="badge badge-info text-xs px-3 py-2 cursor-pointer hover:outline-2 hover:outline-black hover:outline-offset-[-2px] transition-all shadow-md rounded-b-none w-20"
+      onclick={props.onSelectView}
+      title="Grant view-only access"
+    >
+      View
+    </button>
+    <button
+      type="button"
+      class="badge badge-warning text-xs px-3 py-2 cursor-pointer hover:outline-2 hover:outline-black hover:outline-offset-[-2px] transition-all shadow-md rounded-none w-20"
+      onclick={props.onSelectEdit}
+      title="Grant edit access"
+    >
+      Edit
+    </button>
+    <button
+      type="button"
+      class="badge badge-error text-xs px-3 py-2 cursor-pointer hover:outline-2 hover:outline-black hover:outline-offset-[-2px] transition-all shadow-md rounded-t-none w-20"
+      onclick={props.onSelectManage}
+      title="Grant manage access (can share with others)"
+    >
+      Manage
+    </button>
+  </div>
+{/snippet}
 
 {#await lessonPromise}
   <div class="w-full rounded-lg bg-neutral shadow-md p-4 space-y-4">
@@ -576,9 +654,37 @@
                   <span class="truncate max-w-32 text-secondary">
                     {user.id === currentUser?.id ? 'You' : `${user.first_name} ${user.last_name}`}
                   </span>
-                  <span class="badge badge-xs {getPermissionColor(share.permission_level)}">
-                    {getPermissionLabel(share.permission_level)}
-                  </span>
+                  
+                  <!-- Show permission dropdown if user can manage sharing and is editing -->
+                  {#if canUserManageSharing(lesson) && isEditing}
+                    <div class="dropdown dropdown-end">
+                      <button
+                        type="button"
+                        tabindex="0"
+                        role="button"
+                        class="badge badge-xs {getPermissionColor(share.permission_level)} cursor-pointer hover:opacity-80"
+                      >
+                        {getPermissionLabel(share.permission_level)} ▾
+                      </button>
+                      {@render permissionDropdownContent({
+                        onSelectView: () => updateSharePermission(share.user_id, 'view'),
+                        onSelectEdit: () => updateSharePermission(share.user_id, 'edit'),
+                        onSelectManage: () => updateSharePermission(share.user_id, 'manage')
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-circle btn-ghost text-error hover:bg-error hover:text-error-content"
+                      onclick={() => removeShare(share.user_id)}
+                      title="Remove share"
+                    >
+                      ×
+                    </button>
+                  {:else}
+                    <span class="badge badge-xs {getPermissionColor(share.permission_level)}">
+                      {getPermissionLabel(share.permission_level)}
+                    </span>
+                  {/if}
                 </div>
               {/if}
             {/each}
@@ -617,22 +723,30 @@
                     
                     <!-- User Dropdown -->
                     {#if ctx.showUserDropdown}
-                      <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      <div class="absolute z-50 w-full mt-1 bg-neutral border border-secondary rounded-lg shadow-lg max-h-64 overflow-y-auto">
                         {#if ctx.filteredUsers.length > 0}
                           {#each ctx.filteredUsers as user (user.id)}
-                            <button
-                              type="button"
-                              class="w-full px-4 py-2 text-left hover:bg-secondary hover:text-neutral transition-colors text-secondary flex justify-between items-center"
-                              onclick={() => ctx.addUser(user, 'view')}
-                            >
-                              <div>
-                                <div class="font-medium">{user.first_name} {user.last_name}</div>
+                            <div class="px-4 py-3 text-secondary border-b border-secondary/20 last:border-0 flex items-center justify-between gap-3">
+                              <div class="flex-1 min-w-0">
+                                <div class="font-medium text-base">{user.first_name} {user.last_name}</div>
                                 <div class="text-xs opacity-70">{user.email}</div>
                               </div>
-                              <span class="badge badge-xs badge-info">
-                                view
-                              </span>
-                            </button>
+                              <div class="dropdown dropdown-end">
+                                <button
+                                  type="button"
+                                  tabindex="0"
+                                  role="button"
+                                  class="btn btn-sm btn-primary"
+                                >
+                                  +
+                                </button>
+                                {@render permissionDropdownContent({
+                                  onSelectView: () => ctx.addUser(user, 'view'),
+                                  onSelectEdit: () => ctx.addUser(user, 'edit'),
+                                  onSelectManage: () => ctx.addUser(user, 'manage')
+                                })}
+                              </div>
+                            </div>
                           {/each}
                         {:else}
                           <div class="px-4 py-2 text-sm text-secondary opacity-60">
