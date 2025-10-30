@@ -10,7 +10,7 @@
   import { deleteLessonStudent, findLessonStudentByLessonAndStudent } from "../../api/lessonStudent";
   import { isLessonMinimized, toggleLessonMinimized } from "$lib/states/lessonMinimizedState.svelte";
   import { getCurrentUser } from "$lib/utils/auth";
-  import { deleteUserLesson, updateUserLesson } from "../../api/userLesson";
+  import { deleteUserLesson, updateUserLesson, createUserLesson } from "../../api/userLesson";
 
   let { lessonId }: { lessonId: number } = $props();
   
@@ -39,6 +39,14 @@
   // Sharing state
   let selectedShares = $state<UserLesson[]>([]);
   let userSearchTerm = $state("");
+  
+  // Share change tracking for staged edits
+  let originalShares = $state<UserLesson[]>([]);
+  type ShareChange = 
+    | { type: 'add', userId: number, permission: 'view' | 'edit' | 'manage' }
+    | { type: 'remove', shareId: number, userId: number }
+    | { type: 'update', shareId: number, userId: number, oldPermission: string, newPermission: 'view' | 'edit' | 'manage' };
+  let pendingShareChanges = $state<ShareChange[]>([]);
 
   // Load current user once
   getCurrentUser().then(user => {
@@ -59,6 +67,8 @@
         notes = lesson.notes ?? "";
         selectedStudents = lesson.students || [];
         selectedShares = lesson.user_shares || [];
+        originalShares = lesson.user_shares || [];
+        pendingShareChanges = [];
         
         // Find current user's share relationship
         if (currentUser && lesson.user_shares) {
@@ -108,10 +118,21 @@
       }
     }
     
+    // Apply all pending share changes
+    if (pendingShareChanges.length > 0) {
+      try {
+        await applyPendingShareChanges();
+      } catch (error) {
+        console.error("Error applying share changes:", error);
+        alert('Failed to apply some share changes. Please try again.');
+      }
+    }
+    
     // Update the lesson with new student list
     const updated = await updateLesson(lesson.id, updatedLesson, studentIds);
     updateLessonInState(updated);
-    // Note: We can't update the lesson promise directly, but the parent state will be updated
+    // Refresh lesson data to get updated shares
+    lessonPromise = fetchLesson(lessonId);
     isEditing = false;
   }
 
@@ -124,7 +145,10 @@
     concepts = lesson.concepts ?? "";
     notes = lesson.notes ?? "";
     selectedStudents = lesson.students || [];
+    selectedShares = [...originalShares];
+    pendingShareChanges = [];
     studentSearchTerm = "";
+    userSearchTerm = "";
   }
 
   async function handleCopy() {
@@ -159,46 +183,140 @@
     }
   }
 
-  // Update permission level for a shared user
-  async function updateSharePermission(userId: number, permission: 'view' | 'edit' | 'manage') {
-    try {
-      const shareToUpdate = selectedShares.find(share => share.user_id === userId);
-      if (shareToUpdate) {
-        const updatedShare = await updateUserLesson(shareToUpdate.id, {
-          permission_level: permission
-        });
-        
-        // Update the local state
-        selectedShares = selectedShares.map(share => 
-          share.user_id === userId ? updatedShare : share
-        );
-        
-        // Refresh the lesson data to update user_shares
-        lessonPromise = fetchLesson(lessonId);
+  // Apply all pending share changes to the database
+  async function applyPendingShareChanges() {
+    const lesson = await lessonPromise;
+    if (!lesson) return;
+    
+    for (const change of pendingShareChanges) {
+      try {
+        if (change.type === 'add') {
+          await createUserLesson({
+            lesson_id: lessonId,
+            user_id: change.userId,
+            permission_level: change.permission
+          });
+        } else if (change.type === 'remove') {
+          await deleteUserLesson(change.shareId);
+        } else if (change.type === 'update') {
+          await updateUserLesson(change.shareId, {
+            permission_level: change.newPermission
+          });
+        }
+      } catch (error) {
+        console.error(`Failed to apply share change:`, change, error);
+        throw error;
       }
-    } catch (error) {
-      console.error('Error updating permission:', error);
-      alert('Failed to update permission. Please try again.');
     }
+    
+    // Clear pending changes after successful application
+    pendingShareChanges = [];
   }
 
-  // Remove a user share
-  async function removeShare(userId: number) {
-    try {
-      const shareToRemove = selectedShares.find(share => share.user_id === userId);
-      if (shareToRemove) {
-        await deleteUserLesson(shareToRemove.id);
+  // Stage adding a new share (called from UserShareSelector)
+  function stageAddShare(user: User, permission: 'view' | 'edit' | 'manage') {
+    // Add to pending changes
+    pendingShareChanges = [...pendingShareChanges, {
+      type: 'add',
+      userId: user.id,
+      permission
+    }];
+    
+    // Update local UI immediately (create a temporary UserLesson-like object)
+    const tempShare: UserLesson = {
+      id: -Date.now(), // Temporary negative ID
+      user_id: user.id,
+      lesson_id: lessonId,
+      permission_level: permission,
+      user: user,
+      created_date: new Date().toISOString(),
+      updated_date: new Date().toISOString()
+    };
+    
+    selectedShares = [...selectedShares, tempShare];
+  }
+
+  // Update permission for a share (staged)
+  function updateSharePermission(userId: number, permission: 'view' | 'edit' | 'manage') {
+    const share = selectedShares.find(s => s.user_id === userId);
+    if (!share) return;
+    
+    // Check if this is a new share (not yet in database)
+    const isNewShare = share.id < 0;
+    
+    if (isNewShare) {
+      // Update the pending add change
+      pendingShareChanges = pendingShareChanges.map(change => 
+        change.type === 'add' && change.userId === userId
+          ? { ...change, permission }
+          : change
+      );
+    } else {
+      // Find the original permission
+      const originalShare = originalShares.find(s => s.user_id === userId);
+      const originalPermission = originalShare?.permission_level || share.permission_level;
+      
+      // Check if there's already an update for this share
+      const existingUpdateIndex = pendingShareChanges.findIndex(
+        c => c.type === 'update' && c.userId === userId
+      );
+      
+      if (permission === originalPermission) {
+        // Reverting to original - remove any pending update
+        if (existingUpdateIndex >= 0) {
+          pendingShareChanges = pendingShareChanges.filter((_, i) => i !== existingUpdateIndex);
+        }
+      } else {
+        // Add or update the pending change
+        const updateChange: ShareChange = {
+          type: 'update',
+          shareId: share.id,
+          userId: userId,
+          oldPermission: originalPermission,
+          newPermission: permission
+        };
         
-        // Update local state
-        selectedShares = selectedShares.filter(share => share.user_id !== userId);
-        
-        // Refresh the lesson data to update user_shares
-        lessonPromise = fetchLesson(lessonId);
+        if (existingUpdateIndex >= 0) {
+          pendingShareChanges[existingUpdateIndex] = updateChange;
+          pendingShareChanges = [...pendingShareChanges];
+        } else {
+          pendingShareChanges = [...pendingShareChanges, updateChange];
+        }
       }
-    } catch (error) {
-      console.error('Error removing share:', error);
-      alert('Failed to remove share. Please try again.');
     }
+    
+    // Update local UI
+    selectedShares = selectedShares.map(s =>
+      s.user_id === userId
+        ? { ...s, permission_level: permission }
+        : s
+    );
+  }
+
+  // Remove a share (staged)
+  function removeShare(userId: number) {
+    const share = selectedShares.find(s => s.user_id === userId);
+    if (!share) return;
+    
+    // Check if this is a new share (not yet in database)
+    const isNewShare = share.id < 0;
+    
+    if (isNewShare) {
+      // Remove from pending add changes
+      pendingShareChanges = pendingShareChanges.filter(
+        c => !(c.type === 'add' && c.userId === userId)
+      );
+    } else {
+      // Add to pending remove changes
+      pendingShareChanges = [...pendingShareChanges, {
+        type: 'remove',
+        shareId: share.id,
+        userId: userId
+      }];
+    }
+    
+    // Update local UI
+    selectedShares = selectedShares.filter(s => s.user_id !== userId);
   }
 
   function initializeDateTime(datetime: string) {
@@ -741,9 +859,9 @@
                                   +
                                 </button>
                                 {@render permissionDropdownContent({
-                                  onSelectView: () => ctx.addUser(user, 'view'),
-                                  onSelectEdit: () => ctx.addUser(user, 'edit'),
-                                  onSelectManage: () => ctx.addUser(user, 'manage')
+                                  onSelectView: () => stageAddShare(user, 'view'),
+                                  onSelectEdit: () => stageAddShare(user, 'edit'),
+                                  onSelectManage: () => stageAddShare(user, 'manage')
                                 })}
                               </div>
                             </div>
