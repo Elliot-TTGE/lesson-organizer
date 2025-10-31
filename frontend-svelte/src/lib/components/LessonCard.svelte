@@ -29,6 +29,7 @@
   // This is a bit hacky, but I didn't have time to make a cleaner solution
   let { date: dateInput, time: timeInput } = $state(initializeDateTimeInput());
   let { date: copyToDate, time: copyToTime } = $state(initializeDateTimeInput());
+  let copySharesToNewLesson = $state(false);
 
   let plan: string = $state("");
   let concepts: string = $state("");
@@ -164,6 +165,27 @@
     const studentIds = lesson.students?.map(s => s.id) || [];
     const createdLesson = await createLesson(newLesson, studentIds);
     addLessonToState(createdLesson);
+
+    // Copy shares if user requested it
+    if (copySharesToNewLesson && selectedShares.length > 0) {
+      try {
+        // Create shares for each user from the original lesson
+        const sharePromises = selectedShares.map(share => 
+          createUserLesson({
+            lesson_id: createdLesson.id,
+            user_id: share.user_id,
+            permission_level: share.permission_level
+          })
+        );
+        await Promise.all(sharePromises);
+      } catch (error) {
+        console.error('Failed to copy shares:', error);
+        alert('Lesson copied successfully, but failed to copy some shares.');
+      }
+    }
+
+    // Reset the copy shares checkbox for next time
+    copySharesToNewLesson = false;
   }
 
   // Simple stop sharing with confirmation
@@ -474,9 +496,23 @@
             <button tabindex="0" class="btn btn-info btn-sm">
               <img src="/images/icons/arrow-clockwise.svg" alt="Copy Icon" class="w-4 h-4" />
             </button>
-            <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md">
+            <div class="dropdown-content bg-neutral p-4 rounded-lg shadow-md min-w-64">
+              <label class="label cursor-pointer justify-start gap-2 mb-2">
+                <span class="label-text text-secondary">Date & Time</span>
+              </label>
               <input type="date" bind:value={copyToDate} class="input input-bordered w-full mb-2" />
               <input type="time" bind:value={copyToTime} class="input input-bordered w-full mb-2" />
+              
+              <!-- Show checkbox for copying shares only if shares exist -->
+              {#if selectedShares.length > 0}
+                <label class="label cursor-pointer justify-start gap-2 mb-2">
+                  <input type="checkbox" bind:checked={copySharesToNewLesson} class="checkbox checkbox-sm checkbox-primary" />
+                  <span class="label-text text-secondary">
+                    Copy shares ({selectedShares.length} user{selectedShares.length === 1 ? '' : 's'})
+                  </span>
+                </label>
+              {/if}
+              
               <button onclick={handleCopy} class="btn btn-success btn-sm w-full">Confirm</button>
             </div>
           </div>
