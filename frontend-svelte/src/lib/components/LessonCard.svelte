@@ -747,8 +747,8 @@
       {/if}
     </div>
 
-    <!-- Lesson Access Section - show to anyone with lesson access -->
-    {#if hasLessonAccess(lesson)}
+    <!-- Lesson Access Section - show when editing or when shares exist -->
+    {#if isEditing || selectedShares.length > 0}
       <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
         <h2 class="mb-2 card-title text-secondary">Who Can See This Lesson</h2>
         
