@@ -57,6 +57,8 @@ class StudentStatusHistorySchema(BaseSchema):
     # exclude = ("student",)  # Prevent duplicate Student during serialization
 
 class LessonSchema(BaseSchema):
+    owner_id = fields.Integer(dump_only=True)
+    
     # Nested relationships - avoiding circular references with dump_only
     students = Nested('StudentSchema', many=True, dump_only=True, exclude=['lessons'])
     owner = Nested('UserRelationshipSchema', dump_only=True)
@@ -73,6 +75,8 @@ class CurriculumSchema(BaseSchema):
         model = Curriculum
 
 class LevelSchema(BaseSchema):
+    curriculum_id = fields.Integer(dump_only=True)
+    
     # Nested relationships
     curriculum = Nested('CurriculumSchema', dump_only=True, exclude=['levels'])
     student_level_history = Nested('StudentLevelHistorySchema', many=True, dump_only=True, exclude=['level'])
@@ -82,6 +86,8 @@ class LevelSchema(BaseSchema):
         model = Level
 
 class UnitSchema(BaseSchema):
+    level_id = fields.Integer(dump_only=True)
+    
     # Nested relationships
     level = Nested('LevelSchema', dump_only=True, exclude=['units'])
     quizzes = Nested('QuizSchema', many=True, dump_only=True, exclude=['unit'])
@@ -103,6 +109,8 @@ class StudentLevelHistorySchema(BaseSchema):
         model = StudentLevelHistory
 
 class QuizSchema(BaseSchema):
+    unit_id = fields.Integer(dump_only=True)
+    
     # Nested relationships
     unit = Nested('UnitSchema', dump_only=True, exclude=['quizzes'])
     # Remove circular relationships - access through StudentLessonQuiz instead

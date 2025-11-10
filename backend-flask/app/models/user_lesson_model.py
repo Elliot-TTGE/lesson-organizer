@@ -1,5 +1,6 @@
 from app.models.base_model import BaseModel
 from app.db import db
+from sqlalchemy.orm import validates
 
 class UserLesson(BaseModel):
     __tablename__ = "user_lesson"
@@ -22,3 +23,15 @@ class UserLesson(BaseModel):
     
     user = db.relationship("User", back_populates="user_lesson_shares")
     lesson = db.relationship("Lesson", back_populates="user_shares")
+
+    @validates('user_id', 'lesson_id')
+    def validate_not_owner(self, key, value):
+        """Prevent sharing a lesson with its owner"""
+        # Only validate when both user_id and lesson_id are set
+        if hasattr(self, 'user_id') and hasattr(self, 'lesson_id'):
+            from app.models.lesson_model import Lesson
+            lesson = Lesson.query.get(self.lesson_id)
+            if lesson and lesson.owner_id == self.user_id:
+                raise ValueError("Cannot share a lesson with its owner")
+        return value
+

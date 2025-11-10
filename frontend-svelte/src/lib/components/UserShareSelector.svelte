@@ -18,6 +18,7 @@
 
   let { 
     lessonId,
+    ownerId = undefined,
     selectedShares = $bindable([]),
     userSearchTerm = $bindable(""),
     isEditing = false,
@@ -26,6 +27,7 @@
     children
   }: { 
     lessonId: number;
+    ownerId?: number;
     selectedShares: UserLesson[];
     userSearchTerm?: string;
     isEditing?: boolean;
@@ -83,14 +85,15 @@
     }
   }
 
-  // Filter users based on search term and exclude already shared
+  // Filter users based on search term and exclude already shared and owner
   function filterUsers() {
     const search = userSearchTerm.toLowerCase().trim();
     filteredUsers = availableUsers.filter((user: User) => {
       const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
       const email = user.email.toLowerCase();
       const isAlreadyShared = selectedShares.some((share: UserLesson) => share.user_id === user.id);
-      return (fullName.includes(search) || email.includes(search)) && !isAlreadyShared;
+      const isOwner = ownerId !== undefined && user.id === ownerId;
+      return (fullName.includes(search) || email.includes(search)) && !isAlreadyShared && !isOwner;
     });
   }
 

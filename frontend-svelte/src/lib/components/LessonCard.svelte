@@ -850,6 +850,7 @@
           <div class="mt-4 pt-4 border-t border-secondary/20">
             <UserShareSelector 
               lessonId={lessonId}
+              ownerId={lesson.owner_id}
               bind:selectedShares={selectedShares}
               bind:userSearchTerm={userSearchTerm}
               isEditing={true}

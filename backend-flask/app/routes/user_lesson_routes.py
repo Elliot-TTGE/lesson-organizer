@@ -126,6 +126,10 @@ def create_user_lesson():
     if not target_user:
         return {"message": "User not found"}, 404
     
+    # Prevent users from sharing a lesson with themselves (the owner)
+    if lesson.owner_id == user_id:
+        return {"message": "Cannot share a lesson with its owner"}, 400
+    
     # Check if current user can manage this lesson (unless admin)
     if not current_user.is_admin():
         if not LessonService.can_user_manage_lesson(current_user.id, lesson_id):
