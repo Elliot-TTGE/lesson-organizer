@@ -27,7 +27,8 @@ class Lesson(BaseModel):
     
     user_shares = db.relationship(
         "UserLesson",
-        back_populates="lesson"
+        back_populates="lesson",
+        cascade="all, delete-orphan"
     )
     
     students = db.relationship(
