@@ -5,9 +5,10 @@ usage() {
   echo "Usage: $0 {MODE} [docker-compose-commands...]"
   echo ""
   echo "DOCKER COMMAND WRAPPERS:"
-  echo "  dev         - Development mode with hot reload (docker compose --env-file .env.dev)"
-  echo "  prod        - Production deployment (docker compose -f compose.prod.yml --env-file .env.prod)"
-  echo "  prod-local  - Test production builds locally (docker compose -f compose.prod.local.yml --env-file .env.prod.local)"
+  echo "  dev            - Development mode with hot reload (docker compose --env-file .env.dev)"
+  echo "  prod           - Production deployment (docker compose -f compose.prod.yml --env-file .env.prod)"
+  echo "  prod-tailscale - Production deployment with Tailscale (docker compose -f compose.prod.tailscale.yml --env-file .env.prod.tailscale)"
+  echo "  prod-local     - Test production builds locally (docker compose -f compose.prod.local.yml --env-file .env.prod.local)"
   echo ""
   echo "EXCLUSIVE COMMANDS:"
   echo "  clean       - Clean up all Docker containers, images, and volumes"
@@ -15,6 +16,8 @@ usage() {
   echo ""
   echo "Examples:"
   echo "  $0 dev up -d                    # Start development environment in background"
+  echo "  $0 prod up -d                   # Deploy to production"
+  echo "  $0 prod-tailscale up -d         # Deploy to production with Tailscale"
   echo "  $0 prod-local build --no-cache  # Build production images locally without cache"
   echo "  $0 clean                        # Clean up Docker resources"
   echo "  $0 backup                       # Backup database"
@@ -37,6 +40,9 @@ case $MODE in
     ;;
   prod)
     BASE_COMMAND="docker compose -f compose.prod.yml --env-file .env.prod"
+    ;;
+  prod-tailscale)
+    BASE_COMMAND="docker compose -f compose.prod.tailscale.yml --env-file .env.prod.tailscale"
     ;;
   prod-local)
     BASE_COMMAND="docker compose -f compose.prod.local.yml --env-file .env.prod.local"
