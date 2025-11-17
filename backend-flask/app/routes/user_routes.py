@@ -4,6 +4,7 @@ from app.db import db
 from app.models.user_model import User
 from app.schemas.schemas import UserSchema
 from app.routes.utils import response_wrapper
+from app.limiter import limiter
 
 user_bp = Blueprint('user', __name__)
 
@@ -44,6 +45,7 @@ def get_users():
 
 @user_bp.route('/users', methods=['POST'])
 @jwt_required()
+@limiter.limit("10 per hour")
 @response_wrapper
 def create_user():
     """
@@ -148,6 +150,7 @@ def update_user(id):
 
 @user_bp.route('/users/<int:id>', methods=['DELETE'])
 @jwt_required()
+@limiter.limit("20 per hour")
 @response_wrapper
 def delete_user(id):
     """

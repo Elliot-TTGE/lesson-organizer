@@ -5,6 +5,7 @@ from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from .db import db
+from .limiter import limiter
 from .routes.lesson_routes import lesson_bp
 from .routes.student_routes import student_bp
 from .routes.curriculum_routes import curriculum_bp
@@ -44,6 +45,9 @@ security = Security(app, user_datastore)
 
 
 jwt = JWTManager(app)
+
+# Initialize rate limiter
+limiter.init_app(app)
 
 # Configure CORS
 CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})

@@ -9,10 +9,12 @@ from flask_jwt_extended import (
 )
 from datetime import datetime, timedelta, timezone
 from app.models.user_model import User
+from app.limiter import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per 15 minutes")
 def login():
     email = request.json.get('email')
     password = request.json.get('password')
