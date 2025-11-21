@@ -396,12 +396,17 @@
 
   function canUserCopy(lesson: Lesson): boolean {
     const perm = getUserPermission(lesson);
-    return perm === 'owner' || perm === 'edit' || perm === 'manage';
+    return perm === 'owner' || perm === 'manage';
   }
 
   function canUserManageSharing(lesson: Lesson): boolean {
     const perm = getUserPermission(lesson);
     return perm === 'owner' || perm === 'manage';
+  }
+
+  function canUserUnsubscribe(lesson: Lesson): boolean {
+    // All shared users (view, edit, manage) can unsubscribe, but not owner
+    return isLessonSharedWithUser(lesson);
   }
 
   function hasLessonAccess(lesson: Lesson): boolean {
@@ -532,8 +537,8 @@
           </button>
         {/if}
         
-        <!-- Stop sharing button - only show if this is a shared lesson -->
-        {#if isLessonSharedWithUser(lesson)}
+        <!-- Unsubscribe button - show for all shared users (view, edit, manage) -->
+        {#if canUserUnsubscribe(lesson)}
           <button onclick={() => showUnsubscribeModal = true} class="btn btn-warning btn-sm" title="Stop receiving this shared lesson">
             ×
           </button>
@@ -627,15 +632,6 @@
               <p class="text-xs text-secondary opacity-70 truncate">{date}</p>
             </div>
         </div>
-        
-        <!-- Shared lesson indicator -->
-        {#if isLessonSharedWithUser(lesson) && currentUserShare}
-          <div class="flex items-center gap-2">
-            <span class="badge badge-outline badge-sm">
-              Shared - {getPermissionLabel(currentUserShare.permission_level)}
-            </span>
-          </div>
-        {/if}
       </div>
     {/if}
 
@@ -783,10 +779,10 @@
       {/if}
     </div>
 
-    <!-- Lesson Access Section - show when editing or when shares exist -->
-    {#if isEditing || selectedShares.length > 0}
+    <!-- Lesson Access Section - show when user has access to the lesson -->
+    {#if hasLessonAccess(lesson)}
       <div class="bg-neutral shadow-md rounded-lg min-h-24 mt-2 card-body">
-        <h2 class="mb-2 card-title text-secondary">Who Can See This Lesson</h2>
+        <h2 class="mb-2 card-title text-secondary">User Shares</h2>
         
         <div class="flex flex-wrap gap-2">
           <!-- Show lesson owner first -->
