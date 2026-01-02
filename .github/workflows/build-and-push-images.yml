@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - LO-120  # Remove once finished testing
+      - LO-121  # Remove once finished testing
 
 env:
   REGISTRY: ghcr.io
