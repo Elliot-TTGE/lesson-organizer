@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: ./backend-flask/
-      dockerfile: Dockerfile.backend
+    image: ghcr.io/elliot-ttge/lesson-organizer-backend:latest
     volumes:
       - backend_db:/app/instance
     networks:
@@ -17,11 +15,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend-svelte/
-      dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    image: ghcr.io/elliot-ttge/lesson-organizer-frontend:latest
     volumes:
       - frontend-cache:/app/node_modules/.cache
     command: npm run preview
