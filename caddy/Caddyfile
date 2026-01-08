@@ -1,8 +1,4 @@
-{
-	auto_https off
-}
-
-lessonorganizer.com {
+goal-english.com {
 	# Backend API - must come before frontend catch-all
 	reverse_proxy /api/* backend:4000
 	
