@@ -18,7 +18,6 @@ services:
     image: ghcr.io/elliot-ttge/lesson-organizer-frontend:latest
     volumes:
       - frontend-cache:/app/node_modules/.cache
-    command: npm run preview
     networks:
       - app-network
     depends_on:
