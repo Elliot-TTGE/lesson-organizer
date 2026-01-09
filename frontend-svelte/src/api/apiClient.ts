@@ -12,11 +12,12 @@ const getApiBaseUrl = (): string => {
         const port = window.location.port;
         
         // If accessed with explicit port (like :3000), assume direct access - use :4000
-        // If no port or standard ports (80/443), assume reverse proxy - use /api path
+        // If no port or standard ports (80/443), assume reverse proxy - use current origin
+        // (Caddy handles /api routing, so we use the same origin)
         if (port && port !== '80' && port !== '443') {
             return `${protocol}//${hostname}:4000`;
         } else {
-            return `${protocol}//${hostname}/api`;
+            return `${protocol}//${hostname}`;
         }
     }
     
