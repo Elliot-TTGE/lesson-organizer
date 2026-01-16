@@ -42,7 +42,9 @@ services:
     restart: unless-stopped
 
   caddy:
-    image: caddy:latest
+    build:
+      context: ./caddy
+      dockerfile: Dockerfile.caddy
     container_name: caddy
     networks:
       - app-network
@@ -53,6 +55,8 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
     depends_on:
       - backend
       - frontend

@@ -1,4 +1,9 @@
 goal-english.com {
+	# Use DNS-01 challenge with Cloudflare (works with proxy enabled)
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
 	# Backend API - must come before frontend catch-all
 	reverse_proxy /api/* backend:4000
 	
