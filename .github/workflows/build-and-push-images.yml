@@ -10,6 +10,7 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: ${{ github.repository }}-backend
   FRONTEND_IMAGE_NAME: ${{ github.repository }}-frontend
+  CADDY_IMAGE_NAME: ${{ github.repository }}-caddy
 
 jobs:
   build-and-push-backend:
@@ -78,6 +79,41 @@ jobs:
         with:
           context: ./frontend-svelte
           file: ./frontend-svelte/Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  build-and-push-caddy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.CADDY_IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - name: Build and push Caddy Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./caddy
+          file: ./caddy/Dockerfile.caddy
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

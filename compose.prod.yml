@@ -42,9 +42,7 @@ services:
     restart: unless-stopped
 
   caddy:
-    build:
-      context: ./caddy
-      dockerfile: Dockerfile.caddy
+    image: ghcr.io/elliot-ttge/lesson-organizer-caddy:latest
     container_name: caddy
     networks:
       - app-network
