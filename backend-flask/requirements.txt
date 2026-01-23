@@ -7,4 +7,5 @@ marshmallow-sqlalchemy>=1.4.2
 Flask-Migrate
 SQLAlchemy>=2.0.37
 Flask-SQLAlchemy>=3.1.1
+gunicorn>=21.2.0
 setuptools
