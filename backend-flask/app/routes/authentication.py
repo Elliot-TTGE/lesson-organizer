@@ -19,7 +19,7 @@ def login():
     user = User.query.filter_by(email=email).first()
     
     if user and user.verify_password(password):
-        access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=4))
+        access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=5))
         
         response = jsonify(status='success', data={'access_token': access_token})
         set_access_cookies(response, access_token)
