@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate, upgrade
@@ -24,15 +25,17 @@ from .routes.authentication import auth_bp, refresh_expiring_jwts
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lesson_organizer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'super-secret'
-app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-salt'
-app.config['JWT_SECRET_KEY'] = 'another-super-secret'
+
+# Security configuration - always required from environment
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECURITY_PASSWORD_SALT']
+app.config['JWT_SECRET_KEY'] = os.environ['JWT_SECRET_KEY']
 
 # Initialize JWT
 app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
-app.config["JWT_COOKIE_SECURE"] = False # Set True in production
+app.config["JWT_COOKIE_SECURE"] = os.getenv('FLASK_ENV') == 'production'
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)

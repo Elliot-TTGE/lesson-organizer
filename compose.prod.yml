@@ -1,10 +1,6 @@
 services:
   backend:
-    build:
-      context: ./backend-flask/
-      dockerfile: Dockerfile.backend
-    ports:
-      - "4000:4000"
+    image: ghcr.io/elliot-ttge/lesson-organizer-backend:latest
     volumes:
       - backend_db:/app/instance
     networks:
@@ -16,19 +12,15 @@ services:
       - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - SECURITY_PASSWORD_SALT=${SECURITY_PASSWORD_SALT}
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend-svelte/
-      dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
-    ports: 
-      - "3000:4173"
+    image: ghcr.io/elliot-ttge/lesson-organizer-frontend:latest
     volumes:
       - frontend-cache:/app/node_modules/.cache
-    command: npm run preview
     networks:
       - app-network
     depends_on:
@@ -50,6 +42,25 @@ services:
       '
     depends_on:
       - backend
+    restart: unless-stopped
+
+  caddy:
+    image: ghcr.io/elliot-ttge/lesson-organizer-caddy:latest
+    container_name: caddy
+    networks:
+      - app-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+    depends_on:
+      - backend
+      - frontend
     restart: unless-stopped
 
 networks:
