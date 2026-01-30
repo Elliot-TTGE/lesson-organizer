@@ -178,6 +178,13 @@ usage() {
   echo -e "                   Saves to: ./db_backups/backup-{timestamp}.db"
   echo -e "                   Automatically removes backups older than 30 days"
   echo ""
+  echo -e "  ${YELLOW}update-admin${NC}   - Update admin user credentials"
+  echo -e "                   Usage: $0 update-admin [dev|prod]"
+  echo -e "                   Defaults to 'dev' if no mode specified"
+  echo -e "                   Requires in .env file: ADMIN_EMAIL_OLD, ADMIN_EMAIL,"
+  echo -e "                                          ADMIN_PASSWORD, ADMIN_FIRST_NAME,"
+  echo -e "                                          ADMIN_LAST_NAME"
+  echo ""
   echo -e "  ${YELLOW}restore${NC}        - Restore database from backup (with safety checks)"
   echo -e "                   Usage: $0 restore [mode] [backup-file]"
   echo -e ""
@@ -360,6 +367,116 @@ case $MODE in
       echo -e "${GREEN}✓ Cleanup complete.${NC}"
     else
       echo -e "${YELLOW}Cleanup cancelled.${NC}"
+    fi
+    exit 0
+    ;;
+  
+  update-admin)
+    # Parse optional mode parameter
+    UPDATE_MODE="$1"
+    if [ -z "$UPDATE_MODE" ]; then
+      UPDATE_MODE="dev"
+    fi
+    
+    # Validate mode
+    if [ "$UPDATE_MODE" != "dev" ] && [ "$UPDATE_MODE" != "prod" ]; then
+      echo -e "${RED}Error:${NC} Invalid mode '$UPDATE_MODE'"
+      echo -e "${YELLOW}Usage: $0 update-admin [dev|prod]${NC}"
+      exit 1
+    fi
+    
+    # Load environment variables from appropriate .env file
+    ENV_FILE=".env.$UPDATE_MODE"
+    if [ ! -f "$ENV_FILE" ]; then
+      echo -e "${RED}Error:${NC} Environment file '$ENV_FILE' not found"
+      exit 1
+    fi
+    
+    echo -e "${GREEN}[UPDATE ADMIN]${NC} Updating admin user credentials (${UPDATE_MODE} environment)..."
+    
+    # Source the env file
+    set -a
+    source "$ENV_FILE"
+    set +a
+    
+    # Check if ADMIN_EMAIL_OLD is set
+    if [ -z "$ADMIN_EMAIL_OLD" ]; then
+      echo -e "${RED}✗ ADMIN_EMAIL_OLD environment variable not set${NC}"
+      echo -e "${YELLOW}Set ADMIN_EMAIL_OLD to the current admin email address in your .env file${NC}"
+      exit 1
+    fi
+    
+    # Check if new credentials are set
+    if [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ] || [ -z "$ADMIN_FIRST_NAME" ] || [ -z "$ADMIN_LAST_NAME" ]; then
+      echo -e "${RED}✗ Missing required environment variables${NC}"
+      echo -e "${YELLOW}Ensure ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_FIRST_NAME, ADMIN_LAST_NAME are set in your .env file${NC}"
+      exit 1
+    fi
+    
+    echo -e "${YELLOW}This will update the admin account:${NC}"
+    echo -e "  Old email: ${ADMIN_EMAIL_OLD}"
+    echo -e "  New email: ${ADMIN_EMAIL}"
+    echo -e "  New first name: ${ADMIN_FIRST_NAME}"
+    echo -e "  New last name: ${ADMIN_LAST_NAME}"
+    echo -e "  New password: [hidden]"
+    echo ""
+    read -p "Continue? (yes/no): " CONFIRM
+    
+    if [ "$CONFIRM" != "yes" ]; then
+      echo -e "${YELLOW}Update cancelled.${NC}"
+      exit 0
+    fi
+    
+    # Run the update command in the backend container
+    docker exec -it lesson-organizer-backend-1 python -c "
+import os
+import sys
+from werkzeug.security import generate_password_hash
+from app.main import app, db
+from app.models.user_model import User
+
+with app.app_context():
+    old_email = '${ADMIN_EMAIL_OLD}'
+    new_email = '${ADMIN_EMAIL}'
+    new_password = '${ADMIN_PASSWORD}'
+    new_first_name = '${ADMIN_FIRST_NAME}'
+    new_last_name = '${ADMIN_LAST_NAME}'
+    
+    # Find the admin user
+    admin = User.query.filter_by(email=old_email, role='admin').first()
+    
+    if not admin:
+        print(f'✗ Admin user with email {old_email} not found')
+        sys.exit(1)
+    
+    print(f'Found admin user: {admin.email}')
+    
+    # Check if new email already exists (and it's not the same user)
+    if new_email != old_email:
+        existing = User.query.filter_by(email=new_email).first()
+        if existing and existing.id != admin.id:
+            print(f'✗ Email {new_email} already exists')
+            sys.exit(1)
+    
+    # Update credentials
+    admin.email = new_email
+    admin.password = generate_password_hash(new_password)
+    admin.first_name = new_first_name
+    admin.last_name = new_last_name
+    
+    db.session.commit()
+    print('✓ Admin credentials updated successfully!')
+    print(f'  Email: {admin.email}')
+    print(f'  Name: {admin.first_name} {admin.last_name}')
+"
+    
+    if [ $? -eq 0 ]; then
+      echo ""
+      echo -e "${GREEN}✓ Admin update complete${NC}"
+    else
+      echo ""
+      echo -e "${RED}✗ Admin update failed${NC}"
+      exit 1
     fi
     exit 0
     ;;
