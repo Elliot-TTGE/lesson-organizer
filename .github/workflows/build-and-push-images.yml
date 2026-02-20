@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - LO-120  # Remove once merged to main
 
 env:
   REGISTRY: ghcr.io
