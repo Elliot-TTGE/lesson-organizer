@@ -1,11 +1,12 @@
-{
-	auto_https off
-}
-
-lessonorganizer.com {
-	reverse_proxy frontend:5173
-}
-
-api.lessonorganizer.com {
-	reverse_proxy backend:4000
+goal-english.com {
+	# Use DNS-01 challenge with Cloudflare (works with proxy enabled)
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	
+	# Backend API - must come before frontend catch-all
+	reverse_proxy /api/* backend:4000
+	
+	# Frontend - catch-all for everything else
+	reverse_proxy * frontend:4173
 }

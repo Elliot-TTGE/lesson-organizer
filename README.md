@@ -1,71 +1,390 @@
-**A lesson organizer for Toward the Goal English**
+# Lesson Organizer
+
+A full-stack web application for managing English language learning programs at Toward the Goal English. The system tracks student progress across curriculum levels, manages lesson plans, and provides quiz assessments with comprehensive reporting.
+
+## Overview
+
+**Lesson Organizer** is a production-ready education management platform that handles student enrollment, curriculum progression, lesson scheduling, and assessment tracking. Built with modern web technologies and deployed with containerization, the application supports multiple instructors managing dozens of students across structured curriculum levels.
+
+### Key Features
+
+- **Student Management**: Track student enrollment, current level, lesson history, and status changes
+- **Curriculum Organization**: Hierarchical structure (Curriculum → Levels → Units → Lessons)
+- **Lesson Scheduling**: Assign lessons to students with completion tracking
+- **Quiz System**: Create and administer quizzes with automatic scoring
+- **Progress Tracking**: Monitor student advancement through curriculum levels
+- **Multi-user Support**: Role-based access (Admin, Instructor, Assistant)
+- **Rate Limiting**: Per-IP and per-user API rate limiting to prevent abuse
+- **RESTful API**: Full backend API for programmatic access
+
+## Tech Stack
+
+### Backend
+- **Python 3.12** with **Flask 3.1** - Web framework
+- **SQLAlchemy 2.0** - ORM with SQLite database
+- **Flask-JWT-Extended** - JWT authentication with secure cookie-based sessions
+- **Flask-Security** - User management and password hashing (bcrypt)
+- **Flask-Limiter** - Rate limiting with Redis backend
+- **Marshmallow** - Request/response serialization and validation
+- **Gunicorn** - Production WSGI server with multi-worker support
+- **Flask-Migrate** - Database migration management (Alembic)
+- **Redis 7** - Rate limit storage and session management
+
+### Frontend
+- **SvelteKit 2.15** with **Svelte 5** - Modern reactive framework using Runes
+- **TypeScript 5.7** - Type-safe development
+- **Tailwind CSS 4.0** - Utility-first styling
+- **DaisyUI 5.0** - UI component library
+- **Vite 6.2** - Fast build tooling
+
+### Infrastructure
+- **Docker** & **Docker Compose** - Containerization and orchestration
+- **Caddy 2** - Reverse proxy with automatic HTTPS (Let's Encrypt)
+- **GitHub Actions** - CI/CD pipeline
+- **Tailscale** - Secure remote access (optional)
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│         Caddy Reverse Proxy (HTTPS)         │
+│              goal-english.com               │
+└────────────┬──────────────┬─────────────────┘
+             │              │
+    ┌────────▼──────┐  ┌────▼──────────┐
+    │   Frontend    │  │    Backend    │
+    │ SvelteKit +   │  │  Flask API +  │
+    │   Node.js     │  │   Gunicorn    │
+    │  (Port 4173)  │  │  (Port 4000)  │
+    └───────────────┘  └───────┬───────┘
+                               │
+                    ┌──────────┼──────────┐
+                    │          │          │
+            ┌───────▼──────┐   │  ┌───────▼───────┐
+            │  SQLite DB   │   │  │  Redis Cache  │
+            │   (Volume)   │   │  │ Rate Limiting │
+            └──────────────┘   │  └───────────────┘
+                               │
+                     (4 Gunicorn Workers)
+```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Docker
-- Docker Compose
+- **Docker** (20.10+) and **Docker Compose** (2.0+)
+- **Python 3.10+** (for local development without Docker)
+- **Node.js 18+** (for frontend development)
 
-### Setup
+### Initial Setup
 
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/yourusername/lesson-organizer.git
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Elliot-TTGE/lesson-organizer.git
    cd lesson-organizer
    ```
 
-2. Create environment variable files:
-   - `.env.dev` for development:
-     ```sh
-     cp .env.example .env.dev
-     # Edit .env.dev with your development environment variables
-     ```
+2. **Generate security secrets**:
+   ```bash
+   # Generate three unique secrets (run three times)
+   python3 -c "import secrets; print(secrets.token_hex(32))"
+   ```
 
-   - `.env.prod` for production:
-     ```sh
-     cp .env.example .env.prod
-     # Edit .env.prod with your production environment variables
-     ```
+3. **Configure environment variables**:
+   
+   Create `.env.dev` for local development:
+   ```bash
+   cp .env.example .env.dev
+   ```
+   
+   Edit `.env.dev` and set:
+   - Admin user credentials (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, etc.)
+   - Security secrets (paste generated values from step 2):
+     - `SECRET_KEY` - Flask session encryption
+     - `JWT_SECRET_KEY` - JWT token signing
+     - `SECURITY_PASSWORD_SALT` - Password reset tokens
+   - `VITE_API_BASE_URL=http://localhost:4000` - Backend API URL for frontend
+   
+   For production, create `.env.prod` with production values:
+   ```bash
+   cp .env.example .env.prod
+   # Edit with production credentials and secrets
+   # Add CLOUDFLARE_API_TOKEN if using Caddy with Cloudflare DNS
+   ```
 
-3. Make the script executable:
-   ```sh
+4. **Make run script executable**:
+   ```bash
    chmod +x run.sh
    ```
 
 ### Running the Application
 
-To run the application, use the `run.sh` script with the appropriate mode:
+#### Development Mode
 
-- For development:
-  ```sh
-  ./run.sh dev
-  ```
-
-- For production:
-  ```sh
-  ./run.sh prod
-  ```
-
-### Stopping the Services
-
-To stop the services, run:
-
-```sh
-docker-compose down
+Start with hot-reload for both frontend and backend:
+```bash
+./run.sh dev up -d
+# Or manually: docker compose --env-file .env.dev up -d
 ```
 
-For production, use:
-
-```sh
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
+Check status:
+```bash
+./run.sh dev ps
 ```
 
-### Additional Information
+View logs:
+```bash
+./run.sh dev logs -f
+```
 
-- The backend service is built using Python and Flask.
-- The frontend service is built using Node.js and Svelte.
-- Tailscale is used for secure networking in production.
-- Caddy is used as a web server and reverse proxy in production.
+Stop services:
+```bash
+./run.sh dev down
+```
 
-For more detailed information, refer to the individual Dockerfiles and Docker Compose files.
+Access the application:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:4000
+- **API Docs**: http://localhost:4000/api/
+
+Development features:
+- Live code reloading (changes reflect immediately)
+- Detailed error pages with stack traces
+- Flask debugger enabled
+- Source maps for debugging
+
+#### Production Mode
+
+Build and run with production optimizations:
+```bash
+# Quick deployment (pulls latest images and starts)
+./run.sh deploy
+
+# Or manually:
+./run.sh prod pull      # Pull latest images
+./run.sh prod up -d     # Start in detached mode
+./run.sh prod ps        # Check status
+./run.sh prod logs -f   # View logs
+./run.sh prod down      # Stop services
+```
+
+Production features:
+- Gunicorn with 4 worker processes (concurrent request handling)
+- Minified and optimized frontend build
+- HTTPS via Caddy with automatic SSL certificates
+- Secure cookie settings enabled
+- No debugger or verbose errors
+- Redis for shared rate limiting across workers
+
+#### Production with Tailscale (Remote Access)
+
+For secure remote access without exposing ports:
+```bash
+# Set TS_AUTH_KEY in .env.prod.tailscale first
+./run.sh prod-tailscale up -d
+
+# Or use quick deployment:
+./run.sh deploy-ts
+```
+
+### Common Commands
+
+**Development:**
+```bash
+./run.sh dev up -d          # Start development environment
+./run.sh dev down           # Stop development environment
+./run.sh dev logs -f        # Follow logs
+./run.sh dev ps             # Check running containers
+./run.sh dev restart backend # Restart specific service
+```
+
+**Production:**
+```bash
+./run.sh deploy             # Pull latest images and deploy
+./run.sh prod up -d         # Start production
+./run.sh prod down          # Stop production
+./run.sh prod logs -f       # Follow logs
+./run.sh prod ps            # Check status
+```
+
+**Utilities:**
+```bash
+./run.sh backup             # Create database backup
+./run.sh restore            # Restore from backup (interactive)
+./run.sh clean              # Remove all containers and volumes
+```
+
+## Development Workflow
+
+### Database Migrations
+
+Database schema changes are managed with Flask-Migrate:
+
+```bash
+# Access backend container (development)
+./run.sh dev exec backend sh
+
+# Or in production:
+./run.sh prod exec backend sh
+
+# Inside the container:
+# Create a new migration after model changes
+flask db migrate -m "Description of changes"
+
+# Apply migrations
+flask db upgrade
+
+# Rollback last migration
+flask db downgrade
+```
+
+Migrations run automatically on container startup via `entrypoint.py`.
+
+### Project Structure
+
+```
+lesson-organizer/
+├── backend-flask/          # Flask API
+│   ├── app/
+│   │   ├── models/        # SQLAlchemy models
+│   │   ├── routes/        # API endpoints
+│   │   ├── schemas/       # Marshmallow schemas
+│   │   ├── services/      # Business logic
+│   │   └── data/          # Data initialization
+│   ├── migrations/        # Alembic migrations
+│   └── requirements.txt   # Python dependencies
+│
+├── frontend-svelte/       # SvelteKit app
+│   ├── src/
+│   │   ├── routes/       # Page components
+│   │   ├── lib/          # Shared components
+│   │   ├── api/          # API client
+│   │   └── types/        # TypeScript types
+│   └── package.json      # Node dependencies
+│
+├── caddy/                # Reverse proxy config
+├── .github/workflows/    # CI/CD pipelines
+└── compose*.yml          # Docker orchestration
+```
+
+### API Development
+
+The backend provides a RESTful API with the following endpoints:
+
+- `POST /api/login` - User authentication
+- `GET /api/students` - List all students
+- `GET /api/lessons` - List all lessons
+- `GET /api/curriculum` - Get curriculum structure
+- `POST /api/student-lesson-quiz` - Submit quiz results
+
+All protected endpoints require JWT authentication via HTTP-only cookies.
+
+### Environment-Specific Configuration
+
+The application uses different configurations per environment:
+
+| File | Environment | Purpose |
+|------|-------------|---------|
+| `.env.local` | Local development | Hot reload, verbose logging |
+| `.env.prod.local` | Local production test | Test production build locally |
+| `.env.prod` | Production deployment | Live environment |
+| `.env.prod.tailscale` | Remote Tailscale access | Secure remote deployment |
+
+## Security Features
+
+- **JWT Authentication**: Secure, stateless authentication with 5-hour token expiration
+- **HTTP-Only Cookies**: Tokens stored securely, inaccessible to JavaScript (prevents XSS)
+- **Bcrypt Password Hashing**: Industry-standard password protection
+- **Environment-based Secrets**: No hardcoded credentials in source code
+- **Automatic HTTPS**: Caddy handles SSL certificate provisioning and renewal
+- **CORS Protection**: Configured for specific origins
+- **Secure Cookie Settings**: HTTPS-only cookies in production
+
+## Deployment
+
+### Local Production Testing
+
+Test production build locally before deploying:
+```bash
+# Build and test production images locally
+./run.sh dev-test up --build -d
+
+# Or manually:
+docker compose -f compose.prod.local.yml --env-file .env.prod.local up --build -d
+```
+
+This mode builds production images but doesn't require Caddy/SSL configuration.
+
+### Production Deployment
+
+1. **Set up production server** with Docker and Docker Compose installed
+
+2. **Configure environment**:
+   - Copy `.env.prod` to server with production values
+   - Set domain in `caddy/Caddyfile`
+   - Add DNS A record pointing to server IP
+   - Set `CLOUDFLARE_API_TOKEN` if using Cloudflare DNS challenge
+
+3. **Deploy**:
+   ```bash
+   # Pull latest code
+   git pull origin main
+   
+   # Deploy using run.sh (recommended)
+   ./run.sh deploy
+   
+   # Or manually:
+   ./run.sh prod pull         # Pull latest images from GHCR
+   ./run.sh prod up -d        # Start services
+   ```
+
+4. **Verify deployment**:
+   - Caddy automatically provisions SSL certificate
+   - Access at https://your-domain.com
+   - Check status: `./run.sh prod ps`
+   - View logs: `./run.sh prod logs -f`
+
+### CI/CD Pipeline
+
+GitHub Actions automatically:
+- Runs on push to `main` branch
+- Builds Docker images
+- Runs linting and type checking
+- Builds production frontend
+- Pushes images to GitHub Container Registry
+
+## Database Schema
+
+The application uses a relational database with the following core models:
+
+- **User**: Instructor/admin accounts with role-based permissions
+- **Student**: Enrolled students with status tracking
+- **Curriculum**: Top-level curriculum (e.g., "Elementary English")
+- **Level**: Curriculum levels (e.g., "Level 1", "Level 2")
+- **Unit**: Units within levels (e.g., "Unit 1: Greetings")
+- **Lesson**: Individual lessons with content
+- **Quiz**: Assessments with questions
+- **StudentLessonQuiz**: Student quiz attempts and scores
+- **StudentLevelHistory**: Student progression through levels
+- **StudentStatusHistory**: Changes in student enrollment status
+
+## Performance Considerations
+
+- **Backend**: Gunicorn with 4 workers handles concurrent requests efficiently
+- **Frontend**: Static asset generation with SvelteKit for fast initial loads
+- **Database**: SQLite suitable for small-to-medium deployments (dozens of concurrent users)
+- **Caching**: Static assets cached by Caddy with proper headers
+
+For larger deployments (100+ concurrent users), consider:
+- Migrating to PostgreSQL
+- Increasing Gunicorn workers
+- Adding Redis for session storage
+- Implementing CDN for static assets
+
+## Contributing
+
+This is a personal project for Toward the Goal English. For questions or suggestions, please open an issue.
+
+## License
+
+All rights reserved. This software is proprietary to Toward the Goal English.

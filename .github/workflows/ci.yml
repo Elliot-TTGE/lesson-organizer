@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - LO-83
   pull_request:
     branches:
       - main
-      - LO-83
 
 jobs:
   build:
@@ -20,6 +18,9 @@ jobs:
       ADMIN_FIRST_NAME: "Admin"
       ADMIN_LAST_NAME: "User"
       VITE_API_BASE_URL: "http://localhost:4000"
+      SECRET_KEY: "test-secret-key-for-ci-only"
+      JWT_SECRET_KEY: "test-jwt-secret-key-for-ci-only"
+      SECURITY_PASSWORD_SALT: "test-security-salt-for-ci-only"
 
     services:
       docker:

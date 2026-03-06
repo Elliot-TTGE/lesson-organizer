@@ -1,10 +1,13 @@
+import os
 from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate, upgrade
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_jwt_extended import JWTManager
+from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import timedelta
 from .db import db
+from .limiter import limiter
 from .routes.lesson_routes import lesson_bp
 from .routes.student_routes import student_bp
 from .routes.curriculum_routes import curriculum_bp
@@ -23,15 +26,27 @@ from .routes.authentication import auth_bp, refresh_expiring_jwts
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lesson_organizer.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'super-secret'
-app.config['SECURITY_PASSWORD_SALT'] = 'super-secret-salt'
-app.config['JWT_SECRET_KEY'] = 'another-super-secret'
+
+# Security configuration - always required from environment
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+app.config['SECURITY_PASSWORD_SALT'] = os.environ['SECURITY_PASSWORD_SALT']
+app.config['JWT_SECRET_KEY'] = os.environ['JWT_SECRET_KEY']
 
 # Initialize JWT
 app.config['JWT_VERIFY_SUB'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
-app.config["JWT_COOKIE_SECURE"] = False # Set True in production
+app.config["JWT_COOKIE_SECURE"] = os.getenv('FLASK_ENV') == 'production'
+
+# Configure ProxyFix to trust Caddy reverse proxy headers
+# This allows Flask to see real client IPs from X-Forwarded-For
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,        # Trust 1 proxy for X-Forwarded-For
+    x_proto=1,      # Trust 1 proxy for X-Forwarded-Proto
+    x_host=1,       # Trust 1 proxy for X-Forwarded-Host
+    x_prefix=0      # Don't trust X-Forwarded-Prefix
+)
 
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
@@ -44,6 +59,9 @@ security = Security(app, user_datastore)
 
 
 jwt = JWTManager(app)
+
+# Initialize rate limiter
+limiter.init_app(app)
 
 # Configure CORS
 CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})

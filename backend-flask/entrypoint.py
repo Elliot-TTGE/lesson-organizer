@@ -31,5 +31,4 @@ if __name__ == '__main__':
         #if load_demo:
             #load_demo_data()
 
-    # Start the Flask application
-    app.run(host='0.0.0.0', port=4000)
+    print("Initialization complete. Server will be started by Dockerfile CMD.")

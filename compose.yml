@@ -17,6 +17,10 @@ services:
       - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - SECURITY_PASSWORD_SALT=${SECURITY_PASSWORD_SALT}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     restart: unless-stopped
 
   frontend:
@@ -39,6 +43,15 @@ services:
       - NODE_ENV=development
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    networks:
+      - app-network
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
 
 
 
@@ -52,3 +65,4 @@ volumes:
   frontend-cache:
   caddy_data:
   caddy_config:
+  redis_data:

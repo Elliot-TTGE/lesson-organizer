@@ -4,6 +4,7 @@ from app.db import db
 from app.models.user_model import User
 from app.schemas.schemas import UserSchema
 from app.routes.utils import response_wrapper
+from app.limiter import limiter
 
 user_bp = Blueprint('user', __name__)
 
@@ -42,8 +43,9 @@ def get_users():
     schema = UserSchema(many=True)
     return schema.dump(users), 200
 
-@user_bp.route('/users', methods=['POST'])
+#@user_bp.route('/users', methods=['POST']) # Un-comment when updating permissions for users
 @jwt_required()
+@limiter.limit("10 per hour")
 @response_wrapper
 def create_user():
     """
@@ -94,7 +96,7 @@ def create_user():
     db.session.commit()
     return schema.dump(user), 201
 
-@user_bp.route('/users/<int:id>', methods=['PUT'])
+#@user_bp.route('/users/<int:id>', methods=['PUT']) # Un-comment when updating permissions for users
 @jwt_required()
 @response_wrapper
 def update_user(id):
@@ -146,8 +148,9 @@ def update_user(id):
     db.session.commit()
     return schema.dump(updated_user), 200
 
-@user_bp.route('/users/<int:id>', methods=['DELETE'])
+#@user_bp.route('/users/<int:id>', methods=['DELETE']) # Un-comment when updating permissions for users
 @jwt_required()
+@limiter.limit("20 per hour")
 @response_wrapper
 def delete_user(id):
     """

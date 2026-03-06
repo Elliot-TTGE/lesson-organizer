@@ -9,17 +9,22 @@ from flask_jwt_extended import (
 )
 from datetime import datetime, timedelta, timezone
 from app.models.user_model import User
+from app.limiter import limiter
+
+ACCESS_TOKEN_EXPIRES = timedelta(hours=5)
+REFRESH_THRESHOLD = timedelta(hours=2)
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("5 per 15 minutes")
 def login():
     email = request.json.get('email')
     password = request.json.get('password')
     user = User.query.filter_by(email=email).first()
     
     if user and user.verify_password(password):
-        access_token = create_access_token(identity=user.id, expires_delta=timedelta(hours=4))
+        access_token = create_access_token(identity=user.id, expires_delta=ACCESS_TOKEN_EXPIRES)
         
         response = jsonify(status='success', data={'access_token': access_token})
         set_access_cookies(response, access_token)
@@ -40,9 +45,9 @@ def refresh_expiring_jwts(response):
         
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now(timezone.utc)
-        target_timestamp = datetime.timestamp(now + timedelta(hours=2))
+        target_timestamp = datetime.timestamp(now + REFRESH_THRESHOLD)
         if target_timestamp > exp_timestamp:
-            access_token = create_access_token(identity=get_jwt_identity(), expires_delta=timedelta(hours=4))
+            access_token = create_access_token(identity=get_jwt_identity(), expires_delta=ACCESS_TOKEN_EXPIRES)
             set_access_cookies(response, access_token)
         return response
     except (RuntimeError, KeyError):

@@ -1,4 +1,31 @@
-const BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
+// Determine API URL with fallback logic
+const getApiBaseUrl = (): string => {
+    // Priority 1: Build-time environment variable
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+    
+    // Priority 2: Auto-detection based on access method
+    if (typeof window !== 'undefined' && import.meta.env.MODE === 'production') {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        
+        // If accessed with explicit port (like :3000), assume direct access - use :4000
+        // If no port or standard ports (80/443), assume reverse proxy - use current origin
+        // (Caddy handles /api routing, so we use the same origin)
+        if (port && port !== '80' && port !== '443') {
+            return `${protocol}//${hostname}:4000`;
+        } else {
+            return `${protocol}//${hostname}`;
+        }
+    }
+    
+    // Priority 3: Development default
+    return 'http://localhost:4000';
+};
+
+const BASE_URL: string = getApiBaseUrl();
 
 export interface QueryParams {
     [key: string]: string | number | boolean;
