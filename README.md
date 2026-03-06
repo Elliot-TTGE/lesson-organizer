@@ -14,6 +14,7 @@ A full-stack web application for managing English language learning programs at 
 - **Quiz System**: Create and administer quizzes with automatic scoring
 - **Progress Tracking**: Monitor student advancement through curriculum levels
 - **Multi-user Support**: Role-based access (Admin, Instructor, Assistant)
+- **Rate Limiting**: Per-IP and per-user API rate limiting to prevent abuse
 - **RESTful API**: Full backend API for programmatic access
 
 ## Tech Stack
@@ -23,9 +24,11 @@ A full-stack web application for managing English language learning programs at 
 - **SQLAlchemy 2.0** - ORM with SQLite database
 - **Flask-JWT-Extended** - JWT authentication with secure cookie-based sessions
 - **Flask-Security** - User management and password hashing (bcrypt)
+- **Flask-Limiter** - Rate limiting with Redis backend
 - **Marshmallow** - Request/response serialization and validation
 - **Gunicorn** - Production WSGI server with multi-worker support
 - **Flask-Migrate** - Database migration management (Alembic)
+- **Redis 7** - Rate limit storage and session management
 
 ### Frontend
 - **SvelteKit 2.15** with **Svelte 5** - Modern reactive framework using Runes
@@ -48,17 +51,21 @@ A full-stack web application for managing English language learning programs at 
 │              goal-english.com               │
 └────────────┬──────────────┬─────────────────┘
              │              │
-    ┌────────▼──────┐  ┌───▼───────────┐
+    ┌────────▼──────┐  ┌────▼──────────┐
     │   Frontend    │  │    Backend    │
     │ SvelteKit +   │  │  Flask API +  │
     │   Node.js     │  │   Gunicorn    │
     │  (Port 4173)  │  │  (Port 4000)  │
     └───────────────┘  └───────┬───────┘
                                │
-                       ┌───────▼────────┐
-                       │  SQLite DB     │
-                       │   (Volume)     │
-                       └────────────────┘
+                    ┌──────────┼──────────┐
+                    │          │          │
+            ┌───────▼──────┐   │  ┌───────▼───────┐
+            │  SQLite DB   │   │  │  Redis Cache  │
+            │   (Volume)   │   │  │ Rate Limiting │
+            └──────────────┘   │  └───────────────┘
+                               │
+                     (4 Gunicorn Workers)
 ```
 
 ## Getting Started
@@ -85,17 +92,18 @@ A full-stack web application for managing English language learning programs at 
 
 3. **Configure environment variables**:
    
-   Create `.env.local` for local development:
+   Create `.env.dev` for local development:
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env.dev
    ```
    
-   Edit `.env.local` and set:
+   Edit `.env.dev` and set:
    - Admin user credentials (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, etc.)
    - Security secrets (paste generated values from step 2):
      - `SECRET_KEY` - Flask session encryption
      - `JWT_SECRET_KEY` - JWT token signing
      - `SECURITY_PASSWORD_SALT` - Password reset tokens
+   - `VITE_API_BASE_URL=http://localhost:4000` - Backend API URL for frontend
    
    For production, create `.env.prod` with production values:
    ```bash
@@ -115,8 +123,23 @@ A full-stack web application for managing English language learning programs at 
 
 Start with hot-reload for both frontend and backend:
 ```bash
-./run.sh dev
-# Or: docker compose up
+./run.sh dev up -d
+# Or manually: docker compose --env-file .env.dev up -d
+```
+
+Check status:
+```bash
+./run.sh dev ps
+```
+
+View logs:
+```bash
+./run.sh dev logs -f
+```
+
+Stop services:
+```bash
+./run.sh dev down
 ```
 
 Access the application:
@@ -134,8 +157,15 @@ Development features:
 
 Build and run with production optimizations:
 ```bash
-./run.sh prod
-# Or: docker compose -f compose.prod.yml up
+# Quick deployment (pulls latest images and starts)
+./run.sh deploy
+
+# Or manually:
+./run.sh prod pull      # Pull latest images
+./run.sh prod up -d     # Start in detached mode
+./run.sh prod ps        # Check status
+./run.sh prod logs -f   # View logs
+./run.sh prod down      # Stop services
 ```
 
 Production features:
@@ -144,23 +174,44 @@ Production features:
 - HTTPS via Caddy with automatic SSL certificates
 - Secure cookie settings enabled
 - No debugger or verbose errors
+- Redis for shared rate limiting across workers
 
 #### Production with Tailscale (Remote Access)
 
 For secure remote access without exposing ports:
 ```bash
 # Set TS_AUTH_KEY in .env.prod.tailscale first
-docker compose -f compose.prod.tailscale.yml up
+./run.sh prod-tailscale up -d
+
+# Or use quick deployment:
+./run.sh deploy-ts
 ```
 
-### Stopping Services
+### Common Commands
 
+**Development:**
 ```bash
-# Development
-docker compose down
+./run.sh dev up -d          # Start development environment
+./run.sh dev down           # Stop development environment
+./run.sh dev logs -f        # Follow logs
+./run.sh dev ps             # Check running containers
+./run.sh dev restart backend # Restart specific service
+```
 
-# Production
-docker compose -f compose.prod.yml down
+**Production:**
+```bash
+./run.sh deploy             # Pull latest images and deploy
+./run.sh prod up -d         # Start production
+./run.sh prod down          # Stop production
+./run.sh prod logs -f       # Follow logs
+./run.sh prod ps            # Check status
+```
+
+**Utilities:**
+```bash
+./run.sh backup             # Create database backup
+./run.sh restore            # Restore from backup (interactive)
+./run.sh clean              # Remove all containers and volumes
 ```
 
 ## Development Workflow
@@ -170,9 +221,13 @@ docker compose -f compose.prod.yml down
 Database schema changes are managed with Flask-Migrate:
 
 ```bash
-# Access backend container
-docker compose exec backend sh
+# Access backend container (development)
+./run.sh dev exec backend sh
 
+# Or in production:
+./run.sh prod exec backend sh
+
+# Inside the container:
 # Create a new migration after model changes
 flask db migrate -m "Description of changes"
 
@@ -249,33 +304,45 @@ The application uses different configurations per environment:
 
 ### Local Production Testing
 
-Test production build without deploying:
+Test production build locally before deploying:
 ```bash
-docker compose -f compose.prod.local.yml up --build
+# Build and test production images locally
+./run.sh dev-test up --build -d
+
+# Or manually:
+docker compose -f compose.prod.local.yml --env-file .env.prod.local up --build -d
 ```
+
+This mode builds production images but doesn't require Caddy/SSL configuration.
 
 ### Production Deployment
 
 1. **Set up production server** with Docker and Docker Compose installed
 
 2. **Configure environment**:
-   - Copy `.env.prod` to server
+   - Copy `.env.prod` to server with production values
    - Set domain in `caddy/Caddyfile`
    - Add DNS A record pointing to server IP
+   - Set `CLOUDFLARE_API_TOKEN` if using Cloudflare DNS challenge
 
 3. **Deploy**:
    ```bash
    # Pull latest code
    git pull origin main
    
-   # Build and start services
-   docker compose -f compose.prod.yml up --build -d
+   # Deploy using run.sh (recommended)
+   ./run.sh deploy
+   
+   # Or manually:
+   ./run.sh prod pull         # Pull latest images from GHCR
+   ./run.sh prod up -d        # Start services
    ```
 
 4. **Verify deployment**:
    - Caddy automatically provisions SSL certificate
    - Access at https://your-domain.com
-   - Check logs: `docker compose -f compose.prod.yml logs -f`
+   - Check status: `./run.sh prod ps`
+   - View logs: `./run.sh prod logs -f`
 
 ### CI/CD Pipeline
 
