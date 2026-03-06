@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Project name (uses COMPOSE_PROJECT_NAME from env or defaults to lesson-organizer)
+PROJECT_NAME="${COMPOSE_PROJECT_NAME:-lesson-organizer}"
+
 # Color codes for better readability
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,9 +16,10 @@ check_sqlite_integrity() {
   echo -e "${BLUE}[CHECK]${NC} Verifying database integrity..."
   
   # Use alpine image with sqlite3 package installed
+  # Properly quote backup_file to prevent command injection
   docker run --rm \
     -v "$(pwd)/db_backups":/backup \
-    alpine sh -c "apk add --no-cache sqlite > /dev/null 2>&1 && sqlite3 /backup/$backup_file 'PRAGMA integrity_check;'" > /tmp/integrity_check.txt 2>&1
+    alpine sh -c "apk add --no-cache sqlite > /dev/null 2>&1 && sqlite3 '/backup/$1' 'PRAGMA integrity_check;'" -- "$backup_file" > /tmp/integrity_check.txt 2>&1
   
   if [ $? -eq 0 ] && grep -q "ok" /tmp/integrity_check.txt; then
     echo -e "${GREEN}✓ Database integrity check passed${NC}"
@@ -70,7 +74,9 @@ list_backups() {
       local filename=$(basename "$backup")
       local size=$(ls -lh "$backup" | awk '{print $5}')
       local date=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M:%S" "$backup" 2>/dev/null || stat -c "%y" "$backup" 2>/dev/null | cut -d'.' -f1)
-      local age_days=$(echo "($(date +%s) - $(stat -f %m "$backup" 2>/dev/null || stat -c %Y "$backup" 2>/dev/null)) / 86400" | bc)
+      # Use awk instead of bc for better portability
+      local file_time=$(stat -f %m "$backup" 2>/dev/null || stat -c %Y "$backup" 2>/dev/null)
+      local age_days=$(awk -v now="$(date +%s)" -v file="$file_time" 'BEGIN {print int((now - file) / 86400)}')
       
       echo -e "  ${GREEN}$count.${NC} $filename" >&2
       echo -e "     Size: $size | Created: $date | Age: ${age_days} days" >&2
@@ -110,7 +116,9 @@ cleanup_old_backups() {
       local filename=$(basename "$backup")
       # Only process files matching the exact backup naming pattern: backup-YYYY-MM-DD_HH-MM-SS.db
       if [[ "$filename" =~ ^backup-[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2}\.db$ ]]; then
-        local age_days=$(echo "($(date +%s) - $(stat -f %m "$backup" 2>/dev/null || stat -c %Y "$backup" 2>/dev/null)) / 86400" | bc)
+        # Use awk instead of bc for better portability
+        local file_time=$(stat -f %m "$backup" 2>/dev/null || stat -c %Y "$backup" 2>/dev/null)
+        local age_days=$(awk -v now="$(date +%s)" -v file="$file_time" 'BEGIN {print int((now - file) / 86400)}')
         if [ $age_days -gt 30 ]; then
           echo -e "  Deleting: $filename (${age_days} days old)"
           rm "$backup"
@@ -427,8 +435,24 @@ case $MODE in
       exit 0
     fi
     
-    # Run the update command in the backend container
-    docker exec -it lesson-organizer-backend-1 python -c "
+    # Get the backend container name dynamically
+    BACKEND_CONTAINER="${COMPOSE_PROJECT_NAME}-backend-1"
+    
+    if ! docker ps --format '{{.Names}}' | grep -q "^${BACKEND_CONTAINER}$"; then
+      echo -e "${RED}✗ Backend container not running${NC}"
+      echo -e "${YELLOW}Start the backend first: ./run.sh $UPDATE_MODE up -d${NC}"
+      exit 1
+    fi
+    
+    # Pass credentials as environment variables to avoid injection
+    # Use docker exec -e to set env vars instead of string interpolation
+    docker exec -i \
+      -e ADMIN_EMAIL_OLD="$ADMIN_EMAIL_OLD" \
+      -e ADMIN_EMAIL="$ADMIN_EMAIL" \
+      -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+      -e ADMIN_FIRST_NAME="$ADMIN_FIRST_NAME" \
+      -e ADMIN_LAST_NAME="$ADMIN_LAST_NAME" \
+      "$BACKEND_CONTAINER" python -c '
 import os
 import sys
 from werkzeug.security import generate_password_hash
@@ -436,26 +460,26 @@ from app.main import app, db
 from app.models.user_model import User
 
 with app.app_context():
-    old_email = '${ADMIN_EMAIL_OLD}'
-    new_email = '${ADMIN_EMAIL}'
-    new_password = '${ADMIN_PASSWORD}'
-    new_first_name = '${ADMIN_FIRST_NAME}'
-    new_last_name = '${ADMIN_LAST_NAME}'
+    old_email = os.environ["ADMIN_EMAIL_OLD"]
+    new_email = os.environ["ADMIN_EMAIL"]
+    new_password = os.environ["ADMIN_PASSWORD"]
+    new_first_name = os.environ["ADMIN_FIRST_NAME"]
+    new_last_name = os.environ["ADMIN_LAST_NAME"]
     
     # Find the admin user
-    admin = User.query.filter_by(email=old_email, role='admin').first()
+    admin = User.query.filter_by(email=old_email, role="admin").first()
     
     if not admin:
-        print(f'✗ Admin user with email {old_email} not found')
+        print(f"✗ Admin user with email {old_email} not found")
         sys.exit(1)
     
-    print(f'Found admin user: {admin.email}')
+    print(f"Found admin user: {admin.email}")
     
-    # Check if new email already exists (and it's not the same user)
+    # Check if new email already exists (and is not the same user)
     if new_email != old_email:
         existing = User.query.filter_by(email=new_email).first()
         if existing and existing.id != admin.id:
-            print(f'✗ Email {new_email} already exists')
+            print(f"✗ Email {new_email} already exists")
             sys.exit(1)
     
     # Update credentials
@@ -465,10 +489,10 @@ with app.app_context():
     admin.last_name = new_last_name
     
     db.session.commit()
-    print('✓ Admin credentials updated successfully!')
-    print(f'  Email: {admin.email}')
-    print(f'  Name: {admin.first_name} {admin.last_name}')
-"
+    print("✓ Admin credentials updated successfully!")
+    print(f"  Email: {admin.email}")
+    print(f"  Name: {admin.first_name} {admin.last_name}")
+'
     
     if [ $? -eq 0 ]; then
       echo ""
@@ -489,8 +513,9 @@ with app.app_context():
     # Create backup directory if it doesn't exist
     mkdir -p db_backups
     
+    VOLUME_NAME=lesson-organizer_backend_db
     docker run --rm \
-      -v lesson-organizer_backend_db:/db \
+      -v "$VOLUME_NAME":/db \
       -v "$(pwd)/db_backups":/backup \
       alpine \
       cp /db/lesson_organizer.db /backup/$BACKUP_FILE
@@ -730,16 +755,25 @@ with app.app_context():
     FOLLOW=$2
     if [ -z "$SERVICE" ]; then
       echo -e "${YELLOW}Usage:${NC} $0 logs <service> [follow]"
-      echo -e "${YELLOW}Available services:${NC} backend, frontend, caddy"
+      echo -e "${YELLOW}Available services:${NC} backend, frontend, caddy, redis"
+      exit 1
+    fi
+    
+    # Construct container name using project name
+    CONTAINER="${PROJECT_NAME}-${SERVICE}-1"
+    
+    # Check if container exists and is running
+    if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER}$"; then
+      echo -e "${RED}✗ Container '$CONTAINER' not found or not running${NC}"
       exit 1
     fi
     
     if [ "$FOLLOW" = "follow" ] || [ "$FOLLOW" = "-f" ]; then
       echo -e "${GREEN}[LOGS]${NC} Following logs for $SERVICE (Ctrl+C to exit)..."
-      docker logs -f $SERVICE
+      docker logs -f "$CONTAINER"
     else
       echo -e "${GREEN}[LOGS]${NC} Showing last 50 lines for $SERVICE..."
-      docker logs --tail 50 $SERVICE
+      docker logs --tail 50 "$CONTAINER"
     fi
     exit 0
     ;;
